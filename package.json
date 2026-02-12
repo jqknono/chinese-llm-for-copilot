@@ -1,0 +1,142 @@
+{
+  "name": "china-ai-for-copilot",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Machine Learning",
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languageModelChatProviders": [
+      {
+        "vendor": "zhipu-ai",
+        "displayName": "%providers.zhipu.displayName%",
+        "managementCommand": "china-ai.manage.zhipu"
+      },
+      {
+        "vendor": "kimi-ai",
+        "displayName": "%providers.kimi.displayName%",
+        "managementCommand": "china-ai.manage.kimi"
+      },
+      {
+        "vendor": "volcengine-ai",
+        "displayName": "%providers.volcengine.displayName%",
+        "managementCommand": "china-ai.manage.volcengine"
+      }
+    ],
+    "commands": [
+      {
+        "command": "china-ai.manage.zhipu",
+        "title": "%commands.china-ai.manage.zhipu.title%",
+        "category": "%commands.category%"
+      },
+      {
+        "command": "china-ai.setApiKey.zhipu",
+        "title": "%commands.china-ai.setApiKey.zhipu.title%",
+        "category": "%commands.category%"
+      },
+      {
+        "command": "china-ai.refreshModels.zhipu",
+        "title": "%commands.china-ai.refreshModels.zhipu.title%",
+        "category": "%commands.category%"
+      },
+      {
+        "command": "china-ai.manage.kimi",
+        "title": "%commands.china-ai.manage.kimi.title%",
+        "category": "%commands.category%"
+      },
+      {
+        "command": "china-ai.setApiKey.kimi",
+        "title": "%commands.china-ai.setApiKey.kimi.title%",
+        "category": "%commands.category%"
+      },
+      {
+        "command": "china-ai.refreshModels.kimi",
+        "title": "%commands.china-ai.refreshModels.kimi.title%",
+        "category": "%commands.category%"
+      },
+      {
+        "command": "china-ai.manage.volcengine",
+        "title": "%commands.china-ai.manage.volcengine.title%",
+        "category": "%commands.category%"
+      },
+      {
+        "command": "china-ai.setApiKey.volcengine",
+        "title": "%commands.china-ai.setApiKey.volcengine.title%",
+        "category": "%commands.category%"
+      },
+      {
+        "command": "china-ai.refreshModels.volcengine",
+        "title": "%commands.china-ai.refreshModels.volcengine.title%",
+        "category": "%commands.category%"
+      }
+    ],
+    "configuration": {
+      "title": "%configuration.title%",
+      "properties": {
+        "china-ai.zhipu.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "%configuration.china-ai.zhipu.apiKey.description%",
+          "order": 1
+        },
+        "china-ai.zhipu.baseUrl": {
+          "type": "string",
+          "default": "https://open.bigmodel.cn/api/paas/v4",
+          "description": "%configuration.china-ai.zhipu.baseUrl.description%",
+          "order": 2
+        },
+        "china-ai.kimi.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "%configuration.china-ai.kimi.apiKey.description%",
+          "order": 3
+        },
+        "china-ai.kimi.baseUrl": {
+          "type": "string",
+          "default": "https://api.moonshot.cn/v1",
+          "description": "%configuration.china-ai.kimi.baseUrl.description%",
+          "order": 4
+        },
+        "china-ai.volcengine.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "%configuration.china-ai.volcengine.apiKey.description%",
+          "order": 5
+        },
+        "china-ai.volcengine.baseUrl": {
+          "type": "string",
+          "default": "https://ark.cn-beijing.volces.com/api/v3",
+          "description": "%configuration.china-ai.volcengine.baseUrl.description%",
+          "order": 6
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./ && npm run copy-i18n",
+    "watch": "tsc -watch -p ./",
+    "copy-i18n": "copyfiles -u 1 \"src/i18n/*.json\" out/",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
+    "@typescript-eslint/parser": "^7.13.1",
+    "copyfiles": "^2.4.1",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "axios": "^1.7.2"
+  }
+}

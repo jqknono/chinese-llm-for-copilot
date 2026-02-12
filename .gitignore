@@ -1,0 +1,9 @@
+node_modules
+*.vsix
+out/
+dist/
+.vscode-test/
+*.log
+.DS_Store
+.vscode/launch.json
+*.log
