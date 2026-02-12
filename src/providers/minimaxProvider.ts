@@ -43,6 +43,9 @@ interface MinimaxChatResponse {
   };
 }
 
+const MINIMAX_DEFAULT_MAINLAND_BASE_URL = 'https://api.minimaxi.com/v1';
+const MINIMAX_DEFAULT_OVERSEAS_BASE_URL = 'https://api.minimax.io/v1';
+
 export class MinimaxLanguageModel extends BaseLanguageModel {
   constructor(provider: BaseAIProvider, modelInfo: AIModelConfig) {
     super(provider, modelInfo);
@@ -106,8 +109,8 @@ export class MinimaxAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('Chinese-AI.minimax.apiKey') || e.affectsConfiguration('Chinese-AI.minimax.baseUrl')) {
-          if (e.affectsConfiguration('Chinese-AI.minimax.baseUrl')) {
+        if (e.affectsConfiguration('Chinese-AI.minimax.apiKey') || this.hasEndpointConfigChanged(e)) {
+          if (this.hasEndpointConfigChanged(e)) {
             this.apiClient.defaults.baseURL = this.getBaseUrl();
           }
           await this.refreshModels();
@@ -126,7 +129,11 @@ export class MinimaxAIProvider extends BaseAIProvider {
 
   getBaseUrl(): string {
     const config = vscode.workspace.getConfiguration('Chinese-AI.minimax');
-    return config.get<string>('baseUrl', 'https://api.minimax.chat/v1');
+    const region = config.get<boolean>('region', true);
+    if (!region) {
+      return MINIMAX_DEFAULT_OVERSEAS_BASE_URL;
+    }
+    return MINIMAX_DEFAULT_MAINLAND_BASE_URL;
   }
 
   getApiKey(): string {
@@ -333,5 +340,9 @@ export class MinimaxAIProvider extends BaseAIProvider {
       return 'auto';
     }
     return 'required';
+  }
+
+  private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
+    return event.affectsConfiguration('Chinese-AI.minimax.region');
   }
 }

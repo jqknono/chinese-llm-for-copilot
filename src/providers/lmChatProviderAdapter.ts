@@ -2,6 +2,17 @@ import * as vscode from 'vscode';
 import { BaseAIProvider, BaseLanguageModel, MODEL_VERSION_LABEL } from './baseProvider';
 import { getMessage } from '../i18n/i18n';
 
+interface ProviderPickerConfiguration {
+  name?: unknown;
+  apiKey?: unknown;
+  region?: unknown;
+}
+
+interface PrepareLanguageModelChatModelOptionsWithConfiguration extends vscode.PrepareLanguageModelChatModelOptions {
+  group?: unknown;
+  configuration?: ProviderPickerConfiguration;
+}
+
 function toLanguageModelInfo(model: BaseLanguageModel): vscode.LanguageModelChatInformation {
   return {
     id: model.id,
@@ -73,6 +84,18 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
     _options: vscode.PrepareLanguageModelChatModelOptions,
     _token: vscode.CancellationToken
   ): Promise<vscode.LanguageModelChatInformation[]> {
+    const options = _options as PrepareLanguageModelChatModelOptionsWithConfiguration;
+    const hasGroup = typeof options.group === 'string' && options.group.trim().length > 0;
+    const hasConfigurationPayload = this.hasConfigurationPayload(options.configuration);
+
+    // VS Code may invoke provider once for base vendor and once per configured group.
+    // Group/configuration calls should be treated as setup sync only, otherwise the same
+    // model list is reported multiple times and UI shows duplicated model rows.
+    if (hasGroup || hasConfigurationPayload) {
+      await this.applyPickerConfiguration(options);
+      return [];
+    }
+
     const models = this.provider.getAvailableModels();
     if (models.length === 0) {
       return [getPlaceholderModel(this.provider.getVendor())];
@@ -132,12 +155,80 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
     return targetModel.countTokens(this.toChatMessage(text), token);
   }
 
+  private hasConfigurationPayload(configuration: ProviderPickerConfiguration | undefined): boolean {
+    if (!configuration || typeof configuration !== 'object') {
+      return false;
+    }
+    return Object.keys(configuration).length > 0;
+  }
+
   private toChatMessage(message: vscode.LanguageModelChatRequestMessage): vscode.LanguageModelChatMessage {
     return new vscode.LanguageModelChatMessage(
       message.role,
       [...message.content] as vscode.LanguageModelInputPart[],
       message.name
     );
+  }
+
+  private async applyPickerConfiguration(options: PrepareLanguageModelChatModelOptionsWithConfiguration): Promise<void> {
+    const rawConfig = options.configuration;
+    if (!rawConfig || typeof rawConfig !== 'object') {
+      return;
+    }
+
+    const normalized = this.normalizePickerConfiguration(rawConfig);
+    if (!normalized) {
+      return;
+    }
+
+    const configSection = this.provider.getConfigSection();
+    const config = vscode.workspace.getConfiguration(configSection);
+    const updates: Array<Thenable<void>> = [];
+
+    const setStringIfChanged = (key: string, value: string): void => {
+      const current = config.get<string>(key, '');
+      if (current !== value) {
+        updates.push(config.update(key, value, vscode.ConfigurationTarget.Global));
+      }
+    };
+
+    const setBooleanIfChanged = (key: string, value: boolean): void => {
+      const current = config.get<boolean>(key, true);
+      if (current !== value) {
+        updates.push(config.update(key, value, vscode.ConfigurationTarget.Global));
+      }
+    };
+
+    if (normalized.apiKey !== undefined) {
+      setStringIfChanged('apiKey', normalized.apiKey);
+    }
+    if (normalized.region !== undefined) {
+      setBooleanIfChanged('region', normalized.region);
+    }
+    if (updates.length > 0) {
+      await Promise.all(updates);
+      await this.provider.refreshModels();
+    }
+  }
+
+  private normalizePickerConfiguration(raw: ProviderPickerConfiguration): {
+    apiKey?: string;
+    region?: boolean;
+  } | undefined {
+    const normalized: {
+      apiKey?: string;
+      region?: boolean;
+    } = {};
+
+    if (typeof raw.apiKey === 'string') {
+      normalized.apiKey = raw.apiKey.trim();
+    }
+
+    if (typeof raw.region === 'boolean') {
+      normalized.region = raw.region;
+    }
+
+    return Object.keys(normalized).length > 0 ? normalized : undefined;
   }
 
   dispose(): void {

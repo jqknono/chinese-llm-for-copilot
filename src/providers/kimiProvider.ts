@@ -43,6 +43,9 @@ interface KimiChatResponse {
   };
 }
 
+const KIMI_DEFAULT_MAINLAND_BASE_URL = 'https://api.moonshot.cn/v1';
+const KIMI_DEFAULT_OVERSEAS_BASE_URL = 'https://api.moonshot.ai/v1';
+
 export class KimiLanguageModel extends BaseLanguageModel {
   constructor(provider: BaseAIProvider, modelInfo: AIModelConfig) {
     super(provider, modelInfo);
@@ -106,8 +109,8 @@ export class KimiAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('Chinese-AI.kimi.apiKey') || e.affectsConfiguration('Chinese-AI.kimi.baseUrl')) {
-          if (e.affectsConfiguration('Chinese-AI.kimi.baseUrl')) {
+        if (e.affectsConfiguration('Chinese-AI.kimi.apiKey') || this.hasEndpointConfigChanged(e)) {
+          if (this.hasEndpointConfigChanged(e)) {
             this.apiClient.defaults.baseURL = this.getBaseUrl();
           }
           await this.refreshModels();
@@ -126,7 +129,11 @@ export class KimiAIProvider extends BaseAIProvider {
 
   getBaseUrl(): string {
     const config = vscode.workspace.getConfiguration('Chinese-AI.kimi');
-    return config.get<string>('baseUrl', 'https://api.moonshot.cn/v1');
+    const region = config.get<boolean>('region', true);
+    if (!region) {
+      return KIMI_DEFAULT_OVERSEAS_BASE_URL;
+    }
+    return KIMI_DEFAULT_MAINLAND_BASE_URL;
   }
 
   getApiKey(): string {
@@ -258,5 +265,9 @@ export class KimiAIProvider extends BaseAIProvider {
 
   protected createModel(modelInfo: AIModelConfig): BaseLanguageModel {
     return new KimiLanguageModel(this, modelInfo);
+  }
+
+  private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
+    return event.affectsConfiguration('Chinese-AI.kimi.region');
   }
 }

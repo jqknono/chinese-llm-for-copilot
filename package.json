@@ -1,186 +1,250 @@
 {
-  "name": "chinese-ai-for-copilot",
-  "displayName": "%displayName%",
-  "description": "%description%",
-  "version": "0.0.1",
-  "engines": {
-    "vscode": "^1.95.0"
-  },
-  "categories": [
-    "Machine Learning",
-    "Other"
-  ],
-  "main": "./out/extension.js",
-  "contributes": {
-    "languageModelChatProviders": [
-      {
-        "vendor": "zhipu-ai",
-        "displayName": "%providers.zhipu.displayName%",
-        "configuration": {
-          "apiKey": "Chinese-AI.zhipu.apiKey",
-          "baseUrl": "Chinese-AI.zhipu.baseUrl"
-        }
-      },
-      {
-        "vendor": "kimi-ai",
-        "displayName": "%providers.kimi.displayName%",
-        "configuration": {
-          "apiKey": "Chinese-AI.kimi.apiKey",
-          "baseUrl": "Chinese-AI.kimi.baseUrl"
-        }
-      },
-      {
-        "vendor": "volcengine-ai",
-        "displayName": "%providers.volcengine.displayName%",
-        "configuration": {
-          "apiKey": "Chinese-AI.volcengine.apiKey",
-          "baseUrl": "Chinese-AI.volcengine.baseUrl"
-        }
-      },
-      {
-        "vendor": "minimax-ai",
-        "displayName": "%providers.minimax.displayName%",
-        "configuration": {
-          "apiKey": "Chinese-AI.minimax.apiKey",
-          "baseUrl": "Chinese-AI.minimax.baseUrl"
-        }
-      }
+    "name": "chinese-ai-for-copilot",
+    "displayName": "%displayName%",
+    "description": "%description%",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.95.0"
+    },
+    "categories": [
+        "Machine Learning",
+        "Other"
     ],
-    "commands": [
-      {
-        "command": "Chinese-AI.manage.zhipu",
-        "title": "%commands.Chinese-AI.manage.zhipu.title%",
-        "category": "%commands.category%"
-      },
-      {
-        "command": "Chinese-AI.setApiKey.zhipu",
-        "title": "%commands.Chinese-AI.setApiKey.zhipu.title%",
-        "category": "%commands.category%"
-      },
-      {
-        "command": "Chinese-AI.refreshModels.zhipu",
-        "title": "%commands.Chinese-AI.refreshModels.zhipu.title%",
-        "category": "%commands.category%"
-      },
-      {
-        "command": "Chinese-AI.manage.kimi",
-        "title": "%commands.Chinese-AI.manage.kimi.title%",
-        "category": "%commands.category%"
-      },
-      {
-        "command": "Chinese-AI.setApiKey.kimi",
-        "title": "%commands.Chinese-AI.setApiKey.kimi.title%",
-        "category": "%commands.category%"
-      },
-      {
-        "command": "Chinese-AI.refreshModels.kimi",
-        "title": "%commands.Chinese-AI.refreshModels.kimi.title%",
-        "category": "%commands.category%"
-      },
-      {
-        "command": "Chinese-AI.manage.volcengine",
-        "title": "%commands.Chinese-AI.manage.volcengine.title%",
-        "category": "%commands.category%"
-      },
-      {
-        "command": "Chinese-AI.setApiKey.volcengine",
-        "title": "%commands.Chinese-AI.setApiKey.volcengine.title%",
-        "category": "%commands.category%"
-      },
-      {
-        "command": "Chinese-AI.refreshModels.volcengine",
-        "title": "%commands.Chinese-AI.refreshModels.volcengine.title%",
-        "category": "%commands.category%"
-      },
-      {
-        "command": "Chinese-AI.manage.minimax",
-        "title": "%commands.Chinese-AI.manage.minimax.title%",
-        "category": "%commands.category%"
-      },
-      {
-        "command": "Chinese-AI.setApiKey.minimax",
-        "title": "%commands.Chinese-AI.setApiKey.minimax.title%",
-        "category": "%commands.category%"
-      },
-      {
-        "command": "Chinese-AI.refreshModels.minimax",
-        "title": "%commands.Chinese-AI.refreshModels.minimax.title%",
-        "category": "%commands.category%"
-      }
-    ],
-    "configuration": {
-      "title": "%configuration.title%",
-      "properties": {
-        "Chinese-AI.zhipu.apiKey": {
-          "type": "string",
-          "default": "",
-          "description": "%configuration.Chinese-AI.zhipu.apiKey.description%",
-          "order": 1
-        },
-        "Chinese-AI.zhipu.baseUrl": {
-          "type": "string",
-          "default": "https://open.bigmodel.cn/api/coding/paas/v4",
-          "description": "%configuration.Chinese-AI.zhipu.baseUrl.description%",
-          "order": 2
-        },
-        "Chinese-AI.kimi.apiKey": {
-          "type": "string",
-          "default": "",
-          "description": "%configuration.Chinese-AI.kimi.apiKey.description%",
-          "order": 3
-        },
-        "Chinese-AI.kimi.baseUrl": {
-          "type": "string",
-          "default": "https://api.moonshot.cn/v1",
-          "description": "%configuration.Chinese-AI.kimi.baseUrl.description%",
-          "order": 4
-        },
-        "Chinese-AI.volcengine.apiKey": {
-          "type": "string",
-          "default": "",
-          "description": "%configuration.Chinese-AI.volcengine.apiKey.description%",
-          "order": 5
-        },
-        "Chinese-AI.volcengine.baseUrl": {
-          "type": "string",
-          "default": "https://ark.cn-beijing.volces.com/api/v3",
-          "description": "%configuration.Chinese-AI.volcengine.baseUrl.description%",
-          "order": 6
-        },
-        "Chinese-AI.minimax.apiKey": {
-          "type": "string",
-          "default": "",
-          "description": "%configuration.Chinese-AI.minimax.apiKey.description%",
-          "order": 7
-        },
-        "Chinese-AI.minimax.baseUrl": {
-          "type": "string",
-          "default": "https://api.minimax.chat/v1",
-          "description": "%configuration.Chinese-AI.minimax.baseUrl.description%",
-          "order": 8
+    "main": "./out/extension.js",
+    "contributes": {
+        "languageModelChatProviders": [
+            {
+                "vendor": "zhipu-ai",
+                "displayName": "%providers.zhipu.displayName%",
+                "configuration": {
+                    "type": "object",
+                    "required": [
+                        "apiKey"
+                    ],
+                    "properties": {
+                        "apiKey": {
+                            "type": "string",
+                            "title": "API Key",
+                            "description": "Zhipu API key",
+                            "secret": true
+                        },
+                        "region": {
+                            "type": "boolean",
+                            "title": "Is China Mainland",
+                            "description": "Whether to use the China mainland endpoint URL",
+                            "default": true
+                        }
+                    }
+                }
+            },
+            {
+                "vendor": "kimi-ai",
+                "displayName": "%providers.kimi.displayName%",
+                "configuration": {
+                    "type": "object",
+                    "required": [
+                        "apiKey"
+                    ],
+                    "properties": {
+                        "apiKey": {
+                            "type": "string",
+                            "title": "API Key",
+                            "description": "Kimi API key",
+                            "secret": true
+                        },
+                        "region": {
+                            "type": "boolean",
+                            "title": "Is China Mainland",
+                            "description": "Whether to use the China mainland endpoint URL",
+                            "default": true
+                        }
+                    }
+                }
+            },
+            {
+                "vendor": "volcengine-ai",
+                "displayName": "%providers.volcengine.displayName%",
+                "configuration": {
+                    "type": "object",
+                    "required": [
+                        "apiKey"
+                    ],
+                    "properties": {
+                        "apiKey": {
+                            "type": "string",
+                            "title": "API Key",
+                            "description": "Volcengine API key",
+                            "secret": true
+                        },
+                        "region": {
+                            "type": "boolean",
+                            "title": "Is China Mainland",
+                            "description": "Whether to use the China mainland endpoint URL",
+                            "default": true
+                        }
+                    }
+                }
+            },
+            {
+                "vendor": "minimax-ai",
+                "displayName": "%providers.minimax.displayName%",
+                "configuration": {
+                    "type": "object",
+                    "required": [
+                        "apiKey"
+                    ],
+                    "properties": {
+                        "apiKey": {
+                            "type": "string",
+                            "title": "API Key",
+                            "description": "Minimax API key",
+                            "secret": true
+                        },
+                        "region": {
+                            "type": "boolean",
+                            "title": "Is China Mainland",
+                            "description": "Whether to use the China mainland endpoint URL",
+                            "default": true
+                        }
+                    }
+                }
+            }
+        ],
+        "commands": [
+            {
+                "command": "Chinese-AI.manage.zhipu",
+                "title": "%commands.Chinese-AI.manage.zhipu.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.setApiKey.zhipu",
+                "title": "%commands.Chinese-AI.setApiKey.zhipu.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.refreshModels.zhipu",
+                "title": "%commands.Chinese-AI.refreshModels.zhipu.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.manage.kimi",
+                "title": "%commands.Chinese-AI.manage.kimi.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.setApiKey.kimi",
+                "title": "%commands.Chinese-AI.setApiKey.kimi.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.refreshModels.kimi",
+                "title": "%commands.Chinese-AI.refreshModels.kimi.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.manage.volcengine",
+                "title": "%commands.Chinese-AI.manage.volcengine.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.setApiKey.volcengine",
+                "title": "%commands.Chinese-AI.setApiKey.volcengine.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.refreshModels.volcengine",
+                "title": "%commands.Chinese-AI.refreshModels.volcengine.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.manage.minimax",
+                "title": "%commands.Chinese-AI.manage.minimax.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.setApiKey.minimax",
+                "title": "%commands.Chinese-AI.setApiKey.minimax.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.refreshModels.minimax",
+                "title": "%commands.Chinese-AI.refreshModels.minimax.title%",
+                "category": "%commands.category%"
+            }
+        ],
+        "configuration": {
+            "title": "%configuration.title%",
+            "properties": {
+                "Chinese-AI.zhipu.apiKey": {
+                    "type": "string",
+                    "default": "",
+                    "description": "%configuration.Chinese-AI.zhipu.apiKey.description%",
+                    "order": 1
+                },
+                "Chinese-AI.zhipu.region": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%configuration.Chinese-AI.zhipu.region.description%",
+                    "order": 2
+                },
+                "Chinese-AI.kimi.apiKey": {
+                    "type": "string",
+                    "default": "",
+                    "description": "%configuration.Chinese-AI.kimi.apiKey.description%",
+                    "order": 3
+                },
+                "Chinese-AI.kimi.region": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%configuration.Chinese-AI.kimi.region.description%",
+                    "order": 4
+                },
+                "Chinese-AI.volcengine.apiKey": {
+                    "type": "string",
+                    "default": "",
+                    "description": "%configuration.Chinese-AI.volcengine.apiKey.description%",
+                    "order": 5
+                },
+                "Chinese-AI.volcengine.region": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%configuration.Chinese-AI.volcengine.region.description%",
+                    "order": 6
+                },
+                "Chinese-AI.minimax.apiKey": {
+                    "type": "string",
+                    "default": "",
+                    "description": "%configuration.Chinese-AI.minimax.apiKey.description%",
+                    "order": 7
+                },
+                "Chinese-AI.minimax.region": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%configuration.Chinese-AI.minimax.region.description%",
+                    "order": 8
+                }
+            }
         }
-      }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./ && npm run copy-i18n",
+        "watch": "tsc -watch -p ./",
+        "copy-i18n": "copyfiles -u 1 \"src/i18n/*.json\" out/",
+        "pretest": "npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "node ./out/test/runTest.js"
+    },
+    "devDependencies": {
+        "@types/node": "^20.14.9",
+        "@types/vscode": "^1.95.0",
+        "@typescript-eslint/eslint-plugin": "^7.13.1",
+        "@typescript-eslint/parser": "^7.13.1",
+        "copyfiles": "^2.4.1",
+        "eslint": "^8.57.0",
+        "typescript": "^5.4.5"
+    },
+    "dependencies": {
+        "axios": "^1.7.2"
     }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && npm run copy-i18n",
-    "watch": "tsc -watch -p ./",
-    "copy-i18n": "copyfiles -u 1 \"src/i18n/*.json\" out/",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
-  },
-  "devDependencies": {
-    "@types/node": "^20.14.9",
-    "@types/vscode": "^1.95.0",
-    "@typescript-eslint/eslint-plugin": "^7.13.1",
-    "@typescript-eslint/parser": "^7.13.1",
-    "copyfiles": "^2.4.1",
-    "eslint": "^8.57.0",
-    "typescript": "^5.4.5"
-  },
-  "dependencies": {
-    "axios": "^1.7.2"
-  }
 }

@@ -117,19 +117,25 @@ code --install-extension Chinese-AI-copilot-0.0.1.vsix
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
 | `Chinese-AI.zhipu.apiKey` | string | - | 智谱 AI API Key（必需） |
-| `Chinese-AI.zhipu.baseUrl` | string | https://open.bigmodel.cn/api/coding/paas/v4 | 智谱 API 基础 URL |
+| `Chinese-AI.zhipu.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
 
 ### Kimi AI
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
 | `Chinese-AI.kimi.apiKey` | string | - | Kimi AI API Key（必需） |
-| `Chinese-AI.kimi.baseUrl` | string | https://api.moonshot.cn/v1 | Kimi API 基础 URL |
+| `Chinese-AI.kimi.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
 
 ### 火山云
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
 | `Chinese-AI.volcengine.apiKey` | string | - | 火山云 API Key（必需） |
-| `Chinese-AI.volcengine.baseUrl` | string | https://ark.cn-beijing.volces.com/api/v3 | 火山云 API 基础 URL |
+| `Chinese-AI.volcengine.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
+
+### Minimax AI
+| 设置项 | 类型 | 默认值 | 描述 |
+|--------|------|--------|------|
+| `Chinese-AI.minimax.apiKey` | string | - | Minimax API Key（必需） |
+| `Chinese-AI.minimax.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
 
 ## 开发
 
@@ -143,7 +149,8 @@ china-lm-for-copilot/
 │       ├── baseProvider.ts           # 基础提供者抽象类
 │       ├── zhipuProvider.ts          # 智谱 GLM 提供者
 │       ├── kimiProvider.ts           # Kimi AI 提供者
-│       └── volcengineProvider.ts    # 火山云提供者
+│       ├── volcengineProvider.ts     # 火山云提供者
+│       └── minimaxProvider.ts        # Minimax 提供者
 ├── package.json                       # 扩展配置
 ├── tsconfig.json                     # TypeScript 配置
 └── README.md                          # 说明文档

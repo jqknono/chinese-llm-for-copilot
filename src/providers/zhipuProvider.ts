@@ -70,7 +70,8 @@ interface ZhipuModelListResponse {
   models?: ZhipuModelListEntry[];
 }
 
-const ZHIPU_DEFAULT_BASE_URL = 'https://open.bigmodel.cn/api/coding/paas/v4';
+const ZHIPU_DEFAULT_MAINLAND_BASE_URL = 'https://open.bigmodel.cn/api/coding/paas/v4';
+const ZHIPU_DEFAULT_OVERSEAS_BASE_URL = 'https://api.z.ai/api/coding/paas/v4';
 
 export class ZhipuLanguageModel extends BaseLanguageModel {
   constructor(provider: BaseAIProvider, modelInfo: AIModelConfig) {
@@ -135,8 +136,8 @@ export class ZhipuAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('Chinese-AI.zhipu.apiKey') || e.affectsConfiguration('Chinese-AI.zhipu.baseUrl')) {
-          if (e.affectsConfiguration('Chinese-AI.zhipu.baseUrl')) {
+        if (e.affectsConfiguration('Chinese-AI.zhipu.apiKey') || this.hasEndpointConfigChanged(e)) {
+          if (this.hasEndpointConfigChanged(e)) {
             this.apiClient.defaults.baseURL = this.getBaseUrl();
           }
           await this.refreshModels();
@@ -155,7 +156,11 @@ export class ZhipuAIProvider extends BaseAIProvider {
 
   getBaseUrl(): string {
     const config = vscode.workspace.getConfiguration('Chinese-AI.zhipu');
-    return config.get<string>('baseUrl', ZHIPU_DEFAULT_BASE_URL);
+    const region = config.get<boolean>('region', true);
+    if (!region) {
+      return ZHIPU_DEFAULT_OVERSEAS_BASE_URL;
+    }
+    return ZHIPU_DEFAULT_MAINLAND_BASE_URL;
   }
 
   getApiKey(): string {
@@ -427,5 +432,9 @@ export class ZhipuAIProvider extends BaseAIProvider {
     }
 
     return undefined;
+  }
+
+  private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
+    return event.affectsConfiguration('Chinese-AI.zhipu.region');
   }
 }

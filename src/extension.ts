@@ -57,36 +57,139 @@ function registerProviderCommands(
   providerKey: string,
   providerName: string
 ): void {
+  type ProviderRegion = boolean;
+  type ManageActionId =
+    | 'configureAll'
+    | 'apiKey'
+    | 'region';
+
+  interface ManageActionItem extends vscode.QuickPickItem {
+    id: ManageActionId;
+  }
+
+  const configSection = `Chinese-AI.${providerKey}`;
+  const getProviderConfig = () => vscode.workspace.getConfiguration(configSection);
+
+  const readCurrentRegion = (): ProviderRegion => {
+    return getProviderConfig().get<boolean>('region', true);
+  };
+
+  const formatRegionLabel = (region: ProviderRegion): string => {
+    return region ? getMessage('regionChinaLabel') : getMessage('regionNonChinaLabel');
+  };
+
+  const promptApiKey = async (): Promise<string | undefined> => {
+    const currentApiKey = getProviderConfig().get<string>('apiKey', '');
+    return vscode.window.showInputBox({
+      prompt: getMessage('inputApiKey', providerName),
+      password: true,
+      ignoreFocusOut: true,
+      placeHolder: getMessage('inputPlaceholder'),
+      value: currentApiKey
+    });
+  };
+
+  const pickRegion = async (): Promise<ProviderRegion | undefined> => {
+    const currentRegion = readCurrentRegion();
+    const regionItems: Array<vscode.QuickPickItem & { value: ProviderRegion }> = [
+      {
+        label: getMessage('regionChinaLabel'),
+        description: currentRegion ? getMessage('currentSelection') : '',
+        value: true
+      },
+      {
+        label: getMessage('regionNonChinaLabel'),
+        description: !currentRegion ? getMessage('currentSelection') : '',
+        value: false
+      }
+    ];
+
+    const picked = await vscode.window.showQuickPick(regionItems, {
+      ignoreFocusOut: true,
+      placeHolder: getMessage('selectRegionPlaceholder', providerName)
+    });
+
+    return picked?.value;
+  };
+
+  const applyUpdates = async (updates: Array<[string, unknown]>): Promise<void> => {
+    const config = getProviderConfig();
+    for (const [key, value] of updates) {
+      await config.update(key, value, vscode.ConfigurationTarget.Global);
+    }
+    await provider.refreshModels();
+  };
+
+  const configureAll = async (): Promise<void> => {
+    const apiKey = await promptApiKey();
+    if (apiKey === undefined) {
+      return;
+    }
+
+    const region = await pickRegion();
+    if (region === undefined) {
+      return;
+    }
+
+    await applyUpdates([
+      ['apiKey', apiKey.trim()],
+      ['region', region]
+    ]);
+
+    vscode.window.showInformationMessage(getMessage('providerConfigSaved', providerName));
+  };
+
   context.subscriptions.push(
     vscode.commands.registerCommand(`Chinese-AI.manage.${providerKey}`, async () => {
-      const apiKey = await vscode.window.showInputBox({
-        prompt: getMessage('inputApiKey', providerName),
-        password: true,
+      const actionItems: ManageActionItem[] = [
+        { id: 'configureAll', label: getMessage('manageActionConfigureAll') },
+        { id: 'apiKey', label: getMessage('manageActionApiKey') },
+        { id: 'region', label: getMessage('manageActionRegion') }
+      ];
+
+      const pickedAction = await vscode.window.showQuickPick(actionItems, {
         ignoreFocusOut: true,
-        placeHolder: getMessage('inputPlaceholder')
+        placeHolder: getMessage('manageActionPlaceholder', providerName)
       });
 
-      if (apiKey !== undefined) {
-        await vscode.workspace.getConfiguration(`Chinese-AI.${providerKey}`).update('apiKey', apiKey, vscode.ConfigurationTarget.Global);
+      if (!pickedAction) {
+        return;
+      }
+
+      if (pickedAction.id === 'configureAll') {
+        await configureAll();
+        return;
+      }
+
+      if (pickedAction.id === 'apiKey') {
+        const apiKey = await promptApiKey();
+        if (apiKey === undefined) {
+          return;
+        }
+        await applyUpdates([['apiKey', apiKey.trim()]]);
         vscode.window.showInformationMessage(getMessage('apiKeySaved', providerName));
-        await provider.refreshModels();
+        return;
+      }
+
+      if (pickedAction.id === 'region') {
+        const region = await pickRegion();
+        if (region === undefined) {
+          return;
+        }
+        await applyUpdates([['region', region]]);
+        vscode.window.showInformationMessage(getMessage('regionSaved', providerName, formatRegionLabel(region)));
+        return;
       }
     })
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand(`Chinese-AI.setApiKey.${providerKey}`, async () => {
-      const apiKey = await vscode.window.showInputBox({
-        prompt: getMessage('inputApiKey', providerName),
-        password: true,
-        ignoreFocusOut: true,
-        placeHolder: getMessage('inputPlaceholder')
-      });
+      const apiKey = await promptApiKey();
 
       if (apiKey !== undefined) {
-        await vscode.workspace.getConfiguration(`Chinese-AI.${providerKey}`).update('apiKey', apiKey, vscode.ConfigurationTarget.Global);
+        await applyUpdates([['apiKey', apiKey.trim()]]);
         vscode.window.showInformationMessage(getMessage('apiKeySaved', providerName));
-        await provider.refreshModels();
       }
     })
   );
