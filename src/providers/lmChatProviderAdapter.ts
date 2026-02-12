@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { BaseAIProvider, BaseLanguageModel } from './baseProvider';
+import { BaseAIProvider, BaseLanguageModel, MODEL_VERSION_LABEL } from './baseProvider';
 import { getMessage } from '../i18n/i18n';
 
 function toLanguageModelInfo(model: BaseLanguageModel): vscode.LanguageModelChatInformation {
@@ -12,10 +12,7 @@ function toLanguageModelInfo(model: BaseLanguageModel): vscode.LanguageModelChat
     version: model.version,
     maxInputTokens: model.maxInputTokens,
     maxOutputTokens: model.maxOutputTokens,
-    capabilities: {
-      toolCalling: false,
-      imageInput: false
-    }
+    capabilities: model.capabilities
   };
 }
 
@@ -48,7 +45,7 @@ function getPlaceholderModel(vendor: string): vscode.LanguageModelChatInformatio
     family: 'setup',
     tooltip: getMessage('setupModelTooltip', providerName),
     detail: getMessage('setupModelDetail'),
-    version: '1.0.0',
+    version: MODEL_VERSION_LABEL,
     maxInputTokens: 1,
     maxOutputTokens: 1,
     capabilities: {

@@ -1,11 +1,22 @@
 import * as vscode from 'vscode';
 import axios, { AxiosInstance } from 'axios';
-import { BaseAIProvider, BaseLanguageModel, AIModelConfig, ChatMessage } from './baseProvider';
+import {
+  BaseAIProvider,
+  BaseLanguageModel,
+  AIModelConfig,
+  ChatMessage,
+  ChatToolCall,
+  ChatToolDefinition,
+  MODEL_VERSION_LABEL,
+  ModelCapabilities
+} from './baseProvider';
 import { getMessage } from '../i18n/i18n';
 
 interface ZhipuChatRequest {
   model: string;
   messages: ChatMessage[];
+  tools?: ChatToolDefinition[];
+  tool_choice?: 'auto' | 'required';
   temperature?: number;
   top_p?: number;
   max_tokens?: number;
@@ -21,6 +32,7 @@ interface ZhipuChatResponse {
     message: {
       role: string;
       content: string;
+      tool_calls?: ChatToolCall[];
     };
     finish_reason: string;
   }>;
@@ -37,13 +49,28 @@ interface ZhipuModelListEntry {
   name?: string;
   max_tokens?: number;
   max_input_tokens?: number;
+  max_output_tokens?: number;
   context_length?: number;
+  tool_calling?: boolean | number;
+  function_calling?: boolean | number;
+  image_input?: boolean;
+  vision?: boolean;
+  capabilities?: {
+    tool_calling?: boolean | number;
+    function_calling?: boolean | number;
+    image_input?: boolean;
+    vision?: boolean;
+    max_input_tokens?: number;
+    max_output_tokens?: number;
+  };
 }
 
 interface ZhipuModelListResponse {
   data?: ZhipuModelListEntry[];
   models?: ZhipuModelListEntry[];
 }
+
+const ZHIPU_DEFAULT_BASE_URL = 'https://open.bigmodel.cn/api/coding/paas/v4';
 
 export class ZhipuLanguageModel extends BaseLanguageModel {
   constructor(provider: BaseAIProvider, modelInfo: AIModelConfig) {
@@ -55,11 +82,15 @@ export class ZhipuLanguageModel extends BaseLanguageModel {
     options?: vscode.LanguageModelChatRequestOptions,
     token?: vscode.CancellationToken
   ): Promise<vscode.LanguageModelChatResponse> {
-    const zhipuMessages = (this.provider as ZhipuAIProvider).convertMessages(messages);
+    const zhipuProvider = this.provider as ZhipuAIProvider;
+    const zhipuMessages = zhipuProvider.convertMessages(messages);
+    const supportsToolCalling = !!this.capabilities.toolCalling;
 
     const request: ZhipuChatRequest = {
       model: this.id,
       messages: zhipuMessages,
+      tools: supportsToolCalling ? zhipuProvider.buildToolDefinitions(options) : undefined,
+      tool_choice: supportsToolCalling ? zhipuProvider.buildToolChoice(options) : undefined,
       stream: false,
       temperature: 0.7,
       top_p: 0.9,
@@ -104,8 +135,8 @@ export class ZhipuAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('china-ai.zhipu.apiKey') || e.affectsConfiguration('china-ai.zhipu.baseUrl')) {
-          if (e.affectsConfiguration('china-ai.zhipu.baseUrl')) {
+        if (e.affectsConfiguration('Chinese-AI.zhipu.apiKey') || e.affectsConfiguration('Chinese-AI.zhipu.baseUrl')) {
+          if (e.affectsConfiguration('Chinese-AI.zhipu.baseUrl')) {
             this.apiClient.defaults.baseURL = this.getBaseUrl();
           }
           await this.refreshModels();
@@ -119,16 +150,16 @@ export class ZhipuAIProvider extends BaseAIProvider {
   }
 
   getConfigSection(): string {
-    return 'china-ai.zhipu';
+    return 'Chinese-AI.zhipu';
   }
 
   getBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration('china-ai.zhipu');
-    return config.get<string>('baseUrl', 'https://open.bigmodel.cn/api/paas/v4');
+    const config = vscode.workspace.getConfiguration('Chinese-AI.zhipu');
+    return config.get<string>('baseUrl', ZHIPU_DEFAULT_BASE_URL);
   }
 
   getApiKey(): string {
-    const config = vscode.workspace.getConfiguration('china-ai.zhipu');
+    const config = vscode.workspace.getConfiguration('Chinese-AI.zhipu');
     return config.get<string>('apiKey', '');
   }
 
@@ -154,8 +185,11 @@ export class ZhipuAIProvider extends BaseAIProvider {
         vendor: 'zhipu-ai',
         family: this.inferFamily(modelId),
         name: modelId,
-        version: '1.0.0',
-        maxTokens: this.readMaxTokens(entry),
+        version: MODEL_VERSION_LABEL,
+        maxTokens: this.readMaxInputTokens(entry),
+        maxInputTokens: this.readMaxInputTokens(entry),
+        maxOutputTokens: this.readMaxOutputTokens(entry),
+        capabilities: this.readCapabilities(entry),
         description: getMessage('zhipuDynamicModelDescription', modelId)
       });
     }
@@ -164,12 +198,7 @@ export class ZhipuAIProvider extends BaseAIProvider {
   }
 
   convertMessages(messages: vscode.LanguageModelChatMessage[]): ChatMessage[] {
-    return messages.map(msg => {
-      return {
-        role: this.toChatRole(msg.role),
-        content: this.readMessageContent(msg.content)
-      };
-    });
+    return this.toProviderMessages(messages);
   }
 
   async sendRequest(
@@ -192,25 +221,27 @@ export class ZhipuAIProvider extends BaseAIProvider {
         axiosConfig.cancelToken = cancelSource.token;
       }
 
-      const response = await this.apiClient.post<ZhipuChatResponse>(
-        '/chat/completions',
-        request,
-        axiosConfig
-      );
+      const response = await this.postChatCompletionsWithRetry(request, axiosConfig);
 
-      const content = response.data.choices[0]?.message?.content || '';
+      const responseMessage = response.data.choices[0]?.message;
+      const content = responseMessage?.content || '';
       const usageData = response.data.usage;
+      const responseParts = this.buildResponseParts(content, responseMessage?.tool_calls);
 
       async function* streamText(text: string): AsyncIterable<string> {
-        yield text;
+        if (text.trim().length > 0) {
+          yield text;
+        }
       }
 
-      async function* streamParts(text: string): AsyncIterable<vscode.LanguageModelTextPart | unknown> {
-        yield new vscode.LanguageModelTextPart(text);
+      async function* streamParts(parts: vscode.LanguageModelResponsePart[]): AsyncIterable<vscode.LanguageModelResponsePart> {
+        for (const part of parts) {
+          yield part;
+        }
       }
 
       const result: vscode.LanguageModelChatResponse = {
-        stream: streamParts(content),
+        stream: streamParts(responseParts),
         text: streamText(content)
       };
 
@@ -223,20 +254,23 @@ export class ZhipuAIProvider extends BaseAIProvider {
       return result;
     } catch (error: any) {
       console.error(getMessage('zhipuApiError'), error);
+      const detail = this.readApiErrorMessage(error);
 
       if (axios.isCancel(error)) {
         throw new vscode.LanguageModelError(getMessage('requestCancelled'));
       }
 
       if (error.response?.status === 401) {
-        throw new vscode.LanguageModelError(getMessage('apiKeyInvalid'));
+        throw new vscode.LanguageModelError(detail || getMessage('apiKeyInvalid'));
       } else if (error.response?.status === 429) {
-        throw new vscode.LanguageModelError(getMessage('rateLimitExceeded'));
+        throw new vscode.LanguageModelError(detail ? `${getMessage('rateLimitExceeded')}: ${detail}` : getMessage('rateLimitExceeded'));
+      } else if (error.response?.status === 403) {
+        throw new vscode.LanguageModelError(detail || getMessage('apiKeyInvalid'));
       } else if (error.response?.status === 400) {
-        throw new vscode.LanguageModelError(getMessage('invalidRequest', error.response.data?.error?.message));
+        throw new vscode.LanguageModelError(getMessage('invalidRequest', detail || error.response.data?.error?.message));
       }
 
-      throw new vscode.LanguageModelError(error.message || getMessage('unknownError'));
+      throw new vscode.LanguageModelError(detail || error.message || getMessage('unknownError'));
     }
   }
 
@@ -270,13 +304,66 @@ export class ZhipuAIProvider extends BaseAIProvider {
   }
 
   private readMaxTokens(entry: ZhipuModelListEntry): number {
-    const values = [entry.max_input_tokens, entry.max_tokens, entry.context_length];
+    return this.readMaxInputTokens(entry);
+  }
+
+  private readMaxInputTokens(entry: ZhipuModelListEntry): number {
+    const values = [entry.capabilities?.max_input_tokens, entry.max_input_tokens, entry.max_tokens, entry.context_length];
     for (const value of values) {
       if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
         return Math.floor(value);
       }
     }
     return 128000;
+  }
+
+  private readMaxOutputTokens(entry: ZhipuModelListEntry): number {
+    const values = [entry.capabilities?.max_output_tokens, entry.max_output_tokens, entry.max_tokens, entry.context_length];
+    for (const value of values) {
+      if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+        return Math.floor(value);
+      }
+    }
+    return this.readMaxInputTokens(entry);
+  }
+
+  private readCapabilities(entry: ZhipuModelListEntry): ModelCapabilities {
+    const toolCalling = this.readToolCalling(entry);
+    const imageInput = this.readImageInput(entry);
+    return {
+      toolCalling,
+      imageInput
+    };
+  }
+
+  private readToolCalling(entry: ZhipuModelListEntry): boolean | number {
+    const values: Array<boolean | number | undefined> = [
+      entry.capabilities?.tool_calling,
+      entry.capabilities?.function_calling,
+      entry.tool_calling,
+      entry.function_calling
+    ];
+    for (const value of values) {
+      if (typeof value === 'boolean' || typeof value === 'number') {
+        return value;
+      }
+    }
+    return true;
+  }
+
+  private readImageInput(entry: ZhipuModelListEntry): boolean {
+    const values: Array<boolean | undefined> = [
+      entry.capabilities?.image_input,
+      entry.capabilities?.vision,
+      entry.image_input,
+      entry.vision
+    ];
+    for (const value of values) {
+      if (typeof value === 'boolean') {
+        return value;
+      }
+    }
+    return false;
   }
 
   private inferFamily(modelId: string): string {
@@ -293,5 +380,52 @@ export class ZhipuAIProvider extends BaseAIProvider {
       return false;
     }
     return lower.startsWith('glm');
+  }
+
+  private async postChatCompletionsWithRetry(request: ZhipuChatRequest, axiosConfig: any): Promise<{ data: ZhipuChatResponse }> {
+    const maxRetries = 2;
+    let attempt = 0;
+
+    while (true) {
+      try {
+        return await this.apiClient.post<ZhipuChatResponse>(
+          '/chat/completions',
+          request,
+          axiosConfig
+        );
+      } catch (error: any) {
+        if (axios.isCancel(error)) {
+          throw error;
+        }
+
+        const status = error?.response?.status;
+        const shouldRetry = (status === 429 || (typeof status === 'number' && status >= 500)) && attempt < maxRetries;
+        if (!shouldRetry) {
+          throw error;
+        }
+
+        const delayMs = 800 * (attempt + 1);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        attempt += 1;
+      }
+    }
+  }
+
+  private readApiErrorMessage(error: any): string | undefined {
+    const responseData = error?.response?.data;
+    if (!responseData) {
+      return undefined;
+    }
+
+    const message = responseData?.error?.message || responseData?.message;
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return message.trim();
+    }
+
+    if (typeof responseData === 'string' && responseData.trim().length > 0) {
+      return responseData.trim();
+    }
+
+    return undefined;
   }
 }

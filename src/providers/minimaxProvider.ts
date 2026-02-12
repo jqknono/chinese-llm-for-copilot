@@ -11,7 +11,7 @@ import {
 } from './baseProvider';
 import { getMessage } from '../i18n/i18n';
 
-interface VolcengineChatRequest {
+interface MinimaxChatRequest {
   model: string;
   messages: ChatMessage[];
   tools?: ChatToolDefinition[];
@@ -22,7 +22,7 @@ interface VolcengineChatRequest {
   stream?: boolean;
 }
 
-interface VolcengineChatResponse {
+interface MinimaxChatResponse {
   id: string;
   object: string;
   created: number;
@@ -43,7 +43,7 @@ interface VolcengineChatResponse {
   };
 }
 
-export class VolcengineLanguageModel extends BaseLanguageModel {
+export class MinimaxLanguageModel extends BaseLanguageModel {
   constructor(provider: BaseAIProvider, modelInfo: AIModelConfig) {
     super(provider, modelInfo);
   }
@@ -53,15 +53,15 @@ export class VolcengineLanguageModel extends BaseLanguageModel {
     options?: vscode.LanguageModelChatRequestOptions,
     token?: vscode.CancellationToken
   ): Promise<vscode.LanguageModelChatResponse> {
-    const volcengineProvider = this.provider as VolcengineAIProvider;
-    const volcengineMessages = volcengineProvider.convertMessages(messages);
+    const minimaxProvider = this.provider as MinimaxAIProvider;
+    const minimaxMessages = minimaxProvider.convertMessages(messages);
     const supportsToolCalling = !!this.capabilities.toolCalling;
 
-    const request: VolcengineChatRequest = {
+    const request: MinimaxChatRequest = {
       model: this.id,
-      messages: volcengineMessages,
-      tools: supportsToolCalling ? volcengineProvider.buildToolDefinitions(options) : undefined,
-      tool_choice: supportsToolCalling ? volcengineProvider.buildToolChoice(options) : undefined,
+      messages: minimaxMessages,
+      tools: supportsToolCalling ? minimaxProvider.buildToolDefinitions(options) : undefined,
+      tool_choice: supportsToolCalling ? minimaxProvider.buildToolChoice(options) : undefined,
       stream: false,
       temperature: 0.7,
       top_p: 0.9,
@@ -69,7 +69,7 @@ export class VolcengineLanguageModel extends BaseLanguageModel {
     };
 
     try {
-      const response = await (this.provider as VolcengineAIProvider).sendRequest(request, token);
+      const response = await (this.provider as MinimaxAIProvider).sendRequest(request, token);
       return response;
     } catch (error) {
       if (error instanceof vscode.LanguageModelError) {
@@ -80,7 +80,7 @@ export class VolcengineLanguageModel extends BaseLanguageModel {
   }
 }
 
-export class VolcengineAIProvider extends BaseAIProvider {
+export class MinimaxAIProvider extends BaseAIProvider {
   private apiClient: AxiosInstance;
 
   constructor(context: vscode.ExtensionContext) {
@@ -106,8 +106,8 @@ export class VolcengineAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('Chinese-AI.volcengine.apiKey') || e.affectsConfiguration('Chinese-AI.volcengine.baseUrl')) {
-          if (e.affectsConfiguration('Chinese-AI.volcengine.baseUrl')) {
+        if (e.affectsConfiguration('Chinese-AI.minimax.apiKey') || e.affectsConfiguration('Chinese-AI.minimax.baseUrl')) {
+          if (e.affectsConfiguration('Chinese-AI.minimax.baseUrl')) {
             this.apiClient.defaults.baseURL = this.getBaseUrl();
           }
           await this.refreshModels();
@@ -117,63 +117,76 @@ export class VolcengineAIProvider extends BaseAIProvider {
   }
 
   getVendor(): string {
-    return 'volcengine-ai';
+    return 'minimax-ai';
   }
 
   getConfigSection(): string {
-    return 'Chinese-AI.volcengine';
+    return 'Chinese-AI.minimax';
   }
 
   getBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.volcengine');
-    return config.get<string>('baseUrl', 'https://ark.cn-beijing.volces.com/api/v3');
+    const config = vscode.workspace.getConfiguration('Chinese-AI.minimax');
+    return config.get<string>('baseUrl', 'https://api.minimax.chat/v1');
   }
 
   getApiKey(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.volcengine');
+    const config = vscode.workspace.getConfiguration('Chinese-AI.minimax');
     return config.get<string>('apiKey', '');
   }
 
   getPredefinedModels(): AIModelConfig[] {
     return [
       {
-        id: 'ep-20250201140916-m989g',
-        vendor: 'volcengine-ai',
-        family: 'doubao',
-        name: '豆包 32K',
+        id: 'abab4-chat',
+        vendor: 'minimax-ai',
+        family: 'abab4',
+        name: 'Minimax abab4',
         version: MODEL_VERSION_LABEL,
         maxTokens: 32768,
         capabilities: {
           toolCalling: true,
           imageInput: false
         },
-        description: getMessage('doubao32kDescription')
+        description: getMessage('minimax4Description')
       },
       {
-        id: 'doubao-pro-32k',
-        vendor: 'volcengine-ai',
-        family: 'doubao',
-        name: '豆包 Pro 32K',
+        id: 'abab5-chat',
+        vendor: 'minimax-ai',
+        family: 'abab5',
+        name: 'Minimax abab5',
         version: MODEL_VERSION_LABEL,
         maxTokens: 32768,
         capabilities: {
           toolCalling: true,
           imageInput: false
         },
-        description: getMessage('doubaoPro32kDescription')
+        description: getMessage('minimax55Description')
       },
       {
-        id: 'doubao-pro-128k',
-        vendor: 'volcengine-ai',
-        family: 'doubao',
-        name: '豆包 Pro 128K',
+        id: 'abab5.5-chat',
+        vendor: 'minimax-ai',
+        family: 'abab5.5',
+        name: 'Minimax abab5.5-chat',
+        version: MODEL_VERSION_LABEL,
+        maxTokens: 65536,
+        capabilities: {
+          toolCalling: true,
+          imageInput: false
+        },
+        description: getMessage('minimax55ChatDescription')
+      },
+      {
+        id: 'abab5.5-pro',
+        vendor: 'minimax-ai',
+        family: 'abab5.5',
+        name: 'Minimax abab5.5-pro',
         version: MODEL_VERSION_LABEL,
         maxTokens: 128000,
         capabilities: {
           toolCalling: true,
           imageInput: false
         },
-        description: getMessage('doubaoPro128kDescription')
+        description: getMessage('minimax55ProDescription')
       }
     ];
   }
@@ -183,13 +196,13 @@ export class VolcengineAIProvider extends BaseAIProvider {
   }
 
   async sendRequest(
-    request: VolcengineChatRequest,
+    request: MinimaxChatRequest,
     token?: vscode.CancellationToken
   ): Promise<vscode.LanguageModelChatResponse> {
     const apiKey = this.getApiKey();
 
     if (!apiKey) {
-      throw new vscode.LanguageModelError(getMessage('apiKeyRequired', 'Volcengine'));
+      throw new vscode.LanguageModelError(getMessage('apiKeyRequired', 'Minimax'));
     }
 
     try {
@@ -202,15 +215,12 @@ export class VolcengineAIProvider extends BaseAIProvider {
         axiosConfig.cancelToken = cancelSource.token;
       }
 
-      const response = await this.apiClient.post<VolcengineChatResponse>(
-        '/chat/completions',
-        request,
-        axiosConfig
-      );
+      const response = await this.apiClient.post<MinimaxChatResponse>('/chat/completions', request, axiosConfig);
 
-      const responseMessage = response.data.choices[0]?.message;
+      const minimaxResponse = response.data;
+      const responseMessage = minimaxResponse.choices[0]?.message;
       const content = responseMessage?.content || '';
-      const usageData = response.data.usage;
+      const usageData = minimaxResponse.usage;
       const responseParts = this.buildResponseParts(content, responseMessage?.tool_calls);
 
       async function* streamText(text: string): AsyncIterable<string> {
@@ -238,25 +248,90 @@ export class VolcengineAIProvider extends BaseAIProvider {
 
       return result;
     } catch (error: any) {
-      console.error(getMessage('volcengineApiError'), error);
-
       if (axios.isCancel(error)) {
         throw new vscode.LanguageModelError(getMessage('requestCancelled'));
       }
 
-      if (error.response?.status === 401) {
-        throw new vscode.LanguageModelError(getMessage('apiKeyInvalid'));
-      } else if (error.response?.status === 429) {
-        throw new vscode.LanguageModelError(getMessage('rateLimitExceeded'));
-      } else if (error.response?.status === 400) {
-        throw new vscode.LanguageModelError(getMessage('invalidRequest', error.response.data?.error?.message));
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+
+        if (status === 401) {
+          throw new vscode.LanguageModelError(getMessage('apiKeyInvalid'));
+        } else if (status === 429) {
+          throw new vscode.LanguageModelError(getMessage('rateLimitExceeded'));
+        } else if (status === 400) {
+          throw new vscode.LanguageModelError(getMessage('invalidRequest', data?.error?.message || 'Unknown'));
+        } else {
+          console.error(`${getMessage('minimaxApiError')} ${JSON.stringify(data)}`);
+          throw new vscode.LanguageModelError(getMessage('unknownError'));
+        }
       }
 
-      throw new vscode.LanguageModelError(error.message || getMessage('unknownError'));
+      console.error(`${getMessage('minimaxApiError')} ${error.message}`);
+      throw new vscode.LanguageModelError(getMessage('unknownError'));
     }
   }
 
+  async fetchAvailableModels(): Promise<AIModelConfig[]> {
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
+      return [];
+    }
+
+    try {
+      const response = await this.apiClient.get('/models', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+
+      if (response.data && response.data.data) {
+        return response.data.data.map((model: any) => ({
+          id: model.id,
+          vendor: this.getVendor(),
+          family: model.id.split('-')[0] || model.id,
+          name: model.id,
+          version: MODEL_VERSION_LABEL,
+          maxTokens: 32768,
+          capabilities: {
+            toolCalling: true,
+            imageInput: false
+          },
+          description: getMessage('minimaxApiError', model.id)
+        }));
+      }
+
+      return [];
+    } catch (error) {
+      console.error(`${getMessage('minimaxApiError')} ${error}`);
+      return [];
+    }
+  }
+
+  buildToolDefinitions(options?: vscode.LanguageModelChatRequestOptions): ChatToolDefinition[] {
+    if (!options?.tools || options.tools.length === 0) {
+      return [];
+    }
+
+    return options.tools.map(tool => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.inputSchema as object
+      }
+    }));
+  }
+
   protected createModel(modelInfo: AIModelConfig): BaseLanguageModel {
-    return new VolcengineLanguageModel(this, modelInfo);
+    return new MinimaxLanguageModel(this, modelInfo);
+  }
+
+  buildToolChoice(options?: vscode.LanguageModelChatRequestOptions): 'auto' | 'required' {
+    if (!options?.tools || options.tools.length === 0) {
+      return 'auto';
+    }
+    return 'required';
   }
 }

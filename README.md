@@ -74,7 +74,7 @@ vsce package
 
 这会生成一个 `.vsix` 文件，你可以通过以下命令安装：
 ```bash
-code --install-extension china-ai-copilot-0.0.1.vsix
+code --install-extension Chinese-AI-copilot-0.0.1.vsix
 ```
 
 ## 使用方法
@@ -93,15 +93,15 @@ code --install-extension china-ai-copilot-0.0.1.vsix
 
 #### 智谱 GLM
 - 按 `Ctrl+Shift+P`（或 `Cmd+Shift+P`），输入 `中国 AI: 设置智谱 API Key`
-- 或打开设置（`Ctrl+,`），搜索 `china-ai.zhipu.apiKey`
+- 或打开设置（`Ctrl+,`），搜索 `Chinese-AI.zhipu.apiKey`
 
 #### Kimi AI
 - 按 `Ctrl+Shift+P`，输入 `中国 AI: 设置 Kimi API Key`
-- 或打开设置（`Ctrl+,`），搜索 `china-ai.kimi.apiKey`
+- 或打开设置（`Ctrl+,`），搜索 `Chinese-AI.kimi.apiKey`
 
 #### 火山云
 - 按 `Ctrl+Shift+P`，输入 `中国 AI: 设置火山云 API Key`
-- 或打开设置（`Ctrl+,`），搜索 `china-ai.volcengine.apiKey`
+- 或打开设置（`Ctrl+,`），搜索 `Chinese-AI.volcengine.apiKey`
 
 ### 3. 使用 Copilot Chat
 
@@ -116,20 +116,20 @@ code --install-extension china-ai-copilot-0.0.1.vsix
 ### 智谱 GLM
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
-| `china-ai.zhipu.apiKey` | string | - | 智谱 AI API Key（必需） |
-| `china-ai.zhipu.baseUrl` | string | https://open.bigmodel.cn/api/paas/v4 | 智谱 API 基础 URL |
+| `Chinese-AI.zhipu.apiKey` | string | - | 智谱 AI API Key（必需） |
+| `Chinese-AI.zhipu.baseUrl` | string | https://open.bigmodel.cn/api/coding/paas/v4 | 智谱 API 基础 URL |
 
 ### Kimi AI
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
-| `china-ai.kimi.apiKey` | string | - | Kimi AI API Key（必需） |
-| `china-ai.kimi.baseUrl` | string | https://api.moonshot.cn/v1 | Kimi API 基础 URL |
+| `Chinese-AI.kimi.apiKey` | string | - | Kimi AI API Key（必需） |
+| `Chinese-AI.kimi.baseUrl` | string | https://api.moonshot.cn/v1 | Kimi API 基础 URL |
 
 ### 火山云
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
-| `china-ai.volcengine.apiKey` | string | - | 火山云 API Key（必需） |
-| `china-ai.volcengine.baseUrl` | string | https://ark.cn-beijing.volces.com/api/v3 | 火山云 API 基础 URL |
+| `Chinese-AI.volcengine.apiKey` | string | - | 火山云 API Key（必需） |
+| `Chinese-AI.volcengine.baseUrl` | string | https://ark.cn-beijing.volces.com/api/v3 | 火山云 API 基础 URL |
 
 ## 开发
 

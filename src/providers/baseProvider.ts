@@ -1,5 +1,12 @@
 import * as vscode from 'vscode';
 
+export const MODEL_VERSION_LABEL = 'China AI Copilot';
+
+export interface ModelCapabilities {
+  toolCalling?: boolean | number;
+  imageInput?: boolean;
+}
+
 export interface AIModelConfig {
   id: string;
   vendor: string;
@@ -7,7 +14,28 @@ export interface AIModelConfig {
   name: string;
   version?: string;
   maxTokens: number;
+  maxInputTokens?: number;
+  maxOutputTokens?: number;
+  capabilities?: ModelCapabilities;
   description: string;
+}
+
+export interface ChatToolCall {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
+export interface ChatToolDefinition {
+  type: 'function';
+  function: {
+    name: string;
+    description?: string;
+    parameters?: object;
+  };
 }
 
 export abstract class BaseLanguageModel implements vscode.LanguageModelChat {
@@ -18,6 +46,7 @@ export abstract class BaseLanguageModel implements vscode.LanguageModelChat {
   public readonly version: string;
   public readonly maxInputTokens: number;
   public readonly maxOutputTokens: number;
+  public readonly capabilities: vscode.LanguageModelChatCapabilities;
   public readonly description: string;
 
   constructor(
@@ -28,9 +57,13 @@ export abstract class BaseLanguageModel implements vscode.LanguageModelChat {
     this.vendor = modelInfo.vendor;
     this.family = modelInfo.family;
     this.name = modelInfo.name;
-    this.version = modelInfo.version || '1.0.0';
-    this.maxInputTokens = modelInfo.maxTokens;
-    this.maxOutputTokens = modelInfo.maxTokens;
+    this.version = modelInfo.version || MODEL_VERSION_LABEL;
+    this.maxInputTokens = modelInfo.maxInputTokens ?? modelInfo.maxTokens;
+    this.maxOutputTokens = modelInfo.maxOutputTokens ?? modelInfo.maxTokens;
+    this.capabilities = modelInfo.capabilities ?? {
+      toolCalling: true,
+      imageInput: false
+    };
     this.description = modelInfo.description;
   }
 
@@ -60,8 +93,10 @@ export abstract class BaseLanguageModel implements vscode.LanguageModelChat {
 }
 
 export interface ChatMessage {
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
+  tool_calls?: ChatToolCall[];
+  tool_call_id?: string;
 }
 
 export abstract class BaseAIProvider implements vscode.Disposable {
@@ -146,6 +181,185 @@ export abstract class BaseAIProvider implements vscode.Disposable {
 
       return '';
     }).join('');
+  }
+
+  public toProviderMessages(messages: vscode.LanguageModelChatMessage[]): ChatMessage[] {
+    const normalized: ChatMessage[] = [];
+
+    for (const message of messages) {
+      const textParts: string[] = [];
+      const toolCalls: vscode.LanguageModelToolCallPart[] = [];
+      const toolResults: vscode.LanguageModelToolResultPart[] = [];
+
+      for (const part of message.content) {
+        if (part instanceof vscode.LanguageModelTextPart) {
+          textParts.push(part.value);
+        } else if (part instanceof vscode.LanguageModelToolCallPart) {
+          toolCalls.push(part);
+        } else if (part instanceof vscode.LanguageModelToolResultPart) {
+          toolResults.push(part);
+        } else if (part instanceof vscode.LanguageModelDataPart) {
+          textParts.push(this.readDataPartContent(part));
+        } else if (part && typeof part === 'object' && 'value' in part) {
+          const value = (part as { value?: unknown }).value;
+          if (typeof value === 'string') {
+            textParts.push(value);
+          }
+        }
+      }
+
+      const textContent = textParts.join('');
+
+      if (toolResults.length > 0) {
+        for (const result of toolResults) {
+          normalized.push({
+            role: 'tool',
+            tool_call_id: result.callId,
+            content: this.stringifyToolResultContent(result.content)
+          });
+        }
+        if (textContent.trim().length > 0) {
+          normalized.push({
+            role: 'user',
+            content: textContent
+          });
+        }
+        continue;
+      }
+
+      if (toolCalls.length > 0) {
+        normalized.push({
+          role: 'assistant',
+          content: textContent,
+          tool_calls: toolCalls.map(call => ({
+            id: call.callId || this.makeToolCallId(),
+            type: 'function',
+            function: {
+              name: call.name,
+              arguments: JSON.stringify(call.input ?? {})
+            }
+          }))
+        });
+        continue;
+      }
+
+      normalized.push({
+        role: this.toChatRole(message.role),
+        content: textContent
+      });
+    }
+
+    return normalized;
+  }
+
+  public buildToolDefinitions(
+    options?: vscode.LanguageModelChatRequestOptions
+  ): ChatToolDefinition[] | undefined {
+    if (!options?.tools || options.tools.length === 0) {
+      return undefined;
+    }
+
+    return options.tools.map(tool => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.inputSchema || {
+          type: 'object',
+          properties: {},
+          additionalProperties: true
+        }
+      }
+    }));
+  }
+
+  public buildToolChoice(
+    options?: vscode.LanguageModelChatRequestOptions
+  ): 'auto' | 'required' | undefined {
+    if (!options?.tools || options.tools.length === 0) {
+      return undefined;
+    }
+
+    if (options.toolMode === vscode.LanguageModelChatToolMode.Required) {
+      return 'required';
+    }
+
+    return 'auto';
+  }
+
+  public buildResponseParts(content: string, toolCalls?: ChatToolCall[]): vscode.LanguageModelResponsePart[] {
+    const parts: vscode.LanguageModelResponsePart[] = [];
+
+    if (content.trim().length > 0) {
+      parts.push(new vscode.LanguageModelTextPart(content));
+    }
+
+    for (const toolCall of toolCalls ?? []) {
+      const name = toolCall.function?.name;
+      if (!name) {
+        continue;
+      }
+
+      parts.push(
+        new vscode.LanguageModelToolCallPart(
+          toolCall.id || this.makeToolCallId(),
+          name,
+          this.parseToolArguments(toolCall.function.arguments)
+        )
+      );
+    }
+
+    return parts;
+  }
+
+  private readDataPartContent(part: vscode.LanguageModelDataPart): string {
+    try {
+      const decoder = new TextDecoder();
+      if (part.mimeType.startsWith('text/') || part.mimeType.includes('json')) {
+        return decoder.decode(part.data);
+      }
+      return `[${part.mimeType} ${part.data.byteLength} bytes]`;
+    } catch {
+      return '';
+    }
+  }
+
+  private stringifyToolResultContent(content: Array<vscode.LanguageModelTextPart | vscode.LanguageModelPromptTsxPart | vscode.LanguageModelDataPart | unknown>): string {
+    const resultParts = content.map(part => {
+      if (part instanceof vscode.LanguageModelTextPart) {
+        return part.value;
+      }
+      if (part instanceof vscode.LanguageModelDataPart) {
+        return this.readDataPartContent(part);
+      }
+      try {
+        return JSON.stringify(part);
+      } catch {
+        return String(part);
+      }
+    }).filter(part => part.length > 0);
+
+    return resultParts.join('\n');
+  }
+
+  private parseToolArguments(rawArgs: string): object {
+    if (!rawArgs) {
+      return {};
+    }
+
+    try {
+      const parsed = JSON.parse(rawArgs);
+      if (parsed && typeof parsed === 'object') {
+        return parsed as object;
+      }
+      return { value: parsed };
+    } catch {
+      return { raw: rawArgs };
+    }
+  }
+
+  private makeToolCallId(): string {
+    return `tool_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
   }
 
   dispose(): void {

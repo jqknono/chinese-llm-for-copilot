@@ -1,11 +1,21 @@
 import * as vscode from 'vscode';
 import axios, { AxiosInstance } from 'axios';
-import { BaseAIProvider, BaseLanguageModel, AIModelConfig, ChatMessage } from './baseProvider';
+import {
+  BaseAIProvider,
+  BaseLanguageModel,
+  AIModelConfig,
+  ChatMessage,
+  ChatToolCall,
+  ChatToolDefinition,
+  MODEL_VERSION_LABEL
+} from './baseProvider';
 import { getMessage } from '../i18n/i18n';
 
 interface KimiChatRequest {
   model: string;
   messages: ChatMessage[];
+  tools?: ChatToolDefinition[];
+  tool_choice?: 'auto' | 'required';
   temperature?: number;
   top_p?: number;
   max_tokens?: number;
@@ -22,6 +32,7 @@ interface KimiChatResponse {
     message: {
       role: string;
       content: string;
+      tool_calls?: ChatToolCall[];
     };
     finish_reason: string;
   }>;
@@ -42,11 +53,15 @@ export class KimiLanguageModel extends BaseLanguageModel {
     options?: vscode.LanguageModelChatRequestOptions,
     token?: vscode.CancellationToken
   ): Promise<vscode.LanguageModelChatResponse> {
-    const kimiMessages = (this.provider as KimiAIProvider).convertMessages(messages);
+    const kimiProvider = this.provider as KimiAIProvider;
+    const kimiMessages = kimiProvider.convertMessages(messages);
+    const supportsToolCalling = !!this.capabilities.toolCalling;
 
     const request: KimiChatRequest = {
       model: this.id,
       messages: kimiMessages,
+      tools: supportsToolCalling ? kimiProvider.buildToolDefinitions(options) : undefined,
+      tool_choice: supportsToolCalling ? kimiProvider.buildToolChoice(options) : undefined,
       stream: false,
       temperature: 0.7,
       top_p: 0.9,
@@ -91,7 +106,10 @@ export class KimiAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('china-ai.kimi.apiKey') || e.affectsConfiguration('china-ai.kimi.baseUrl')) {
+        if (e.affectsConfiguration('Chinese-AI.kimi.apiKey') || e.affectsConfiguration('Chinese-AI.kimi.baseUrl')) {
+          if (e.affectsConfiguration('Chinese-AI.kimi.baseUrl')) {
+            this.apiClient.defaults.baseURL = this.getBaseUrl();
+          }
           await this.refreshModels();
         }
       })
@@ -103,16 +121,16 @@ export class KimiAIProvider extends BaseAIProvider {
   }
 
   getConfigSection(): string {
-    return 'china-ai.kimi';
+    return 'Chinese-AI.kimi';
   }
 
   getBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration('china-ai.kimi');
+    const config = vscode.workspace.getConfiguration('Chinese-AI.kimi');
     return config.get<string>('baseUrl', 'https://api.moonshot.cn/v1');
   }
 
   getApiKey(): string {
-    const config = vscode.workspace.getConfiguration('china-ai.kimi');
+    const config = vscode.workspace.getConfiguration('Chinese-AI.kimi');
     return config.get<string>('apiKey', '');
   }
 
@@ -123,8 +141,12 @@ export class KimiAIProvider extends BaseAIProvider {
         vendor: 'kimi-ai',
         family: 'moonshot-v1',
         name: 'Kimi 8K',
-        version: '1.0.0',
+        version: MODEL_VERSION_LABEL,
         maxTokens: 8192,
+        capabilities: {
+          toolCalling: true,
+          imageInput: false
+        },
         description: getMessage('kimi8kDescription')
       },
       {
@@ -132,8 +154,12 @@ export class KimiAIProvider extends BaseAIProvider {
         vendor: 'kimi-ai',
         family: 'moonshot-v1',
         name: 'Kimi 32K',
-        version: '1.0.0',
+        version: MODEL_VERSION_LABEL,
         maxTokens: 32768,
+        capabilities: {
+          toolCalling: true,
+          imageInput: false
+        },
         description: getMessage('kimi32kDescription')
       },
       {
@@ -141,20 +167,19 @@ export class KimiAIProvider extends BaseAIProvider {
         vendor: 'kimi-ai',
         family: 'moonshot-v1',
         name: 'Kimi 128K',
-        version: '1.0.0',
+        version: MODEL_VERSION_LABEL,
         maxTokens: 128000,
+        capabilities: {
+          toolCalling: true,
+          imageInput: false
+        },
         description: getMessage('kimi128kDescription')
       }
     ];
   }
 
   convertMessages(messages: vscode.LanguageModelChatMessage[]): ChatMessage[] {
-    return messages.map(msg => {
-      return {
-        role: this.toChatRole(msg.role),
-        content: this.readMessageContent(msg.content)
-      };
-    });
+    return this.toProviderMessages(messages);
   }
 
   async sendRequest(
@@ -183,19 +208,25 @@ export class KimiAIProvider extends BaseAIProvider {
         axiosConfig
       );
 
-      const content = response.data.choices[0]?.message?.content || '';
+      const responseMessage = response.data.choices[0]?.message;
+      const content = responseMessage?.content || '';
       const usageData = response.data.usage;
+      const responseParts = this.buildResponseParts(content, responseMessage?.tool_calls);
 
       async function* streamText(text: string): AsyncIterable<string> {
-        yield text;
+        if (text.trim().length > 0) {
+          yield text;
+        }
       }
 
-      async function* streamParts(text: string): AsyncIterable<vscode.LanguageModelTextPart | unknown> {
-        yield new vscode.LanguageModelTextPart(text);
+      async function* streamParts(parts: vscode.LanguageModelResponsePart[]): AsyncIterable<vscode.LanguageModelResponsePart> {
+        for (const part of parts) {
+          yield part;
+        }
       }
 
       const result: vscode.LanguageModelChatResponse = {
-        stream: streamParts(content),
+        stream: streamParts(responseParts),
         text: streamText(content)
       };
 
