@@ -1,0 +1,16 @@
+{
+    "projectTranslator.specifiedFiles": [
+        {
+            "sourceFile": {
+                "path": "README.md",
+                "lang": "zh-cn"
+            },
+            "targetFiles": [
+                {
+                    "path": "README_en.md",
+                    "lang": "en-us"
+                }
+            ]
+        }
+    ]
+}

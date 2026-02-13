@@ -43,6 +43,21 @@ interface MinimaxChatResponse {
   };
 }
 
+interface MinimaxModelListEntry {
+  id?: string;
+  model?: string;
+  name?: string;
+  max_tokens?: number;
+  context_length?: number;
+  max_input_tokens?: number;
+  max_output_tokens?: number;
+}
+
+interface MinimaxModelListResponse {
+  data?: MinimaxModelListEntry[];
+  models?: MinimaxModelListEntry[];
+}
+
 const MINIMAX_DEFAULT_MAINLAND_BASE_URL = 'https://api.minimaxi.com/v1';
 const MINIMAX_DEFAULT_OVERSEAS_BASE_URL = 'https://api.minimax.io/v1';
 
@@ -142,60 +157,7 @@ export class MinimaxAIProvider extends BaseAIProvider {
   }
 
   getPredefinedModels(): AIModelConfig[] {
-    return [
-      {
-        id: 'abab4-chat',
-        vendor: 'minimax-ai',
-        family: 'abab4',
-        name: 'Minimax abab4',
-        version: MODEL_VERSION_LABEL,
-        maxTokens: 32768,
-        capabilities: {
-          toolCalling: true,
-          imageInput: false
-        },
-        description: getMessage('minimax4Description')
-      },
-      {
-        id: 'abab5-chat',
-        vendor: 'minimax-ai',
-        family: 'abab5',
-        name: 'Minimax abab5',
-        version: MODEL_VERSION_LABEL,
-        maxTokens: 32768,
-        capabilities: {
-          toolCalling: true,
-          imageInput: false
-        },
-        description: getMessage('minimax55Description')
-      },
-      {
-        id: 'abab5.5-chat',
-        vendor: 'minimax-ai',
-        family: 'abab5.5',
-        name: 'Minimax abab5.5-chat',
-        version: MODEL_VERSION_LABEL,
-        maxTokens: 65536,
-        capabilities: {
-          toolCalling: true,
-          imageInput: false
-        },
-        description: getMessage('minimax55ChatDescription')
-      },
-      {
-        id: 'abab5.5-pro',
-        vendor: 'minimax-ai',
-        family: 'abab5.5',
-        name: 'Minimax abab5.5-pro',
-        version: MODEL_VERSION_LABEL,
-        maxTokens: 128000,
-        capabilities: {
-          toolCalling: true,
-          imageInput: false
-        },
-        description: getMessage('minimax55ProDescription')
-      }
-    ];
+    return [];
   }
 
   convertMessages(messages: vscode.LanguageModelChatMessage[]): ChatMessage[] {
@@ -280,38 +242,49 @@ export class MinimaxAIProvider extends BaseAIProvider {
     }
   }
 
-  async fetchAvailableModels(): Promise<AIModelConfig[]> {
-    const apiKey = this.getApiKey();
-    if (!apiKey) {
-      return [];
-    }
-
+  protected async resolveModelConfigs(): Promise<AIModelConfig[]> {
     try {
-      const response = await this.apiClient.get('/models', {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`
-        }
-      });
+      const response = await this.apiClient.get<MinimaxModelListResponse>('/models');
+      const entries = this.readModelEntries(response.data);
+      const models: AIModelConfig[] = [];
+      const deduped = new Set<string>();
 
-      if (response.data && response.data.data) {
-        return response.data.data.map((model: any) => ({
-          id: model.id,
-          vendor: this.getVendor(),
-          family: model.id.split('-')[0] || model.id,
-          name: model.id,
+      for (const entry of entries) {
+        const modelId = this.readModelId(entry);
+        if (!modelId || !this.isChatModel(modelId)) {
+          continue;
+        }
+
+        const dedupeKey = modelId.toLowerCase();
+        if (deduped.has(dedupeKey)) {
+          continue;
+        }
+        deduped.add(dedupeKey);
+
+        const maxTokens = this.readMaxTokens(entry);
+        models.push({
+          id: modelId,
+          vendor: 'minimax-ai',
+          family: this.inferFamily(modelId),
+          name: modelId,
           version: MODEL_VERSION_LABEL,
-          maxTokens: 32768,
+          maxTokens,
+          maxInputTokens: maxTokens,
+          maxOutputTokens: maxTokens,
           capabilities: {
             toolCalling: true,
             imageInput: false
           },
-          description: getMessage('minimaxApiError', model.id)
-        }));
+          description: getMessage('minimaxDynamicModelDescription', modelId)
+        });
       }
 
-      return [];
-    } catch (error) {
-      console.error(`${getMessage('minimaxApiError')} ${error}`);
+      return models;
+    } catch (error: any) {
+      if (this.isModelDiscoveryUnsupportedError(error)) {
+        this.setModelDiscoveryUnsupported(true);
+      }
+      console.warn('Failed to fetch Minimax models from /models.', error);
       return [];
     }
   }
@@ -344,5 +317,61 @@ export class MinimaxAIProvider extends BaseAIProvider {
 
   private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
     return event.affectsConfiguration('Chinese-AI.minimax.region');
+  }
+
+  private readModelEntries(payload: MinimaxModelListResponse | undefined): MinimaxModelListEntry[] {
+    if (!payload) {
+      return [];
+    }
+
+    if (Array.isArray(payload.data)) {
+      return payload.data;
+    }
+
+    if (Array.isArray(payload.models)) {
+      return payload.models;
+    }
+
+    return [];
+  }
+
+  private readModelId(entry: MinimaxModelListEntry): string | undefined {
+    const candidate = entry.id || entry.model || entry.name;
+    if (!candidate) {
+      return undefined;
+    }
+    const normalized = candidate.trim();
+    return normalized.length > 0 ? normalized : undefined;
+  }
+
+  private readMaxTokens(entry: MinimaxModelListEntry): number {
+    const values = [entry.max_input_tokens, entry.max_output_tokens, entry.max_tokens, entry.context_length];
+    for (const value of values) {
+      if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+        return Math.floor(value);
+      }
+    }
+    return 128000;
+  }
+
+  private inferFamily(modelId: string): string {
+    const parts = modelId.split('-').filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0]}-${parts[1]}`;
+    }
+    return parts[0] || 'minimax';
+  }
+
+  private isChatModel(modelId: string): boolean {
+    const lower = modelId.toLowerCase();
+    if (lower.includes('embedding') || lower.includes('rerank') || lower.includes('speech')) {
+      return false;
+    }
+    return true;
+  }
+
+  private isModelDiscoveryUnsupportedError(error: any): boolean {
+    const status = error?.response?.status;
+    return status === 404 || status === 405 || status === 501;
   }
 }

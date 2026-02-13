@@ -75,7 +75,7 @@ export abstract class BaseLanguageModel implements vscode.LanguageModelChat {
 
   countTokens(
     text: string | vscode.LanguageModelChatMessage,
-    token?: vscode.CancellationToken
+    _token?: vscode.CancellationToken
   ): Promise<number> {
     let contentText: string;
 
@@ -103,6 +103,7 @@ export abstract class BaseAIProvider implements vscode.Disposable {
   protected models: BaseLanguageModel[];
   protected disposables: vscode.Disposable[] = [];
   private readonly modelChangedEmitter = new vscode.EventEmitter<void>();
+  private modelDiscoveryUnsupported = false;
   public readonly onDidChangeModels = this.modelChangedEmitter.event;
 
   constructor(protected context: vscode.ExtensionContext) {
@@ -122,11 +123,13 @@ export abstract class BaseAIProvider implements vscode.Disposable {
 
     if (!apiKey) {
       this.models = [];
+      this.modelDiscoveryUnsupported = false;
       this.modelChangedEmitter.fire();
       return;
     }
 
     try {
+      this.modelDiscoveryUnsupported = false;
       const resolvedModels = await this.resolveModelConfigs();
       this.models = resolvedModels.map(model => this.createModel(model));
       console.log(`${this.getVendor()} 模型列表已刷新:`, this.models.map(m => m.id));
@@ -146,6 +149,14 @@ export abstract class BaseAIProvider implements vscode.Disposable {
 
   getAvailableModels(): BaseLanguageModel[] {
     return this.models;
+  }
+
+  isModelDiscoveryUnsupported(): boolean {
+    return this.modelDiscoveryUnsupported;
+  }
+
+  protected setModelDiscoveryUnsupported(unsupported: boolean): void {
+    this.modelDiscoveryUnsupported = unsupported;
   }
 
   getModel(modelId: string): BaseLanguageModel | undefined {

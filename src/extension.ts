@@ -3,11 +3,14 @@ import { ZhipuAIProvider } from './providers/zhipuProvider';
 import { KimiAIProvider } from './providers/kimiProvider';
 import { VolcengineAIProvider } from './providers/volcengineProvider';
 import { MinimaxAIProvider } from './providers/minimaxProvider';
+import { AliyunAIProvider } from './providers/aliyunProvider';
 import { BaseAIProvider } from './providers/baseProvider';
 import { LMChatProviderAdapter } from './providers/lmChatProviderAdapter';
 import { initI18n, getMessage } from './i18n/i18n';
 
 let providers: Map<string, BaseAIProvider> = new Map();
+const BETA_PROVIDER_KEYS = new Set(['kimi', 'volcengine', 'minimax', 'aliyun']);
+const warnedBetaProviders = new Set<string>();
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   // 初始化国际化
@@ -20,22 +23,26 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const kimiProvider = new KimiAIProvider(context);
   const volcengineProvider = new VolcengineAIProvider(context);
   const minimaxProvider = new MinimaxAIProvider(context);
+  const aliyunProvider = new AliyunAIProvider(context);
 
   providers.set('zhipu-ai', zhipuProvider);
   providers.set('kimi-ai', kimiProvider);
   providers.set('volcengine-ai', volcengineProvider);
   providers.set('minimax-ai', minimaxProvider);
+  providers.set('aliyun-ai', aliyunProvider);
 
   registerLanguageModelProvider(context, 'zhipu-ai', zhipuProvider);
   registerLanguageModelProvider(context, 'kimi-ai', kimiProvider);
   registerLanguageModelProvider(context, 'volcengine-ai', volcengineProvider);
   registerLanguageModelProvider(context, 'minimax-ai', minimaxProvider);
+  registerLanguageModelProvider(context, 'aliyun-ai', aliyunProvider);
 
   // 注册命令
-  registerProviderCommands(context, zhipuProvider, 'zhipu', 'Zhipu GLM');
-  registerProviderCommands(context, kimiProvider, 'kimi', 'Kimi');
-  registerProviderCommands(context, volcengineProvider, 'volcengine', 'Volcengine');
-  registerProviderCommands(context, minimaxProvider, 'minimax', 'Minimax');
+  registerProviderCommands(context, zhipuProvider, 'zhipu', 'Zhipu z.ai');
+  registerProviderCommands(context, kimiProvider, 'kimi', 'Kimi (Beta)');
+  registerProviderCommands(context, volcengineProvider, 'volcengine', 'Volcengine (Beta)');
+  registerProviderCommands(context, minimaxProvider, 'minimax', 'Minimax (Beta)');
+  registerProviderCommands(context, aliyunProvider, 'aliyun', 'Aliyun Qwen (Beta)');
 
   // 检查是否有 API Key
   checkApiKeys();
@@ -69,6 +76,14 @@ function registerProviderCommands(
 
   const configSection = `Chinese-AI.${providerKey}`;
   const getProviderConfig = () => vscode.workspace.getConfiguration(configSection);
+  const maybeShowBetaWarning = () => {
+    if (!BETA_PROVIDER_KEYS.has(providerKey) || warnedBetaProviders.has(providerKey)) {
+      return;
+    }
+
+    warnedBetaProviders.add(providerKey);
+    void vscode.window.showWarningMessage(getMessage('betaProviderWarning', providerName));
+  };
 
   const readCurrentRegion = (): ProviderRegion => {
     return getProviderConfig().get<boolean>('region', true);
@@ -141,6 +156,8 @@ function registerProviderCommands(
 
   context.subscriptions.push(
     vscode.commands.registerCommand(`Chinese-AI.manage.${providerKey}`, async () => {
+      maybeShowBetaWarning();
+
       const actionItems: ManageActionItem[] = [
         { id: 'configureAll', label: getMessage('manageActionConfigureAll') },
         { id: 'apiKey', label: getMessage('manageActionApiKey') },
@@ -185,6 +202,7 @@ function registerProviderCommands(
 
   context.subscriptions.push(
     vscode.commands.registerCommand(`Chinese-AI.setApiKey.${providerKey}`, async () => {
+      maybeShowBetaWarning();
       const apiKey = await promptApiKey();
 
       if (apiKey !== undefined) {
@@ -196,6 +214,7 @@ function registerProviderCommands(
 
   context.subscriptions.push(
     vscode.commands.registerCommand(`Chinese-AI.refreshModels.${providerKey}`, async () => {
+      maybeShowBetaWarning();
       await provider.refreshModels();
       vscode.window.showInformationMessage(getMessage('modelsRefreshed', providerName));
     })
@@ -210,14 +229,16 @@ function checkApiKeys(): void {
   const kimiKey = vscode.workspace.getConfiguration('Chinese-AI.kimi').get<string>('apiKey', '');
   const volcengineKey = vscode.workspace.getConfiguration('Chinese-AI.volcengine').get<string>('apiKey', '');
   const minimaxKey = vscode.workspace.getConfiguration('Chinese-AI.minimax').get<string>('apiKey', '');
+  const aliyunKey = vscode.workspace.getConfiguration('Chinese-AI.aliyun').get<string>('apiKey', '');
 
-  if (!zhipuKey && !kimiKey && !volcengineKey && !minimaxKey) {
+  if (!zhipuKey && !kimiKey && !volcengineKey && !minimaxKey && !aliyunKey) {
     vscode.window.showInformationMessage(
       getMessage('welcomeTitle'),
       getMessage('setZhipuApiKey'),
       getMessage('setKimiApiKey'),
       getMessage('setVolcengineApiKey'),
-      getMessage('setMinimaxApiKey')
+      getMessage('setMinimaxApiKey'),
+      getMessage('setAliyunApiKey')
     ).then(selection => {
       if (selection === getMessage('setZhipuApiKey')) {
         vscode.commands.executeCommand('Chinese-AI.setApiKey.zhipu');
@@ -227,6 +248,8 @@ function checkApiKeys(): void {
         vscode.commands.executeCommand('Chinese-AI.setApiKey.volcengine');
       } else if (selection === getMessage('setMinimaxApiKey')) {
         vscode.commands.executeCommand('Chinese-AI.setApiKey.minimax');
+      } else if (selection === getMessage('setAliyunApiKey')) {
+        vscode.commands.executeCommand('Chinese-AI.setApiKey.aliyun');
       }
     });
   }

@@ -1,6 +1,6 @@
 # 欢迎使用中国 AI 模型 for Copilot！
 
-这是一个 VS Code 扩展，将中国主流 AI 模型（智谱 GLM、Kimi、火山云）集成到 Copilot 中。
+这是一个 VS Code 扩展，将智谱 z.ai（已验证）以及 Kimi/火山云/Minimax/阿里云（Beta，尚未测试）集成到 Copilot 中。
 
 ## 快速开始
 
@@ -22,21 +22,26 @@ npm run compile
 2. 在新打开的 VS Code 窗口中，按 `Ctrl+Shift+P`（或 `Cmd+Shift+P`）
 3. 选择任一命令设置 API Key：
    - `中国 AI: 设置智谱 API Key`
-   - `中国 AI: 设置 Kimi API Key`
-   - `中国 AI: 设置火山云 API Key`
+   - `中国 AI: 设置 Kimi API Key (Beta)`
+   - `中国 AI: 设置火山云 API Key (Beta)`
+   - `中国 AI: 设置 Minimax API Key (Beta)`
+   - `中国 AI: 设置阿里云 API Key (Beta)`
 4. 输入对应的 API Key
 
 ### 4. 测试功能
 
 1. 打开 Copilot Chat 面板（`Ctrl+L` 或 `Cmd+L`）
 2. 在模型选择器中选择对应的 AI 提供商和模型
-3. 开始对话！
+3. 开始对话（非 z.ai 提供商为 Beta，遇到问题请提交 Issue）
 
 ## 支持的 AI 提供商
 
-- **智谱 GLM**: [智谱 AI 开放平台](https://open.bigmodel.cn/)
-- **Kimi AI**: [Kimi 开放平台](https://platform.moonshot.cn/)
-- **火山云**: [火山引擎](https://www.volcengine.com/)
+- **智谱 z.ai（已验证）**: [智谱 AI 开放平台](https://open.bigmodel.cn/)
+- **Kimi AI（Beta，尚未测试）**: [Kimi 开放平台](https://platform.moonshot.cn/)
+- **火山云（Beta，尚未测试）**: [火山引擎](https://www.volcengine.com/)
+- **Minimax（Beta，尚未测试）**: [Minimax 开放平台](https://platform.minimaxi.com/)
+- **阿里云（Beta，尚未测试）**: [阿里云 DashScope](https://dashscope.aliyun.com/)
+- Beta 服务遇到问题请提交 Issue
 
 ## 下一步
 

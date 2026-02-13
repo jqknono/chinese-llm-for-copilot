@@ -43,8 +43,23 @@ interface VolcengineChatResponse {
   };
 }
 
-const VOLCENGINE_DEFAULT_MAINLAND_BASE_URL = 'https://ark.cn-beijing.volces.com/api/v3';
-const VOLCENGINE_DEFAULT_OVERSEAS_BASE_URL = 'https://ark.ap-southeast.bytepluses.com/api/v3';
+interface VolcengineModelListEntry {
+  id?: string;
+  model?: string;
+  name?: string;
+  max_tokens?: number;
+  context_length?: number;
+  max_input_tokens?: number;
+  max_output_tokens?: number;
+}
+
+interface VolcengineModelListResponse {
+  data?: VolcengineModelListEntry[];
+  models?: VolcengineModelListEntry[];
+}
+
+const VOLCENGINE_DEFAULT_MAINLAND_BASE_URL = 'https://ark.cn-beijing.volces.com/api/coding/v3';
+const VOLCENGINE_DEFAULT_OVERSEAS_BASE_URL = 'https://ark.ap-southeast.bytepluses.com/api/coding/v3';
 
 export class VolcengineLanguageModel extends BaseLanguageModel {
   constructor(provider: BaseAIProvider, modelInfo: AIModelConfig) {
@@ -142,47 +157,54 @@ export class VolcengineAIProvider extends BaseAIProvider {
   }
 
   getPredefinedModels(): AIModelConfig[] {
-    return [
-      {
-        id: 'ep-20250201140916-m989g',
-        vendor: 'volcengine-ai',
-        family: 'doubao',
-        name: '豆包 32K',
-        version: MODEL_VERSION_LABEL,
-        maxTokens: 32768,
-        capabilities: {
-          toolCalling: true,
-          imageInput: false
-        },
-        description: getMessage('doubao32kDescription')
-      },
-      {
-        id: 'doubao-pro-32k',
-        vendor: 'volcengine-ai',
-        family: 'doubao',
-        name: '豆包 Pro 32K',
-        version: MODEL_VERSION_LABEL,
-        maxTokens: 32768,
-        capabilities: {
-          toolCalling: true,
-          imageInput: false
-        },
-        description: getMessage('doubaoPro32kDescription')
-      },
-      {
-        id: 'doubao-pro-128k',
-        vendor: 'volcengine-ai',
-        family: 'doubao',
-        name: '豆包 Pro 128K',
-        version: MODEL_VERSION_LABEL,
-        maxTokens: 128000,
-        capabilities: {
-          toolCalling: true,
-          imageInput: false
-        },
-        description: getMessage('doubaoPro128kDescription')
+    return [];
+  }
+
+  protected async resolveModelConfigs(): Promise<AIModelConfig[]> {
+    try {
+      const response = await this.apiClient.get<VolcengineModelListResponse>('/models');
+      const entries = this.readModelEntries(response.data);
+      const models: AIModelConfig[] = [];
+      const deduped = new Set<string>();
+
+      for (const entry of entries) {
+        const modelId = this.readModelId(entry);
+        if (!modelId || !this.isChatModel(modelId)) {
+          continue;
+        }
+
+        const dedupeKey = modelId.toLowerCase();
+        if (deduped.has(dedupeKey)) {
+          continue;
+        }
+        deduped.add(dedupeKey);
+
+        const maxTokens = this.readMaxTokens(entry);
+        models.push({
+          id: modelId,
+          vendor: 'volcengine-ai',
+          family: this.inferFamily(modelId),
+          name: modelId,
+          version: MODEL_VERSION_LABEL,
+          maxTokens,
+          maxInputTokens: maxTokens,
+          maxOutputTokens: maxTokens,
+          capabilities: {
+            toolCalling: true,
+            imageInput: false
+          },
+          description: getMessage('volcengineDynamicModelDescription', modelId)
+        });
       }
-    ];
+
+      return models;
+    } catch (error: any) {
+      if (this.isModelDiscoveryUnsupportedError(error)) {
+        this.setModelDiscoveryUnsupported(true);
+      }
+      console.warn('Failed to fetch Volcengine models from /models.', error);
+      return [];
+    }
   }
 
   convertMessages(messages: vscode.LanguageModelChatMessage[]): ChatMessage[] {
@@ -265,6 +287,62 @@ export class VolcengineAIProvider extends BaseAIProvider {
 
   protected createModel(modelInfo: AIModelConfig): BaseLanguageModel {
     return new VolcengineLanguageModel(this, modelInfo);
+  }
+
+  private readModelEntries(payload: VolcengineModelListResponse | undefined): VolcengineModelListEntry[] {
+    if (!payload) {
+      return [];
+    }
+
+    if (Array.isArray(payload.data)) {
+      return payload.data;
+    }
+
+    if (Array.isArray(payload.models)) {
+      return payload.models;
+    }
+
+    return [];
+  }
+
+  private readModelId(entry: VolcengineModelListEntry): string | undefined {
+    const candidate = entry.id || entry.model || entry.name;
+    if (!candidate) {
+      return undefined;
+    }
+    const normalized = candidate.trim();
+    return normalized.length > 0 ? normalized : undefined;
+  }
+
+  private readMaxTokens(entry: VolcengineModelListEntry): number {
+    const values = [entry.max_input_tokens, entry.max_output_tokens, entry.max_tokens, entry.context_length];
+    for (const value of values) {
+      if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+        return Math.floor(value);
+      }
+    }
+    return 128000;
+  }
+
+  private inferFamily(modelId: string): string {
+    const parts = modelId.split('-').filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0]}-${parts[1]}`;
+    }
+    return parts[0] || 'volcengine';
+  }
+
+  private isChatModel(modelId: string): boolean {
+    const lower = modelId.toLowerCase();
+    if (lower.includes('embedding') || lower.includes('rerank') || lower.includes('speech')) {
+      return false;
+    }
+    return true;
+  }
+
+  private isModelDiscoveryUnsupportedError(error: any): boolean {
+    const status = error?.response?.status;
+    return status === 404 || status === 405 || status === 501;
   }
 
   private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {

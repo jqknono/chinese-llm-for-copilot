@@ -108,6 +108,24 @@
                         }
                     }
                 }
+            },
+            {
+                "vendor": "aliyun-ai",
+                "displayName": "%providers.aliyun.displayName%",
+                "configuration": {
+                    "type": "object",
+                    "required": [
+                        "apiKey"
+                    ],
+                    "properties": {
+                        "apiKey": {
+                            "type": "string",
+                            "title": "API Key",
+                            "description": "Aliyun DashScope API key",
+                            "secret": true
+                        }
+                    }
+                }
             }
         ],
         "commands": [
@@ -170,6 +188,21 @@
                 "command": "Chinese-AI.refreshModels.minimax",
                 "title": "%commands.Chinese-AI.refreshModels.minimax.title%",
                 "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.manage.aliyun",
+                "title": "%commands.Chinese-AI.manage.aliyun.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.setApiKey.aliyun",
+                "title": "%commands.Chinese-AI.setApiKey.aliyun.title%",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.refreshModels.aliyun",
+                "title": "%commands.Chinese-AI.refreshModels.aliyun.title%",
+                "category": "%commands.category%"
             }
         ],
         "configuration": {
@@ -222,6 +255,12 @@
                     "default": true,
                     "description": "%configuration.Chinese-AI.minimax.region.description%",
                     "order": 8
+                },
+                "Chinese-AI.aliyun.apiKey": {
+                    "type": "string",
+                    "default": "",
+                    "description": "%configuration.Chinese-AI.aliyun.apiKey.description%",
+                    "order": 9
                 }
             }
         }

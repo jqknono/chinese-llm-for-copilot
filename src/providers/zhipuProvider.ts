@@ -105,7 +105,7 @@ export class ZhipuLanguageModel extends BaseLanguageModel {
       if (error instanceof vscode.LanguageModelError) {
         throw error;
       }
-      throw new vscode.LanguageModelError(`请求失败: ${error}`);
+      throw new vscode.LanguageModelError(getMessage('requestFailed', error));
     }
   }
 }

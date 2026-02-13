@@ -1,17 +1,23 @@
 # 中国 AI 模型 for Copilot
 
-将中国主流 AI 模型（智谱 GLM、Kimi、火山云）接入 VS Code Copilot，让开发者可以在 VS Code 中使用国产 AI 模型。
+将智谱 z.ai（已验证）接入 VS Code Copilot，并提供 Kimi、火山云、Minimax、阿里云的 Beta 接入能力（尚未测试）。
 
 ## 功能特性
 
-- 支持智谱 GLM 系列模型（GLM-4, GLM-4 Flash, GLM-4 Plus, GLM-3 Turbo）
-- 支持 Kimi AI 系列模型（Kimi 8K, 32K, 128K）
-- 支持火山云豆包系列模型（豆包 32K, 豆包 Pro）
+- 支持智谱 z.ai 模型动态查询（已验证）
+- 支持 Kimi、火山云、Minimax、阿里云模型的 Beta 接入（尚未测试）
+- 非 z.ai 提供商如遇问题，请提交 Issue 反馈
 - 无缝集成到 VS Code Copilot Chat
 - 支持多轮对话
 - 可自定义模型参数
 - 简单的 API Key 配置
 - **中英双语界面支持，默认使用中文**（根据 VS Code 语言设置自动切换）
+
+## 服务状态
+
+- **智谱 z.ai**：已验证
+- **Kimi / 火山云 / Minimax / 阿里云**：Beta（尚未测试）
+- Beta 服务如遇问题，请提交 Issue
 
 ## 多语言支持
 
@@ -32,21 +38,20 @@
 
 ## 支持的模型
 
-### 智谱 GLM
-- **GLM-4**: 智谱 GLM-4 模型，适用于复杂对话和推理任务
-- **GLM-4 Flash**: 智谱 GLM-4 Flash 模型，快速响应
-- **GLM-4 Plus**: 智谱 GLM-4 Plus 模型，增强版
-- **GLM-3 Turbo**: 智谱 GLM-3 Turbo 模型，高效版本
+### 智谱 z.ai（已验证）
+- 模型列表由厂商接口动态返回
 
-### Kimi AI
-- **Kimi 8K**: Kimi AI 8K 上下文模型
-- **Kimi 32K**: Kimi AI 32K 上下文模型
-- **Kimi 128K**: Kimi AI 128K 上下文模型，支持长文本
+### Kimi AI（Beta，尚未测试）
+- 模型列表由厂商接口动态返回
 
-### 火山云
-- **豆包 32K**: 火山云豆包 32K 上下文模型
-- **豆包 Pro 32K**: 火山云豆包 Pro 32K 上下文模型
-- **豆包 Pro 128K**: 火山云豆包 Pro 128K 上下文模型
+### 火山云（Beta，尚未测试）
+- 模型列表由厂商接口动态返回
+
+### Minimax（Beta，尚未测试）
+- 模型列表由厂商接口动态返回
+
+### 阿里云通义千问（Beta，尚未测试）
+- 模型列表由厂商接口动态返回
 
 ## 安装
 
@@ -83,15 +88,18 @@ code --install-extension Chinese-AI-copilot-0.0.1.vsix
 
 根据你要使用的提供商获取对应的 API Key：
 
-- **智谱 GLM**: 访问 [智谱 AI 开放平台](https://open.bigmodel.cn/)
-- **Kimi AI**: 访问 [Kimi 开放平台](https://platform.moonshot.cn/)
-- **火山云**: 访问 [火山引擎](https://www.volcengine.com/)
+- **智谱 z.ai（已验证）**: 访问 [智谱 AI 开放平台](https://open.bigmodel.cn/)
+- **Kimi AI（Beta，尚未测试）**: 访问 [Kimi 开放平台](https://platform.moonshot.cn/)
+- **火山云（Beta，尚未测试）**: 访问 [火山引擎](https://www.volcengine.com/)
+- **Minimax（Beta，尚未测试）**: 访问 [Minimax 开放平台](https://platform.minimaxi.com/)
+- **阿里云（Beta，尚未测试）**: 访问 [阿里云 DashScope](https://dashscope.aliyun.com/)
+- 使用 Beta 服务如遇问题，请提交 Issue
 
 ### 2. 配置 API Key
 
 在 VS Code 中：
 
-#### 智谱 GLM
+#### 智谱 z.ai
 - 按 `Ctrl+Shift+P`（或 `Cmd+Shift+P`），输入 `中国 AI: 设置智谱 API Key`
 - 或打开设置（`Ctrl+,`），搜索 `Chinese-AI.zhipu.apiKey`
 
@@ -113,29 +121,34 @@ code --install-extension Chinese-AI-copilot-0.0.1.vsix
 
 你可以在 VS Code 设置中配置以下选项：
 
-### 智谱 GLM
+### 智谱 z.ai（已验证）
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
 | `Chinese-AI.zhipu.apiKey` | string | - | 智谱 AI API Key（必需） |
 | `Chinese-AI.zhipu.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
 
-### Kimi AI
+### Kimi AI（Beta，尚未测试）
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
 | `Chinese-AI.kimi.apiKey` | string | - | Kimi AI API Key（必需） |
 | `Chinese-AI.kimi.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
 
-### 火山云
+### 火山云（Beta，尚未测试）
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
 | `Chinese-AI.volcengine.apiKey` | string | - | 火山云 API Key（必需） |
 | `Chinese-AI.volcengine.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
 
-### Minimax AI
+### Minimax AI（Beta，尚未测试）
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
 | `Chinese-AI.minimax.apiKey` | string | - | Minimax API Key（必需） |
 | `Chinese-AI.minimax.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
+
+### 阿里云通义千问（Beta，尚未测试）
+| 设置项 | 类型 | 默认值 | 描述 |
+|--------|------|--------|------|
+| `Chinese-AI.aliyun.apiKey` | string | - | 阿里云 DashScope API Key（必需） |
 
 ## 开发
 
@@ -186,7 +199,10 @@ A: AI API 通常有速率限制，请稍后再试，或升级您的账户以获�
 A: 在 Copilot Chat 面板的模型选择器中选择不同的 AI 提供商和模型。
 
 ### Q: 能否同时使用多个提供商？
-A: 可以！你可以为多个提供商配置 API Key，并在需要时切换使用。
+A: 可以！你可以为多个提供商配置 API Key，并在需要时切换使用。请注意，目前仅智谱 z.ai 已验证，其他提供商为 Beta（尚未测试）。
+
+### Q: Beta 提供商遇到问题怎么办？
+A: 请在仓库提交 Issue，并附上报错信息、请求模型和复现步骤。
 
 ## 相关链接
 
@@ -197,6 +213,7 @@ A: 可以！你可以为多个提供商配置 API Key，并在需要时切换使
 - [火山引擎](https://www.volcengine.com/)
 - [火山云 API 文档](https://www.volcengine.com/docs/82379)
 - [VS Code 扩展 API](https://code.visualstudio.com/api)
+- Beta 服务问题反馈：请在仓库提交 Issue
 
 ## 许可证
 

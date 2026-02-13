@@ -11,7 +11,7 @@ import {
 } from './baseProvider';
 import { getMessage } from '../i18n/i18n';
 
-interface KimiChatRequest {
+interface AliyunChatRequest {
   model: string;
   messages: ChatMessage[];
   tools?: ChatToolDefinition[];
@@ -22,7 +22,7 @@ interface KimiChatRequest {
   stream?: boolean;
 }
 
-interface KimiChatResponse {
+interface AliyunChatResponse {
   id: string;
   object: string;
   created: number;
@@ -43,7 +43,7 @@ interface KimiChatResponse {
   };
 }
 
-interface KimiModelListEntry {
+interface AliyunModelListEntry {
   id?: string;
   model?: string;
   name?: string;
@@ -51,17 +51,20 @@ interface KimiModelListEntry {
   context_length?: number;
   max_input_tokens?: number;
   max_output_tokens?: number;
+  object?: string;
+  created?: number;
+  owned_by?: string;
 }
 
-interface KimiModelListResponse {
-  data?: KimiModelListEntry[];
-  models?: KimiModelListEntry[];
+interface AliyunModelListResponse {
+  object?: string;
+  data?: AliyunModelListEntry[];
+  models?: AliyunModelListEntry[];
 }
 
-const KIMI_DEFAULT_MAINLAND_BASE_URL = 'https://api.moonshot.cn/v1';
-const KIMI_DEFAULT_OVERSEAS_BASE_URL = 'https://api.moonshot.ai/v1';
+const ALIYUN_CODING_DEFAULT_BASE_URL = 'https://coding.dashscope.aliyuncs.com/v1';
 
-export class KimiLanguageModel extends BaseLanguageModel {
+export class AliyunLanguageModel extends BaseLanguageModel {
   constructor(provider: BaseAIProvider, modelInfo: AIModelConfig) {
     super(provider, modelInfo);
   }
@@ -71,15 +74,15 @@ export class KimiLanguageModel extends BaseLanguageModel {
     options?: vscode.LanguageModelChatRequestOptions,
     token?: vscode.CancellationToken
   ): Promise<vscode.LanguageModelChatResponse> {
-    const kimiProvider = this.provider as KimiAIProvider;
-    const kimiMessages = kimiProvider.convertMessages(messages);
+    const aliyunProvider = this.provider as AliyunAIProvider;
+    const aliyunMessages = aliyunProvider.convertMessages(messages);
     const supportsToolCalling = !!this.capabilities.toolCalling;
 
-    const request: KimiChatRequest = {
+    const request: AliyunChatRequest = {
       model: this.id,
-      messages: kimiMessages,
-      tools: supportsToolCalling ? kimiProvider.buildToolDefinitions(options) : undefined,
-      tool_choice: supportsToolCalling ? kimiProvider.buildToolChoice(options) : undefined,
+      messages: aliyunMessages,
+      tools: supportsToolCalling ? aliyunProvider.buildToolDefinitions(options) : undefined,
+      tool_choice: supportsToolCalling ? aliyunProvider.buildToolChoice(options) : undefined,
       stream: false,
       temperature: 0.7,
       top_p: 0.9,
@@ -87,7 +90,7 @@ export class KimiLanguageModel extends BaseLanguageModel {
     };
 
     try {
-      const response = await (this.provider as KimiAIProvider).sendRequest(request, token);
+      const response = await (this.provider as AliyunAIProvider).sendRequest(request, token);
       return response;
     } catch (error) {
       if (error instanceof vscode.LanguageModelError) {
@@ -98,7 +101,7 @@ export class KimiLanguageModel extends BaseLanguageModel {
   }
 }
 
-export class KimiAIProvider extends BaseAIProvider {
+export class AliyunAIProvider extends BaseAIProvider {
   private apiClient: AxiosInstance;
 
   constructor(context: vscode.ExtensionContext) {
@@ -124,10 +127,7 @@ export class KimiAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('Chinese-AI.kimi.apiKey') || this.hasEndpointConfigChanged(e)) {
-          if (this.hasEndpointConfigChanged(e)) {
-            this.apiClient.defaults.baseURL = this.getBaseUrl();
-          }
+        if (e.affectsConfiguration('Chinese-AI.aliyun.apiKey')) {
           await this.refreshModels();
         }
       })
@@ -135,24 +135,19 @@ export class KimiAIProvider extends BaseAIProvider {
   }
 
   getVendor(): string {
-    return 'kimi-ai';
+    return 'aliyun-ai';
   }
 
   getConfigSection(): string {
-    return 'Chinese-AI.kimi';
+    return 'Chinese-AI.aliyun';
   }
 
   getBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.kimi');
-    const region = config.get<boolean>('region', true);
-    if (!region) {
-      return KIMI_DEFAULT_OVERSEAS_BASE_URL;
-    }
-    return KIMI_DEFAULT_MAINLAND_BASE_URL;
+    return ALIYUN_CODING_DEFAULT_BASE_URL;
   }
 
   getApiKey(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.kimi');
+    const config = vscode.workspace.getConfiguration('Chinese-AI.aliyun');
     return config.get<string>('apiKey', '');
   }
 
@@ -162,7 +157,7 @@ export class KimiAIProvider extends BaseAIProvider {
 
   protected async resolveModelConfigs(): Promise<AIModelConfig[]> {
     try {
-      const response = await this.apiClient.get<KimiModelListResponse>('/models');
+      const response = await this.apiClient.get<AliyunModelListResponse>('/models');
       const entries = this.readModelEntries(response.data);
       const models: AIModelConfig[] = [];
       const deduped = new Set<string>();
@@ -182,7 +177,7 @@ export class KimiAIProvider extends BaseAIProvider {
         const maxTokens = this.readMaxTokens(entry);
         models.push({
           id: modelId,
-          vendor: 'kimi-ai',
+          vendor: 'aliyun-ai',
           family: this.inferFamily(modelId),
           name: modelId,
           version: MODEL_VERSION_LABEL,
@@ -193,7 +188,7 @@ export class KimiAIProvider extends BaseAIProvider {
             toolCalling: true,
             imageInput: false
           },
-          description: getMessage('kimiDynamicModelDescription', modelId)
+          description: getMessage('aliyunDynamicModelDescription', modelId)
         });
       }
 
@@ -202,7 +197,7 @@ export class KimiAIProvider extends BaseAIProvider {
       if (this.isModelDiscoveryUnsupportedError(error)) {
         this.setModelDiscoveryUnsupported(true);
       }
-      console.warn('Failed to fetch Kimi models from /models.', error);
+      console.warn('Failed to fetch Aliyun models from /models.', error);
       return [];
     }
   }
@@ -212,13 +207,13 @@ export class KimiAIProvider extends BaseAIProvider {
   }
 
   async sendRequest(
-    request: KimiChatRequest,
+    request: AliyunChatRequest,
     token?: vscode.CancellationToken
   ): Promise<vscode.LanguageModelChatResponse> {
     const apiKey = this.getApiKey();
 
     if (!apiKey) {
-      throw new vscode.LanguageModelError(getMessage('apiKeyRequired', 'Kimi'));
+      throw new vscode.LanguageModelError(getMessage('apiKeyRequired', 'Aliyun'));
     }
 
     try {
@@ -231,11 +226,7 @@ export class KimiAIProvider extends BaseAIProvider {
         axiosConfig.cancelToken = cancelSource.token;
       }
 
-      const response = await this.apiClient.post<KimiChatResponse>(
-        '/chat/completions',
-        request,
-        axiosConfig
-      );
+      const response = await this.postChatCompletionsWithRetry(request, axiosConfig);
 
       const responseMessage = response.data.choices[0]?.message;
       const content = responseMessage?.content || '';
@@ -267,29 +258,32 @@ export class KimiAIProvider extends BaseAIProvider {
 
       return result;
     } catch (error: any) {
-      console.error(getMessage('kimiApiError'), error);
+      console.error(getMessage('aliyunApiError'), error);
+      const detail = this.readApiErrorMessage(error);
 
       if (axios.isCancel(error)) {
         throw new vscode.LanguageModelError(getMessage('requestCancelled'));
       }
 
       if (error.response?.status === 401) {
-        throw new vscode.LanguageModelError(getMessage('apiKeyInvalid'));
+        throw new vscode.LanguageModelError(detail || getMessage('apiKeyInvalid'));
       } else if (error.response?.status === 429) {
-        throw new vscode.LanguageModelError(getMessage('rateLimitExceeded'));
+        throw new vscode.LanguageModelError(detail ? `${getMessage('rateLimitExceeded')}: ${detail}` : getMessage('rateLimitExceeded'));
+      } else if (error.response?.status === 403) {
+        throw new vscode.LanguageModelError(detail || getMessage('apiKeyInvalid'));
       } else if (error.response?.status === 400) {
-        throw new vscode.LanguageModelError(getMessage('invalidRequest', error.response.data?.error?.message));
+        throw new vscode.LanguageModelError(getMessage('invalidRequest', detail || error.response.data?.error?.message));
       }
 
-      throw new vscode.LanguageModelError(error.message || getMessage('unknownError'));
+      throw new vscode.LanguageModelError(detail || error.message || getMessage('unknownError'));
     }
   }
 
   protected createModel(modelInfo: AIModelConfig): BaseLanguageModel {
-    return new KimiLanguageModel(this, modelInfo);
+    return new AliyunLanguageModel(this, modelInfo);
   }
 
-  private readModelEntries(payload: KimiModelListResponse | undefined): KimiModelListEntry[] {
+  private readModelEntries(payload: AliyunModelListResponse | undefined): AliyunModelListEntry[] {
     if (!payload) {
       return [];
     }
@@ -305,7 +299,7 @@ export class KimiAIProvider extends BaseAIProvider {
     return [];
   }
 
-  private readModelId(entry: KimiModelListEntry): string | undefined {
+  private readModelId(entry: AliyunModelListEntry): string | undefined {
     const candidate = entry.id || entry.model || entry.name;
     if (!candidate) {
       return undefined;
@@ -314,7 +308,7 @@ export class KimiAIProvider extends BaseAIProvider {
     return normalized.length > 0 ? normalized : undefined;
   }
 
-  private readMaxTokens(entry: KimiModelListEntry): number {
+  private readMaxTokens(entry: AliyunModelListEntry): number {
     const values = [entry.max_input_tokens, entry.max_output_tokens, entry.max_tokens, entry.context_length];
     for (const value of values) {
       if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
@@ -329,12 +323,12 @@ export class KimiAIProvider extends BaseAIProvider {
     if (parts.length >= 2) {
       return `${parts[0]}-${parts[1]}`;
     }
-    return parts[0] || 'kimi';
+    return parts[0] || 'qwen';
   }
 
   private isChatModel(modelId: string): boolean {
     const lower = modelId.toLowerCase();
-    if (lower.includes('embedding') || lower.includes('rerank') || lower.includes('speech')) {
+    if (lower.includes('embedding') || lower.includes('rerank') || lower.includes('speech') || lower.includes('tts') || lower.includes('asr')) {
       return false;
     }
     return true;
@@ -345,7 +339,50 @@ export class KimiAIProvider extends BaseAIProvider {
     return status === 404 || status === 405 || status === 501;
   }
 
-  private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
-    return event.affectsConfiguration('Chinese-AI.kimi.region');
+  private async postChatCompletionsWithRetry(request: AliyunChatRequest, axiosConfig: any): Promise<{ data: AliyunChatResponse }> {
+    const maxRetries = 2;
+    let attempt = 0;
+
+    while (true) {
+      try {
+        return await this.apiClient.post<AliyunChatResponse>(
+          '/chat/completions',
+          request,
+          axiosConfig
+        );
+      } catch (error: any) {
+        if (axios.isCancel(error)) {
+          throw error;
+        }
+
+        const status = error?.response?.status;
+        const shouldRetry = (status === 429 || (typeof status === 'number' && status >= 500)) && attempt < maxRetries;
+        if (!shouldRetry) {
+          throw error;
+        }
+
+        const delayMs = 800 * (attempt + 1);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        attempt += 1;
+      }
+    }
+  }
+
+  private readApiErrorMessage(error: any): string | undefined {
+    const responseData = error?.response?.data;
+    if (!responseData) {
+      return undefined;
+    }
+
+    const message = responseData?.error?.message || responseData?.message;
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return message.trim();
+    }
+
+    if (typeof responseData === 'string' && responseData.trim().length > 0) {
+      return responseData.trim();
+    }
+
+    return undefined;
   }
 }
