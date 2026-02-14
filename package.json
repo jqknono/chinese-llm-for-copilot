@@ -1,8 +1,13 @@
 {
-    "name": "chinese-ai-for-copilot",
+    "name": "chinese-ai-plans-for-copilot",
     "displayName": "%displayName%",
     "description": "%description%",
-    "version": "0.0.1",
+    "version": "0.0.2",
+    "publisher": "techfetch-dev",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/jqknono/chinese-llm-for-copilot.git"
+    },
     "engines": {
         "vscode": "^1.95.0"
     },
@@ -10,6 +15,7 @@
         "Machine Learning",
         "Other"
     ],
+    "icon": "assets/icon.png",
     "main": "./out/extension.js",
     "contributes": {
         "languageModelChatProviders": [
@@ -208,59 +214,29 @@
         "configuration": {
             "title": "%configuration.title%",
             "properties": {
-                "Chinese-AI.zhipu.apiKey": {
-                    "type": "string",
-                    "default": "",
-                    "description": "%configuration.Chinese-AI.zhipu.apiKey.description%",
-                    "order": 1
-                },
                 "Chinese-AI.zhipu.region": {
                     "type": "boolean",
                     "default": true,
                     "description": "%configuration.Chinese-AI.zhipu.region.description%",
-                    "order": 2
-                },
-                "Chinese-AI.kimi.apiKey": {
-                    "type": "string",
-                    "default": "",
-                    "description": "%configuration.Chinese-AI.kimi.apiKey.description%",
-                    "order": 3
+                    "order": 1
                 },
                 "Chinese-AI.kimi.region": {
                     "type": "boolean",
                     "default": true,
                     "description": "%configuration.Chinese-AI.kimi.region.description%",
-                    "order": 4
-                },
-                "Chinese-AI.volcengine.apiKey": {
-                    "type": "string",
-                    "default": "",
-                    "description": "%configuration.Chinese-AI.volcengine.apiKey.description%",
-                    "order": 5
+                    "order": 2
                 },
                 "Chinese-AI.volcengine.region": {
                     "type": "boolean",
                     "default": true,
                     "description": "%configuration.Chinese-AI.volcengine.region.description%",
-                    "order": 6
-                },
-                "Chinese-AI.minimax.apiKey": {
-                    "type": "string",
-                    "default": "",
-                    "description": "%configuration.Chinese-AI.minimax.apiKey.description%",
-                    "order": 7
+                    "order": 3
                 },
                 "Chinese-AI.minimax.region": {
                     "type": "boolean",
                     "default": true,
                     "description": "%configuration.Chinese-AI.minimax.region.description%",
-                    "order": 8
-                },
-                "Chinese-AI.aliyun.apiKey": {
-                    "type": "string",
-                    "default": "",
-                    "description": "%configuration.Chinese-AI.aliyun.apiKey.description%",
-                    "order": 9
+                    "order": 4
                 }
             }
         }
@@ -272,7 +248,10 @@
         "copy-i18n": "copyfiles -u 1 \"src/i18n/*.json\" out/",
         "pretest": "npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
-        "test": "node ./out/test/runTest.js"
+        "test": "node ./out/test/runTest.js",
+        "package:vsix": "npm run compile && npx @vscode/vsce package",
+        "publish:marketplace": "npm run compile && node ./scripts/publish-vsce.js",
+        "pricing:fetch": "node ./scripts/fetch-provider-pricing.js"
     },
     "devDependencies": {
         "@types/node": "^20.14.9",

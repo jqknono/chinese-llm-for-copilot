@@ -1,6 +1,6 @@
-# 欢迎使用中国 AI 模型 for Copilot！
+# 欢迎使用中国 AI 套餐 for Copilot！
 
-这是一个 VS Code 扩展，将智谱 z.ai（已验证）以及 Kimi/火山云/Minimax/阿里云（Beta，尚未测试）集成到 Copilot 中。
+这是一个 VS Code 扩展，将智谱 z.ai（已验证）以及 Kimi/火山云/Minimax/阿里云（Beta，尚未测试）的套餐能力集成到 Copilot 中。
 
 ## 快速开始
 
@@ -27,6 +27,7 @@ npm run compile
    - `中国 AI: 设置 Minimax API Key (Beta)`
    - `中国 AI: 设置阿里云 API Key (Beta)`
 4. 输入对应的 API Key
+5. API Key 会保存到 VS Code Secret Storage，不写入 `settings.json`
 
 ### 4. 测试功能
 

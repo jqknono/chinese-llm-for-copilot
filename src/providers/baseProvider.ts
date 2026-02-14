@@ -104,6 +104,8 @@ export abstract class BaseAIProvider implements vscode.Disposable {
   protected disposables: vscode.Disposable[] = [];
   private readonly modelChangedEmitter = new vscode.EventEmitter<void>();
   private modelDiscoveryUnsupported = false;
+  private apiKey = '';
+  private apiKeyInitializationPromise: Promise<void> | undefined;
   public readonly onDidChangeModels = this.modelChangedEmitter.event;
 
   constructor(protected context: vscode.ExtensionContext) {
@@ -118,7 +120,35 @@ export abstract class BaseAIProvider implements vscode.Disposable {
   abstract convertMessages(messages: vscode.LanguageModelChatMessage[]): ChatMessage[];
   abstract sendRequest(request: any, token?: vscode.CancellationToken): Promise<vscode.LanguageModelChatResponse>;
 
+  async initialize(): Promise<void> {
+    if (!this.apiKeyInitializationPromise) {
+      this.apiKeyInitializationPromise = this.initializeApiKeyFromSecret();
+    }
+    await this.apiKeyInitializationPromise;
+  }
+
+  async setApiKey(apiKey: string): Promise<void> {
+    await this.initialize();
+    const normalized = apiKey.trim();
+    const secretKey = this.getApiKeySecretStorageKey();
+
+    this.apiKey = normalized;
+    if (normalized.length > 0) {
+      await this.context.secrets.store(secretKey, normalized);
+    } else {
+      await this.context.secrets.delete(secretKey);
+    }
+
+    await this.clearLegacyApiKeyFromConfiguration();
+  }
+
+  protected readApiKey(): string {
+    return this.apiKey;
+  }
+
   async refreshModels(): Promise<void> {
+    await this.initialize();
+    await this.migrateLegacyApiKeyFromConfiguration();
     const apiKey = this.getApiKey();
 
     if (!apiKey) {
@@ -157,6 +187,52 @@ export abstract class BaseAIProvider implements vscode.Disposable {
 
   protected setModelDiscoveryUnsupported(unsupported: boolean): void {
     this.modelDiscoveryUnsupported = unsupported;
+  }
+
+  private getApiKeySecretStorageKey(): string {
+    return `${this.getConfigSection()}.apiKey`;
+  }
+
+  private async initializeApiKeyFromSecret(): Promise<void> {
+    const secretKey = this.getApiKeySecretStorageKey();
+    const stored = await this.context.secrets.get(secretKey);
+    this.apiKey = (stored || '').trim();
+    await this.migrateLegacyApiKeyFromConfiguration();
+  }
+
+  private async migrateLegacyApiKeyFromConfiguration(): Promise<void> {
+    const config = vscode.workspace.getConfiguration(this.getConfigSection());
+    const legacyValue = (config.get<string>('apiKey', '') || '').trim();
+    if (legacyValue.length === 0) {
+      return;
+    }
+
+    if (!this.apiKey) {
+      this.apiKey = legacyValue;
+      await this.context.secrets.store(this.getApiKeySecretStorageKey(), legacyValue);
+    }
+
+    await this.clearLegacyApiKeyFromConfiguration(config);
+  }
+
+  private async clearLegacyApiKeyFromConfiguration(config?: vscode.WorkspaceConfiguration): Promise<void> {
+    const targetConfig = config ?? vscode.workspace.getConfiguration(this.getConfigSection());
+    const inspected = targetConfig.inspect<string>('apiKey');
+    const updates: Array<Thenable<void>> = [];
+
+    if (inspected?.globalValue !== undefined) {
+      updates.push(targetConfig.update('apiKey', undefined, vscode.ConfigurationTarget.Global));
+    }
+    if (inspected?.workspaceValue !== undefined) {
+      updates.push(targetConfig.update('apiKey', undefined, vscode.ConfigurationTarget.Workspace));
+    }
+    if (inspected?.workspaceFolderValue !== undefined) {
+      updates.push(targetConfig.update('apiKey', undefined, vscode.ConfigurationTarget.WorkspaceFolder));
+    }
+
+    if (updates.length > 0) {
+      await Promise.all(updates);
+    }
   }
 
   getModel(modelId: string): BaseLanguageModel | undefined {

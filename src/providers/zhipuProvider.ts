@@ -164,8 +164,7 @@ export class ZhipuAIProvider extends BaseAIProvider {
   }
 
   getApiKey(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.zhipu');
-    return config.get<string>('apiKey', '');
+    return this.readApiKey();
   }
 
   getPredefinedModels(): AIModelConfig[] {

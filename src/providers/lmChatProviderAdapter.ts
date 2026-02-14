@@ -253,29 +253,30 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
     const configSection = this.provider.getConfigSection();
     const config = vscode.workspace.getConfiguration(configSection);
     const updates: Array<Thenable<void>> = [];
-
-    const setStringIfChanged = (key: string, value: string): void => {
-      const current = config.get<string>(key, '');
-      if (current !== value) {
-        updates.push(config.update(key, value, vscode.ConfigurationTarget.Global));
-      }
-    };
+    let changed = false;
 
     const setBooleanIfChanged = (key: string, value: boolean): void => {
       const current = config.get<boolean>(key, true);
       if (current !== value) {
         updates.push(config.update(key, value, vscode.ConfigurationTarget.Global));
+        changed = true;
       }
     };
 
     if (normalized.apiKey !== undefined) {
-      setStringIfChanged('apiKey', normalized.apiKey);
+      const nextApiKey = normalized.apiKey.trim();
+      if (this.provider.getApiKey() !== nextApiKey) {
+        await this.provider.setApiKey(nextApiKey);
+        changed = true;
+      }
     }
     if (normalized.region !== undefined) {
       setBooleanIfChanged('region', normalized.region);
     }
     if (updates.length > 0) {
       await Promise.all(updates);
+    }
+    if (changed) {
       await this.provider.refreshModels();
     }
   }

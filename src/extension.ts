@@ -24,6 +24,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const volcengineProvider = new VolcengineAIProvider(context);
   const minimaxProvider = new MinimaxAIProvider(context);
   const aliyunProvider = new AliyunAIProvider(context);
+  await Promise.all([
+    zhipuProvider.initialize(),
+    kimiProvider.initialize(),
+    volcengineProvider.initialize(),
+    minimaxProvider.initialize(),
+    aliyunProvider.initialize()
+  ]);
 
   providers.set('zhipu-ai', zhipuProvider);
   providers.set('kimi-ai', kimiProvider);
@@ -45,7 +52,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   registerProviderCommands(context, aliyunProvider, 'aliyun', 'Aliyun Qwen (Beta)');
 
   // 检查是否有 API Key
-  checkApiKeys();
+  await checkApiKeys();
 }
 
 function registerLanguageModelProvider(
@@ -94,13 +101,11 @@ function registerProviderCommands(
   };
 
   const promptApiKey = async (): Promise<string | undefined> => {
-    const currentApiKey = getProviderConfig().get<string>('apiKey', '');
     return vscode.window.showInputBox({
       prompt: getMessage('inputApiKey', providerName),
       password: true,
       ignoreFocusOut: true,
-      placeHolder: getMessage('inputPlaceholder'),
-      value: currentApiKey
+      placeHolder: getMessage('inputPlaceholder')
     });
   };
 
@@ -127,12 +132,36 @@ function registerProviderCommands(
     return picked?.value;
   };
 
-  const applyUpdates = async (updates: Array<[string, unknown]>): Promise<void> => {
+  const applyRegionUpdate = async (region: ProviderRegion): Promise<boolean> => {
     const config = getProviderConfig();
-    for (const [key, value] of updates) {
-      await config.update(key, value, vscode.ConfigurationTarget.Global);
+    const current = config.get<boolean>('region', true);
+    if (current === region) {
+      return false;
     }
-    await provider.refreshModels();
+    await config.update('region', region, vscode.ConfigurationTarget.Global);
+    return true;
+  };
+
+  const applyApiKeyUpdate = async (apiKey: string): Promise<boolean> => {
+    const normalized = apiKey.trim();
+    if (provider.getApiKey() === normalized) {
+      return false;
+    }
+    await provider.setApiKey(normalized);
+    return true;
+  };
+
+  const applyUpdates = async (payload: { apiKey?: string; region?: ProviderRegion }): Promise<void> => {
+    let changed = false;
+    if (payload.apiKey !== undefined) {
+      changed = await applyApiKeyUpdate(payload.apiKey) || changed;
+    }
+    if (payload.region !== undefined) {
+      changed = await applyRegionUpdate(payload.region) || changed;
+    }
+    if (changed) {
+      await provider.refreshModels();
+    }
   };
 
   const configureAll = async (): Promise<void> => {
@@ -146,10 +175,7 @@ function registerProviderCommands(
       return;
     }
 
-    await applyUpdates([
-      ['apiKey', apiKey.trim()],
-      ['region', region]
-    ]);
+    await applyUpdates({ apiKey, region });
 
     vscode.window.showInformationMessage(getMessage('providerConfigSaved', providerName));
   };
@@ -183,7 +209,7 @@ function registerProviderCommands(
         if (apiKey === undefined) {
           return;
         }
-        await applyUpdates([['apiKey', apiKey.trim()]]);
+        await applyUpdates({ apiKey });
         vscode.window.showInformationMessage(getMessage('apiKeySaved', providerName));
         return;
       }
@@ -193,7 +219,7 @@ function registerProviderCommands(
         if (region === undefined) {
           return;
         }
-        await applyUpdates([['region', region]]);
+        await applyUpdates({ region });
         vscode.window.showInformationMessage(getMessage('regionSaved', providerName, formatRegionLabel(region)));
         return;
       }
@@ -206,7 +232,7 @@ function registerProviderCommands(
       const apiKey = await promptApiKey();
 
       if (apiKey !== undefined) {
-        await applyUpdates([['apiKey', apiKey.trim()]]);
+        await applyUpdates({ apiKey });
         vscode.window.showInformationMessage(getMessage('apiKeySaved', providerName));
       }
     })
@@ -224,12 +250,12 @@ function registerProviderCommands(
   void provider.refreshModels();
 }
 
-function checkApiKeys(): void {
-  const zhipuKey = vscode.workspace.getConfiguration('Chinese-AI.zhipu').get<string>('apiKey', '');
-  const kimiKey = vscode.workspace.getConfiguration('Chinese-AI.kimi').get<string>('apiKey', '');
-  const volcengineKey = vscode.workspace.getConfiguration('Chinese-AI.volcengine').get<string>('apiKey', '');
-  const minimaxKey = vscode.workspace.getConfiguration('Chinese-AI.minimax').get<string>('apiKey', '');
-  const aliyunKey = vscode.workspace.getConfiguration('Chinese-AI.aliyun').get<string>('apiKey', '');
+async function checkApiKeys(): Promise<void> {
+  const zhipuKey = providers.get('zhipu-ai')?.getApiKey() ?? '';
+  const kimiKey = providers.get('kimi-ai')?.getApiKey() ?? '';
+  const volcengineKey = providers.get('volcengine-ai')?.getApiKey() ?? '';
+  const minimaxKey = providers.get('minimax-ai')?.getApiKey() ?? '';
+  const aliyunKey = providers.get('aliyun-ai')?.getApiKey() ?? '';
 
   if (!zhipuKey && !kimiKey && !volcengineKey && !minimaxKey && !aliyunKey) {
     vscode.window.showInformationMessage(

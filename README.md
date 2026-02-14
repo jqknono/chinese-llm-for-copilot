@@ -1,11 +1,11 @@
-# 中国 AI 模型 for Copilot
+# 中国 AI 套餐 for Copilot
 
-将智谱 z.ai（已验证）接入 VS Code Copilot，并提供 Kimi、火山云、Minimax、阿里云的 Beta 接入能力（尚未测试）。
+接入中国 AI 模型套餐到 VS Code Copilot：智谱 z.ai（已验证），以及 Kimi、火山云、Minimax、阿里云的 Beta 套餐接入能力（尚未测试）。
 
 ## 功能特性
 
-- 支持智谱 z.ai 模型动态查询（已验证）
-- 支持 Kimi、火山云、Minimax、阿里云模型的 Beta 接入（尚未测试）
+- 支持智谱 z.ai 套餐模型动态查询（已验证）
+- 支持 Kimi、火山云、Minimax、阿里云套餐模型的 Beta 接入（尚未测试）
 - 非 z.ai 提供商如遇问题，请提交 Issue 反馈
 - 无缝集成到 VS Code Copilot Chat
 - 支持多轮对话
@@ -73,13 +73,23 @@ npm run compile
 ### 打包发布
 
 ```bash
-npm install -g vsce
-vsce package
+npm run package:vsix
 ```
 
 这会生成一个 `.vsix` 文件，你可以通过以下命令安装：
 ```bash
 code --install-extension Chinese-AI-copilot-0.0.1.vsix
+```
+
+发布到 VS Code 插件市场（使用环境变量 `VSCE_PAT`）：
+```bash
+# Linux / macOS
+export VSCE_PAT=your_pat
+npm run publish:marketplace
+
+# PowerShell
+$env:VSCE_PAT="your_pat"
+npm run publish:marketplace
 ```
 
 ## 使用方法
@@ -101,15 +111,14 @@ code --install-extension Chinese-AI-copilot-0.0.1.vsix
 
 #### 智谱 z.ai
 - 按 `Ctrl+Shift+P`（或 `Cmd+Shift+P`），输入 `中国 AI: 设置智谱 API Key`
-- 或打开设置（`Ctrl+,`），搜索 `Chinese-AI.zhipu.apiKey`
 
 #### Kimi AI
 - 按 `Ctrl+Shift+P`，输入 `中国 AI: 设置 Kimi API Key`
-- 或打开设置（`Ctrl+,`），搜索 `Chinese-AI.kimi.apiKey`
 
 #### 火山云
 - 按 `Ctrl+Shift+P`，输入 `中国 AI: 设置火山云 API Key`
-- 或打开设置（`Ctrl+,`），搜索 `Chinese-AI.volcengine.apiKey`
+
+API Key 会保存到 VS Code Secret Storage，不写入 `settings.json`。
 
 ### 3. 使用 Copilot Chat
 
@@ -119,36 +128,30 @@ code --install-extension Chinese-AI-copilot-0.0.1.vsix
 
 ## 配置选项
 
-你可以在 VS Code 设置中配置以下选项：
+你可以在 VS Code 设置中配置以下非敏感选项：
 
 ### 智谱 z.ai（已验证）
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
-| `Chinese-AI.zhipu.apiKey` | string | - | 智谱 AI API Key（必需） |
 | `Chinese-AI.zhipu.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
 
 ### Kimi AI（Beta，尚未测试）
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
-| `Chinese-AI.kimi.apiKey` | string | - | Kimi AI API Key（必需） |
 | `Chinese-AI.kimi.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
 
 ### 火山云（Beta，尚未测试）
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
-| `Chinese-AI.volcengine.apiKey` | string | - | 火山云 API Key（必需） |
 | `Chinese-AI.volcengine.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
 
 ### Minimax AI（Beta，尚未测试）
 | 设置项 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
-| `Chinese-AI.minimax.apiKey` | string | - | Minimax API Key（必需） |
 | `Chinese-AI.minimax.region` | boolean | true | 是否使用中国大陆接口（`true` 为大陆，`false` 为海外） |
 
 ### 阿里云通义千问（Beta，尚未测试）
-| 设置项 | 类型 | 默认值 | 描述 |
-|--------|------|--------|------|
-| `Chinese-AI.aliyun.apiKey` | string | - | 阿里云 DashScope API Key（必需） |
+阿里云当前无额外设置项；通过命令 `中国 AI: 设置阿里云 API Key` 配置密钥。
 
 ## 开发
 
@@ -186,6 +189,48 @@ npm run watch
 ```bash
 npm run lint
 ```
+
+## 编码套餐价格抓取
+
+价格抓取脚本只关注编码套餐（Coding Plan），并固定抓取以下页面：
+
+- Kimi: https://www.kimi.com/code/zh
+- 智谱 GLM: https://bigmodel.cn/glm-coding
+- MiniMax: https://platform.minimaxi.com/docs/guides/pricing-coding-plan
+- 火山引擎: https://www.volcengine.com/activity/codingplan
+- 阿里云百炼: https://www.aliyun.com/benefit/scene/codingplan
+
+执行方式：
+
+```bash
+npm run pricing:fetch
+```
+
+抓取结果写入：
+
+```text
+assets/provider-pricing.json
+```
+
+字段说明：
+
+- `currentPrice` / `currentPriceText`: 当前价格（若存在优惠，优先为优惠价）
+- `originalPrice` / `originalPriceText`: 原价（仅页面明确展示时写入）
+- 若页面未提供原价，`originalPrice` 为 `null`
+
+套餐购买地址（README 固定提供）：
+
+- Kimi: https://www.kimi.com/code/zh
+- 智谱 GLM: https://bigmodel.cn/glm-coding
+- MiniMax: https://platform.minimaxi.com/subscribe/coding-plan
+- 火山引擎:
+  - Lite: https://console.volcengine.com/common-buy/fast/ark_bd%7C%7Ccu3pq57og65ta2ostdvg
+  - Pro: https://console.volcengine.com/common-buy/fast/ark_bd%7C%7Cd2a7m37ditkldl312h1g
+- 阿里云百炼: https://common-buy.aliyun.com/?commodityCode=sfm_codingplan_public_cn#/buy
+
+自动更新：
+
+- `.github/workflows/update-pricing.yml` 已配置每周日自动更新（UTC：`cron: 0 2 * * 0`）
 
 ## 常见问题
 

@@ -152,8 +152,7 @@ export class VolcengineAIProvider extends BaseAIProvider {
   }
 
   getApiKey(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.volcengine');
-    return config.get<string>('apiKey', '');
+    return this.readApiKey();
   }
 
   getPredefinedModels(): AIModelConfig[] {

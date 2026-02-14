@@ -147,8 +147,7 @@ export class AliyunAIProvider extends BaseAIProvider {
   }
 
   getApiKey(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.aliyun');
-    return config.get<string>('apiKey', '');
+    return this.readApiKey();
   }
 
   getPredefinedModels(): AIModelConfig[] {

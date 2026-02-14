@@ -152,8 +152,7 @@ export class MinimaxAIProvider extends BaseAIProvider {
   }
 
   getApiKey(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.minimax');
-    return config.get<string>('apiKey', '');
+    return this.readApiKey();
   }
 
   getPredefinedModels(): AIModelConfig[] {

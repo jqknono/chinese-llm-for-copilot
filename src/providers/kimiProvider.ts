@@ -152,8 +152,7 @@ export class KimiAIProvider extends BaseAIProvider {
   }
 
   getApiKey(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.kimi');
-    return config.get<string>('apiKey', '');
+    return this.readApiKey();
   }
 
   getPredefinedModels(): AIModelConfig[] {
