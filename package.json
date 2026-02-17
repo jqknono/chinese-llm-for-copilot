@@ -2,7 +2,7 @@
     "name": "chinese-ai-plans-for-copilot",
     "displayName": "%displayName%",
     "description": "%description%",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "publisher": "techfetch-dev",
     "repository": {
         "type": "git",
@@ -249,6 +249,7 @@
         "pretest": "npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js",
+        "changelog:update": "node ./scripts/update-changelog.js",
         "package:vsix": "npm run compile && npx @vscode/vsce package",
         "publish:marketplace": "npm run compile && node ./scripts/publish-vsce.js",
         "pricing:fetch": "node ./scripts/fetch-provider-pricing.js"

@@ -30,7 +30,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add assets/provider-pricing.json
+          git add assets/provider-pricing.json docs/provider-pricing.json
           if git diff --cached --quiet; then
             echo "No pricing changes detected."
             exit 0

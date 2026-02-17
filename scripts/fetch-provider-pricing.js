@@ -6,6 +6,7 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 
 const OUTPUT_FILE = path.resolve(__dirname, "..", "assets", "provider-pricing.json");
+const DOCS_OUTPUT_FILE = path.resolve(__dirname, "..", "docs", "provider-pricing.json");
 
 const PROVIDER_IDS = {
   ZHIPU: "zhipu-ai",
@@ -625,11 +626,18 @@ async function main() {
     failures,
   };
 
+  const outputText = `${JSON.stringify(output, null, 2)}\n`;
+
   await fs.mkdir(path.dirname(OUTPUT_FILE), { recursive: true });
-  await fs.writeFile(OUTPUT_FILE, `${JSON.stringify(output, null, 2)}\n`, "utf8");
+  await fs.mkdir(path.dirname(DOCS_OUTPUT_FILE), { recursive: true });
+  await Promise.all([
+    fs.writeFile(OUTPUT_FILE, outputText, "utf8"),
+    fs.writeFile(DOCS_OUTPUT_FILE, outputText, "utf8"),
+  ]);
 
   const summary = providers.map((provider) => `${provider.provider}: ${provider.plans.length}`).join(", ");
   console.log(`[pricing] wrote ${OUTPUT_FILE}`);
+  console.log(`[pricing] wrote ${DOCS_OUTPUT_FILE}`);
   console.log(`[pricing] plans -> ${summary}`);
   if (failures.length > 0) {
     console.log(`[pricing] failures -> ${failures.length}`);

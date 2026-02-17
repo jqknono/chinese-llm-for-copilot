@@ -44,6 +44,13 @@ npm run compile
 - 简单的 API Key 配置
 - **中英双语界面支持，默认使用中文**（根据 VS Code 语言设置自动切换）
 
+## GitHub Pages 套餐看板
+
+仓库提供了一个 GitHub Pages 静态看板，用于展示抓取到的各家编码套餐信息（价格、备注、来源和更新时间）。
+
+- 访问路径：`https://<你的 GitHub 用户名>.github.io/chinese-llm-for-copilot/`
+- 页面数据文件：`docs/provider-pricing.json`
+
 ## 服务状态
 
 - **智谱 z.ai**：已验证

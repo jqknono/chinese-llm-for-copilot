@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>中国 AI 编码套餐看板</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">GitHub Pages · 自动抓取</p>
+        <h1>中国 AI 编码套餐看板</h1>
+        <p class="subtitle">展示仓库脚本抓取到的最新套餐价格、促销信息和来源链接。</p>
+        <div class="stats" id="stats">
+          <span>生成时间：<strong id="generatedAt">加载中</strong></span>
+          <span>提供商：<strong id="providerCount">0</strong></span>
+          <span>套餐数：<strong id="planCount">0</strong></span>
+        </div>
+      </header>
+
+      <section class="toolbar">
+        <label for="unitFilter">计费周期筛选</label>
+        <select id="unitFilter" aria-label="计费周期筛选"></select>
+        <button id="reloadButton" type="button">重新加载</button>
+      </section>
+
+      <section id="errorBanner" class="error hidden" role="status" aria-live="polite"></section>
+      <section id="providerGrid" class="provider-grid" aria-live="polite"></section>
+    </main>
+  </body>
+</html>

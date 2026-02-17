@@ -1,0 +1,44 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="42" y1="36" x2="462" y2="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#09366F"/>
+      <stop offset="1" stop-color="#0AA3D8"/>
+    </linearGradient>
+    <linearGradient id="pill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.14"/>
+    </linearGradient>
+    <filter id="blur" x="82" y="102" width="348" height="308" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+  </defs>
+
+  <rect x="20" y="20" width="472" height="472" rx="104" fill="url(#bg)"/>
+
+  <g filter="url(#blur)" opacity="0.45">
+    <circle cx="256" cy="256" r="86" fill="#BDEBFF"/>
+  </g>
+
+  <g transform="translate(200 180) scale(4.6)" opacity="0.24">
+    <path fill="#F4FBFF" d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/>
+    <path fill="#F4FBFF" d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/>
+    <path fill="#F4FBFF" d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>
+  </g>
+
+  <g>
+    <rect x="58" y="86" width="186" height="64" rx="20" fill="url(#pill)" stroke="#EAF8FF" stroke-opacity="0.5"/>
+    <text x="151" y="126" text-anchor="middle" fill="#FFFFFF" font-size="30" font-weight="700" font-family="Segoe UI, Microsoft YaHei, Arial, sans-serif">ZHIPU</text>
+
+    <rect x="268" y="86" width="186" height="64" rx="20" fill="url(#pill)" stroke="#EAF8FF" stroke-opacity="0.5"/>
+    <text x="361" y="126" text-anchor="middle" fill="#FFFFFF" font-size="30" font-weight="700" font-family="Segoe UI, Microsoft YaHei, Arial, sans-serif">KIMI</text>
+
+    <rect x="58" y="186" width="186" height="64" rx="20" fill="url(#pill)" stroke="#EAF8FF" stroke-opacity="0.5"/>
+    <text x="151" y="226" text-anchor="middle" fill="#FFFFFF" font-size="24" font-weight="700" font-family="Segoe UI, Microsoft YaHei, Arial, sans-serif">VOLCENGINE</text>
+
+    <rect x="268" y="186" width="186" height="64" rx="20" fill="url(#pill)" stroke="#EAF8FF" stroke-opacity="0.5"/>
+    <text x="361" y="226" text-anchor="middle" fill="#FFFFFF" font-size="25" font-weight="700" font-family="Segoe UI, Microsoft YaHei, Arial, sans-serif">MINIMAX</text>
+
+    <rect x="130" y="286" width="252" height="64" rx="20" fill="url(#pill)" stroke="#EAF8FF" stroke-opacity="0.5"/>
+    <text x="256" y="326" text-anchor="middle" fill="#FFFFFF" font-size="30" font-weight="700" font-family="Segoe UI, Microsoft YaHei, Arial, sans-serif">ALIYUN</text>
+  </g>
+</svg>
