@@ -48,7 +48,7 @@ npm run compile
 
 仓库提供了一个 GitHub Pages 静态看板，用于展示抓取到的各家编码套餐信息（价格、备注、来源和更新时间）。
 
-- 访问路径：`https://<你的 GitHub 用户名>.github.io/chinese-llm-for-copilot/`
+- 访问路径：https://jqknono.github.io/chinese-llm-for-copilot/
 - 页面数据文件：`docs/provider-pricing.json`
 
 ## 服务状态
