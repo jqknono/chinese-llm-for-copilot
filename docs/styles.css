@@ -81,6 +81,30 @@ h1 {
   line-height: 1.6;
 }
 
+.hero-actions {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.hero-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(12, 124, 89, 0.28);
+  background: rgba(12, 124, 89, 0.08);
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hero-link:hover {
+  filter: brightness(1.03);
+}
+
 .stats {
   margin-top: 1rem;
   display: grid;
