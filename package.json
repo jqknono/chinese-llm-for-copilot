@@ -2,7 +2,7 @@
     "name": "chinese-ai-plans-for-copilot",
     "displayName": "%displayName%",
     "description": "%description%",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "publisher": "techfetch-dev",
     "repository": {
         "type": "git",
