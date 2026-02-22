@@ -209,34 +209,85 @@
                 "command": "Chinese-AI.refreshModels.aliyun",
                 "title": "%commands.Chinese-AI.refreshModels.aliyun.title%",
                 "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.generateCommitMessage",
+                "title": "%commands.Chinese-AI.generateCommitMessage.title%",
+                "icon": "$(sparkle)",
+                "category": "%commands.category%"
+            },
+            {
+                "command": "Chinese-AI.selectCommitMessageModel",
+                "title": "%commands.Chinese-AI.selectCommitMessageModel.title%",
+                "category": "%commands.category%"
             }
         ],
+        "keybindings": [
+            {
+                "command": "Chinese-AI.generateCommitMessage",
+                "key": "ctrl+shift+g ctrl+shift+m",
+                "mac": "cmd+shift+g cmd+shift+m"
+            }
+        ],
+        "menus": {
+            "scm/title": [
+                {
+                    "command": "Chinese-AI.generateCommitMessage",
+                    "group": "navigation",
+                    "when": "scmProvider == git"
+                }
+            ]
+        },
         "configuration": {
             "title": "%configuration.title%",
             "properties": {
+                "Chinese-AI.commitMessage.language": {
+                    "type": "string",
+                    "default": "auto",
+                    "enum": ["auto", "en", "zh-cn"],
+                    "enumDescriptions": [
+                        "%configuration.Chinese-AI.commitMessage.language.auto%",
+                        "English",
+                        "中文"
+                    ],
+                    "description": "%configuration.Chinese-AI.commitMessage.language.description%",
+                    "order": 0
+                },
+                "Chinese-AI.commitMessage.modelVendor": {
+                    "type": "string",
+                    "default": "",
+                    "description": "%configuration.Chinese-AI.commitMessage.modelVendor.description%",
+                    "order": 1
+                },
+                "Chinese-AI.commitMessage.modelId": {
+                    "type": "string",
+                    "default": "",
+                    "description": "%configuration.Chinese-AI.commitMessage.modelId.description%",
+                    "order": 2
+                },
                 "Chinese-AI.zhipu.region": {
                     "type": "boolean",
                     "default": true,
                     "description": "%configuration.Chinese-AI.zhipu.region.description%",
-                    "order": 1
+                    "order": 3
                 },
                 "Chinese-AI.kimi.region": {
                     "type": "boolean",
                     "default": true,
                     "description": "%configuration.Chinese-AI.kimi.region.description%",
-                    "order": 2
+                    "order": 4
                 },
                 "Chinese-AI.volcengine.region": {
                     "type": "boolean",
                     "default": true,
                     "description": "%configuration.Chinese-AI.volcengine.region.description%",
-                    "order": 3
+                    "order": 5
                 },
                 "Chinese-AI.minimax.region": {
                     "type": "boolean",
                     "default": true,
                     "description": "%configuration.Chinese-AI.minimax.region.description%",
-                    "order": 4
+                    "order": 6
                 }
             }
         }

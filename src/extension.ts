@@ -7,6 +7,7 @@ import { AliyunAIProvider } from './providers/aliyunProvider';
 import { BaseAIProvider } from './providers/baseProvider';
 import { LMChatProviderAdapter } from './providers/lmChatProviderAdapter';
 import { initI18n, getMessage } from './i18n/i18n';
+import { generateCommitMessage, selectCommitMessageModel } from './commitMessageGenerator';
 
 let providers: Map<string, BaseAIProvider> = new Map();
 const BETA_PROVIDER_KEYS = new Set(['kimi', 'volcengine', 'minimax', 'aliyun']);
@@ -50,6 +51,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   registerProviderCommands(context, volcengineProvider, 'volcengine', 'Volcengine (Beta)');
   registerProviderCommands(context, minimaxProvider, 'minimax', 'Minimax (Beta)');
   registerProviderCommands(context, aliyunProvider, 'aliyun', 'Aliyun Qwen (Beta)');
+
+  // 注册生成 commit message 命令
+  context.subscriptions.push(
+    vscode.commands.registerCommand('Chinese-AI.generateCommitMessage', () => generateCommitMessage(context))
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand('Chinese-AI.selectCommitMessageModel', () => selectCommitMessageModel(context))
+  );
 
   // 检查是否有 API Key
   await checkApiKeys();

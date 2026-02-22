@@ -26,5 +26,11 @@
   "providers.kimi.displayName": "Kimi AI (Beta)",
   "providers.volcengine.displayName": "Volcengine AI (Beta)",
   "providers.minimax.displayName": "Minimax AI (Beta)",
-  "providers.aliyun.displayName": "Aliyun Qwen (Beta)"
+  "providers.aliyun.displayName": "Aliyun Qwen (Beta)",
+  "commands.Chinese-AI.generateCommitMessage.title": "Generate Commit Message",
+  "commands.Chinese-AI.selectCommitMessageModel.title": "Select Commit Message Model",
+  "configuration.Chinese-AI.commitMessage.language.description": "Language for generated commit messages (auto follows VS Code locale)",
+  "configuration.Chinese-AI.commitMessage.modelVendor.description": "Preferred vendor for commit message generation (e.g. zhipu-ai, kimi-ai). Leave empty to always prompt or pick the first available model.",
+  "configuration.Chinese-AI.commitMessage.modelId.description": "Preferred model id for commit message generation. When set, it takes precedence over modelVendor.",
+  "configuration.Chinese-AI.commitMessage.language.auto": "Follow VS Code language setting"
 }
