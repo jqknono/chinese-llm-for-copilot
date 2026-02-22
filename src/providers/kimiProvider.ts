@@ -124,7 +124,7 @@ export class KimiAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('Chinese-AI.kimi.apiKey') || this.hasEndpointConfigChanged(e)) {
+        if (e.affectsConfiguration('coding-plans.kimi.apiKey') || this.hasEndpointConfigChanged(e)) {
           if (this.hasEndpointConfigChanged(e)) {
             this.apiClient.defaults.baseURL = this.getBaseUrl();
           }
@@ -139,11 +139,11 @@ export class KimiAIProvider extends BaseAIProvider {
   }
 
   getConfigSection(): string {
-    return 'Chinese-AI.kimi';
+    return 'coding-plans.kimi';
   }
 
   getBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.kimi');
+    const config = vscode.workspace.getConfiguration('coding-plans.kimi');
     const region = config.get<boolean>('region', true);
     if (!region) {
       return KIMI_DEFAULT_OVERSEAS_BASE_URL;
@@ -345,6 +345,6 @@ export class KimiAIProvider extends BaseAIProvider {
   }
 
   private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
-    return event.affectsConfiguration('Chinese-AI.kimi.region');
+    return event.affectsConfiguration('coding-plans.kimi.region');
   }
 }

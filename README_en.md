@@ -1,5 +1,5 @@
 
-# Chinese AI Models for Copilot
+# Coding Plans for Copilot
 
 Integrate Zhipu z.ai (verified) into VS Code Copilot, with Beta support for Kimi, Volcano Cloud, Minimax, and Alibaba Cloud (untested).
 
@@ -12,7 +12,7 @@ Integrate Zhipu z.ai (verified) into VS Code Copilot, with Beta support for Kimi
 - Supports multi-turn conversations
 - Customizable model parameters
 - Simple API Key configuration
-- **Bilingual UI support (Chinese/English), defaults to Chinese** (auto-switches based on VS Code language settings)
+- **Bilingual UI support (Chinese/English)** (auto-switches based on VS Code language settings)
 
 ## Service Status
 
@@ -80,7 +80,7 @@ vsce package
 
 This generates a `.vsix` file. Install it via:
 ```bash
-code --install-extension Chinese-AI-copilot-0.0.1.vsix
+code --install-extension coding-plans-for-copilot-0.1.0.vsix
 ```
 
 ## Usage
@@ -101,16 +101,15 @@ Get API Keys from your chosen provider:
 In VS Code:
 
 #### Zhipu z.ai
-- Press `Ctrl+Shift+P` (or `Cmd+Shift+P`), type `Chinese AI: Set Zhipu API Key`
-- Or open Settings (`Ctrl+,`), search for `Chinese-AI.zhipu.apiKey`
+- Press `Ctrl+Shift+P` (or `Cmd+Shift+P`), type `Coding Plans: Set Zhipu API Key`
 
 #### Kimi AI
-- Press `Ctrl+Shift+P`, type `Chinese AI: Set Kimi API Key`
-- Or open Settings (`Ctrl+,`), search for `Chinese-AI.kimi.apiKey`
+- Press `Ctrl+Shift+P`, type `Coding Plans: Set Kimi API Key`
 
 #### Volcano Cloud
-- Press `Ctrl+Shift+P`, type `Chinese AI: Set Volcano Cloud API Key`
-- Or open Settings (`Ctrl+,`), search for `Chinese-AI.volcengine.apiKey`
+- Press `Ctrl+Shift+P`, type `Coding Plans: Set Volcano Cloud API Key`
+
+API keys are stored in VS Code Secret Storage (not in `settings.json`).
 
 ### 3. Use Copilot Chat
 
@@ -125,31 +124,27 @@ Configure these options in VS Code Settings:
 ### Zhipu z.ai (Verified)
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `Chinese-AI.zhipu.apiKey` | string | - | Zhipu AI API Key (required) |
-| `Chinese-AI.zhipu.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
+| `coding-plans.zhipu.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
 
 ### Kimi AI (Beta, untested)
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `Chinese-AI.kimi.apiKey` | string | - | Kimi AI API Key (required) |
-| `Chinese-AI.kimi.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
+| `coding-plans.kimi.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
 
 ### Volcano Cloud (Beta, untested)
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `Chinese-AI.volcengine.apiKey` | string | - | Volcano Cloud API Key (required) |
-| `Chinese-AI.volcengine.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
+| `coding-plans.volcengine.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
 
 ### Minimax AI (Beta, untested)
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `Chinese-AI.minimax.apiKey` | string | - | Minimax API Key (required) |
-| `Chinese-AI.minimax.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
+| `coding-plans.minimax.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
 
 ### Alibaba Cloud Tongyi Qianwen (Beta, untested)
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `Chinese-AI.aliyun.apiKey` | string | - | Alibaba Cloud DashScope API Key (required) |
+| (none) | - | - | API keys are stored in Secret Storage via the command palette |
 
 ## Development
 

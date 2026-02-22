@@ -1,7 +1,7 @@
 {
-  "extensionActivated": "Chinese AI Copilot extension activated",
-  "extensionDeactivated": "Chinese AI Copilot extension deactivated",
-  "welcomeTitle": "Welcome to Chinese AI Copilot! Please set at least one provider's API Key.",
+  "extensionActivated": "Coding Plans for Copilot extension activated",
+  "extensionDeactivated": "Coding Plans for Copilot extension deactivated",
+  "welcomeTitle": "Welcome to Coding Plans for Copilot! Please set at least one provider's API Key.",
   "setZhipuApiKey": "Set Zhipu API Key",
   "setKimiApiKey": "Set Kimi API Key",
   "setVolcengineApiKey": "Set Volcengine API Key",
@@ -44,6 +44,8 @@
   "unsupportedModelDetail": "Not supported",
   "unsupportedModelResponse": "{0} does not provide a model discovery API. This provider is currently unsupported.",
   "betaProviderWarning": "{0} is currently in Beta (untested). Please submit an Issue if you encounter problems.",
+  "migrationCompletedWithApiKey": "Settings migration completed. Plaintext API keys from Settings were moved into Secret Storage.",
+  "migrationCompletedNoApiKey": "Settings migration completed. API keys from the legacy extension can't be migrated from Secret Storage. Please configure API keys again.",
   "zhipuApiError": "Zhipu API request failed:",
   "kimiApiError": "Kimi API request failed:",
   "volcengineApiError": "Volcengine API request failed:",
@@ -62,7 +64,7 @@
   "commitMessageModelSaved": "Commit message model saved: {0}",
   "commitMessageNoChanges": "No staged or unstaged changes found.",
   "commitMessageNoModel": "No language model available. Please configure at least one AI provider.",
-  "commitMessageCopilotQuotaExceeded": "Copilot chat quota exceeded. Please select a Chinese-AI provider model (configure its API key first), or wait for quota to renew.",
+  "commitMessageCopilotQuotaExceeded": "Copilot chat quota exceeded. Please select a provider model configured by this extension (configure its API key first), or wait for quota to renew.",
   "commitMessageFailed": "Failed to generate commit message: {0}",
   "commitMessageDiffTooLarge": "Diff is too large ({0} chars), truncated to {1} chars.",
   "commitMessageNoGitRepo": "No Git repository found in current workspace."

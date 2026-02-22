@@ -1,6 +1,6 @@
-# 中国 AI 套餐 for Copilot
+# 编码套餐 for Copilot
 
-接入中国 AI 模型套餐到 VS Code Copilot：智谱 z.ai（已验证），以及 Kimi、火山云、Minimax、阿里云的 Beta 套餐接入能力（尚未测试）。
+接入 AI 模型套餐到 VS Code Copilot：智谱 z.ai（已验证），以及 Kimi、火山云、Minimax、阿里云的 Beta 套餐接入能力（尚未测试）。
 
 ## 演示
 
@@ -10,12 +10,12 @@
 
 ### 方式一：从 VS Code 插件市场安装（推荐）
 
-- [点击访问 VS Code 插件市场](https://marketplace.visualstudio.com/items?itemName=techfetch-dev.chinese-ai-plans-for-copilot)
+- [点击访问 VS Code 插件市场](https://marketplace.visualstudio.com/items?itemName=techfetch-dev.coding-plans-for-copilot)
 
 ### 方式二：在 VS Code 中搜索安装
 
 1. 打开 VS Code 扩展面板（`Ctrl+Shift+X` 或 `Cmd+Shift+X`）
-2. 搜索 `Chinese AI Plans for Copilot` 或 `中国 AI 套餐`
+2. 搜索 `Coding Plans for Copilot` 或 `编码套餐`
 3. 点击安装
 
 ### 方式三：从源码安装
@@ -83,7 +83,7 @@ npm run compile
 
 ### 2. 配置 API Key
 
-按 `Ctrl+Shift+P`，输入 `中国 AI: 设置 [提供商] API Key`。API Key 会保存到 VS Code Secret Storage。
+按 `Ctrl+Shift+P`，输入 `编码套餐: 设置 [提供商] API Key`。API Key 会保存到 VS Code Secret Storage。
 
 ### 3. 使用 Copilot Chat
 
@@ -91,7 +91,7 @@ npm run compile
 
 ## 配置选项
 
-在 VS Code 设置中配置 `region` 选项：`true` 为中国大陆接口，`false` 为海外接口。
+在 VS Code 设置中配置 `coding-plans.<provider>.region`：`true` 为中国大陆接口，`false` 为海外接口。
 
 ## 开发
 

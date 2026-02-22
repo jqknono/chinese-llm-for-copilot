@@ -136,7 +136,7 @@ export class ZhipuAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('Chinese-AI.zhipu.apiKey') || this.hasEndpointConfigChanged(e)) {
+        if (e.affectsConfiguration('coding-plans.zhipu.apiKey') || this.hasEndpointConfigChanged(e)) {
           if (this.hasEndpointConfigChanged(e)) {
             this.apiClient.defaults.baseURL = this.getBaseUrl();
           }
@@ -151,11 +151,11 @@ export class ZhipuAIProvider extends BaseAIProvider {
   }
 
   getConfigSection(): string {
-    return 'Chinese-AI.zhipu';
+    return 'coding-plans.zhipu';
   }
 
   getBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.zhipu');
+    const config = vscode.workspace.getConfiguration('coding-plans.zhipu');
     const region = config.get<boolean>('region', true);
     if (!region) {
       return ZHIPU_DEFAULT_OVERSEAS_BASE_URL;
@@ -434,6 +434,6 @@ export class ZhipuAIProvider extends BaseAIProvider {
   }
 
   private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
-    return event.affectsConfiguration('Chinese-AI.zhipu.region');
+    return event.affectsConfiguration('coding-plans.zhipu.region');
   }
 }

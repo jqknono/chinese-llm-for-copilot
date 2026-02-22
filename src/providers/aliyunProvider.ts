@@ -127,7 +127,7 @@ export class AliyunAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('Chinese-AI.aliyun.apiKey')) {
+        if (e.affectsConfiguration('coding-plans.aliyun.apiKey')) {
           await this.refreshModels();
         }
       })
@@ -139,7 +139,7 @@ export class AliyunAIProvider extends BaseAIProvider {
   }
 
   getConfigSection(): string {
-    return 'Chinese-AI.aliyun';
+    return 'coding-plans.aliyun';
   }
 
   getBaseUrl(): string {

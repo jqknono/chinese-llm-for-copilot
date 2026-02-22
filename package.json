@@ -1,8 +1,8 @@
 {
-    "name": "chinese-ai-plans-for-copilot",
+    "name": "coding-plans-for-copilot",
     "displayName": "%displayName%",
     "description": "%description%",
-    "version": "0.0.4",
+    "version": "0.1.0",
     "publisher": "techfetch-dev",
     "repository": {
         "type": "git",
@@ -136,95 +136,95 @@
         ],
         "commands": [
             {
-                "command": "Chinese-AI.manage.zhipu",
-                "title": "%commands.Chinese-AI.manage.zhipu.title%",
+                "command": "coding-plans.manage.zhipu",
+                "title": "%commands.coding-plans.manage.zhipu.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.setApiKey.zhipu",
-                "title": "%commands.Chinese-AI.setApiKey.zhipu.title%",
+                "command": "coding-plans.setApiKey.zhipu",
+                "title": "%commands.coding-plans.setApiKey.zhipu.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.refreshModels.zhipu",
-                "title": "%commands.Chinese-AI.refreshModels.zhipu.title%",
+                "command": "coding-plans.refreshModels.zhipu",
+                "title": "%commands.coding-plans.refreshModels.zhipu.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.manage.kimi",
-                "title": "%commands.Chinese-AI.manage.kimi.title%",
+                "command": "coding-plans.manage.kimi",
+                "title": "%commands.coding-plans.manage.kimi.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.setApiKey.kimi",
-                "title": "%commands.Chinese-AI.setApiKey.kimi.title%",
+                "command": "coding-plans.setApiKey.kimi",
+                "title": "%commands.coding-plans.setApiKey.kimi.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.refreshModels.kimi",
-                "title": "%commands.Chinese-AI.refreshModels.kimi.title%",
+                "command": "coding-plans.refreshModels.kimi",
+                "title": "%commands.coding-plans.refreshModels.kimi.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.manage.volcengine",
-                "title": "%commands.Chinese-AI.manage.volcengine.title%",
+                "command": "coding-plans.manage.volcengine",
+                "title": "%commands.coding-plans.manage.volcengine.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.setApiKey.volcengine",
-                "title": "%commands.Chinese-AI.setApiKey.volcengine.title%",
+                "command": "coding-plans.setApiKey.volcengine",
+                "title": "%commands.coding-plans.setApiKey.volcengine.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.refreshModels.volcengine",
-                "title": "%commands.Chinese-AI.refreshModels.volcengine.title%",
+                "command": "coding-plans.refreshModels.volcengine",
+                "title": "%commands.coding-plans.refreshModels.volcengine.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.manage.minimax",
-                "title": "%commands.Chinese-AI.manage.minimax.title%",
+                "command": "coding-plans.manage.minimax",
+                "title": "%commands.coding-plans.manage.minimax.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.setApiKey.minimax",
-                "title": "%commands.Chinese-AI.setApiKey.minimax.title%",
+                "command": "coding-plans.setApiKey.minimax",
+                "title": "%commands.coding-plans.setApiKey.minimax.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.refreshModels.minimax",
-                "title": "%commands.Chinese-AI.refreshModels.minimax.title%",
+                "command": "coding-plans.refreshModels.minimax",
+                "title": "%commands.coding-plans.refreshModels.minimax.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.manage.aliyun",
-                "title": "%commands.Chinese-AI.manage.aliyun.title%",
+                "command": "coding-plans.manage.aliyun",
+                "title": "%commands.coding-plans.manage.aliyun.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.setApiKey.aliyun",
-                "title": "%commands.Chinese-AI.setApiKey.aliyun.title%",
+                "command": "coding-plans.setApiKey.aliyun",
+                "title": "%commands.coding-plans.setApiKey.aliyun.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.refreshModels.aliyun",
-                "title": "%commands.Chinese-AI.refreshModels.aliyun.title%",
+                "command": "coding-plans.refreshModels.aliyun",
+                "title": "%commands.coding-plans.refreshModels.aliyun.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.generateCommitMessage",
-                "title": "%commands.Chinese-AI.generateCommitMessage.title%",
+                "command": "coding-plans.generateCommitMessage",
+                "title": "%commands.coding-plans.generateCommitMessage.title%",
                 "icon": "$(sparkle)",
                 "category": "%commands.category%"
             },
             {
-                "command": "Chinese-AI.selectCommitMessageModel",
-                "title": "%commands.Chinese-AI.selectCommitMessageModel.title%",
+                "command": "coding-plans.selectCommitMessageModel",
+                "title": "%commands.coding-plans.selectCommitMessageModel.title%",
                 "category": "%commands.category%"
             }
         ],
         "keybindings": [
             {
-                "command": "Chinese-AI.generateCommitMessage",
+                "command": "coding-plans.generateCommitMessage",
                 "key": "ctrl+shift+g ctrl+shift+m",
                 "mac": "cmd+shift+g cmd+shift+m"
             }
@@ -232,7 +232,7 @@
         "menus": {
             "scm/title": [
                 {
-                    "command": "Chinese-AI.generateCommitMessage",
+                    "command": "coding-plans.generateCommitMessage",
                     "group": "navigation",
                     "when": "scmProvider == git"
                 }
@@ -241,52 +241,52 @@
         "configuration": {
             "title": "%configuration.title%",
             "properties": {
-                "Chinese-AI.commitMessage.language": {
+                "coding-plans.commitMessage.language": {
                     "type": "string",
                     "default": "auto",
                     "enum": ["auto", "en", "zh-cn"],
                     "enumDescriptions": [
-                        "%configuration.Chinese-AI.commitMessage.language.auto%",
+                        "%configuration.coding-plans.commitMessage.language.auto%",
                         "English",
                         "中文"
                     ],
-                    "description": "%configuration.Chinese-AI.commitMessage.language.description%",
+                    "description": "%configuration.coding-plans.commitMessage.language.description%",
                     "order": 0
                 },
-                "Chinese-AI.commitMessage.modelVendor": {
+                "coding-plans.commitMessage.modelVendor": {
                     "type": "string",
                     "default": "",
-                    "description": "%configuration.Chinese-AI.commitMessage.modelVendor.description%",
+                    "description": "%configuration.coding-plans.commitMessage.modelVendor.description%",
                     "order": 1
                 },
-                "Chinese-AI.commitMessage.modelId": {
+                "coding-plans.commitMessage.modelId": {
                     "type": "string",
                     "default": "",
-                    "description": "%configuration.Chinese-AI.commitMessage.modelId.description%",
+                    "description": "%configuration.coding-plans.commitMessage.modelId.description%",
                     "order": 2
                 },
-                "Chinese-AI.zhipu.region": {
+                "coding-plans.zhipu.region": {
                     "type": "boolean",
                     "default": true,
-                    "description": "%configuration.Chinese-AI.zhipu.region.description%",
+                    "description": "%configuration.coding-plans.zhipu.region.description%",
                     "order": 3
                 },
-                "Chinese-AI.kimi.region": {
+                "coding-plans.kimi.region": {
                     "type": "boolean",
                     "default": true,
-                    "description": "%configuration.Chinese-AI.kimi.region.description%",
+                    "description": "%configuration.coding-plans.kimi.region.description%",
                     "order": 4
                 },
-                "Chinese-AI.volcengine.region": {
+                "coding-plans.volcengine.region": {
                     "type": "boolean",
                     "default": true,
-                    "description": "%configuration.Chinese-AI.volcengine.region.description%",
+                    "description": "%configuration.coding-plans.volcengine.region.description%",
                     "order": 5
                 },
-                "Chinese-AI.minimax.region": {
+                "coding-plans.minimax.region": {
                     "type": "boolean",
                     "default": true,
-                    "description": "%configuration.Chinese-AI.minimax.region.description%",
+                    "description": "%configuration.coding-plans.minimax.region.description%",
                     "order": 6
                 }
             }

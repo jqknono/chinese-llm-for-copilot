@@ -124,7 +124,7 @@ export class VolcengineAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('Chinese-AI.volcengine.apiKey') || this.hasEndpointConfigChanged(e)) {
+        if (e.affectsConfiguration('coding-plans.volcengine.apiKey') || this.hasEndpointConfigChanged(e)) {
           if (this.hasEndpointConfigChanged(e)) {
             this.apiClient.defaults.baseURL = this.getBaseUrl();
           }
@@ -139,11 +139,11 @@ export class VolcengineAIProvider extends BaseAIProvider {
   }
 
   getConfigSection(): string {
-    return 'Chinese-AI.volcengine';
+    return 'coding-plans.volcengine';
   }
 
   getBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.volcengine');
+    const config = vscode.workspace.getConfiguration('coding-plans.volcengine');
     const region = config.get<boolean>('region', true);
     if (!region) {
       return VOLCENGINE_DEFAULT_OVERSEAS_BASE_URL;
@@ -345,6 +345,6 @@ export class VolcengineAIProvider extends BaseAIProvider {
   }
 
   private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
-    return event.affectsConfiguration('Chinese-AI.volcengine.region');
+    return event.affectsConfiguration('coding-plans.volcengine.region');
   }
 }

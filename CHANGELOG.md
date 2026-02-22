@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0] - 2026-02-22
+- feat!: rebrand to "Coding Plans for Copilot" and rename command/config namespace to `coding-plans` (breaking)
+- feat: persist commit message model selection in settings and add a dedicated command to set it
+- feat: migrate legacy `Chinese-AI.*` settings to `coding-plans.*` on first activation (best-effort)
+
 ## [0.0.4] - 2026-02-20
 - chore: update version
 - feat(docs): 添加 github 仓库链接按钮
@@ -22,4 +27,3 @@ All notable changes to this project will be documented in this file.
 - feat: Update configuration for AI providers to include region settings
 - feat: 更新智谱 API 基础 URL，增强工具调用支持
 - feat: Add support for multiple Chinese AI models in Copilot extension
-

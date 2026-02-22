@@ -124,7 +124,7 @@ export class MinimaxAIProvider extends BaseAIProvider {
     // 监听配置变化
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('Chinese-AI.minimax.apiKey') || this.hasEndpointConfigChanged(e)) {
+        if (e.affectsConfiguration('coding-plans.minimax.apiKey') || this.hasEndpointConfigChanged(e)) {
           if (this.hasEndpointConfigChanged(e)) {
             this.apiClient.defaults.baseURL = this.getBaseUrl();
           }
@@ -139,11 +139,11 @@ export class MinimaxAIProvider extends BaseAIProvider {
   }
 
   getConfigSection(): string {
-    return 'Chinese-AI.minimax';
+    return 'coding-plans.minimax';
   }
 
   getBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration('Chinese-AI.minimax');
+    const config = vscode.workspace.getConfiguration('coding-plans.minimax');
     const region = config.get<boolean>('region', true);
     if (!region) {
       return MINIMAX_DEFAULT_OVERSEAS_BASE_URL;
@@ -315,7 +315,7 @@ export class MinimaxAIProvider extends BaseAIProvider {
   }
 
   private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
-    return event.affectsConfiguration('Chinese-AI.minimax.region');
+    return event.affectsConfiguration('coding-plans.minimax.region');
   }
 
   private readModelEntries(payload: MinimaxModelListResponse | undefined): MinimaxModelListEntry[] {

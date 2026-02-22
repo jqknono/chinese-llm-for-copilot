@@ -12,12 +12,18 @@ import { generateCommitMessage, selectCommitMessageModel } from './commitMessage
 let providers: Map<string, BaseAIProvider> = new Map();
 const BETA_PROVIDER_KEYS = new Set(['kimi', 'volcengine', 'minimax', 'aliyun']);
 const warnedBetaProviders = new Set<string>();
+const OLD_NAMESPACE = 'Chinese-AI';
+const NEW_NAMESPACE = 'coding-plans';
+const MIGRATION_NOTICE_SHOWN_KEY = 'coding-plans.migration.noticeShown';
+const PROVIDER_KEYS = ['zhipu', 'kimi', 'volcengine', 'minimax', 'aliyun'] as const;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   // 初始化国际化
   await initI18n();
 
   console.log(getMessage('extensionActivated'));
+
+  await migrateChineseAISettingsToCodingPlans(context);
 
   // 创建所有 AI 提供者
   const zhipuProvider = new ZhipuAIProvider(context);
@@ -54,10 +60,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // 注册生成 commit message 命令
   context.subscriptions.push(
-    vscode.commands.registerCommand('Chinese-AI.generateCommitMessage', () => generateCommitMessage(context))
+    vscode.commands.registerCommand('coding-plans.generateCommitMessage', generateCommitMessage)
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand('Chinese-AI.selectCommitMessageModel', () => selectCommitMessageModel(context))
+    vscode.commands.registerCommand('coding-plans.selectCommitMessageModel', selectCommitMessageModel)
   );
 
   // 检查是否有 API Key
@@ -90,7 +96,7 @@ function registerProviderCommands(
     id: ManageActionId;
   }
 
-  const configSection = `Chinese-AI.${providerKey}`;
+  const configSection = `${NEW_NAMESPACE}.${providerKey}`;
   const getProviderConfig = () => vscode.workspace.getConfiguration(configSection);
   const maybeShowBetaWarning = () => {
     if (!BETA_PROVIDER_KEYS.has(providerKey) || warnedBetaProviders.has(providerKey)) {
@@ -190,7 +196,7 @@ function registerProviderCommands(
   };
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(`Chinese-AI.manage.${providerKey}`, async () => {
+    vscode.commands.registerCommand(`coding-plans.manage.${providerKey}`, async () => {
       maybeShowBetaWarning();
 
       const actionItems: ManageActionItem[] = [
@@ -236,7 +242,7 @@ function registerProviderCommands(
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(`Chinese-AI.setApiKey.${providerKey}`, async () => {
+    vscode.commands.registerCommand(`coding-plans.setApiKey.${providerKey}`, async () => {
       maybeShowBetaWarning();
       const apiKey = await promptApiKey();
 
@@ -248,7 +254,7 @@ function registerProviderCommands(
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(`Chinese-AI.refreshModels.${providerKey}`, async () => {
+    vscode.commands.registerCommand(`coding-plans.refreshModels.${providerKey}`, async () => {
       maybeShowBetaWarning();
       await provider.refreshModels();
       vscode.window.showInformationMessage(getMessage('modelsRefreshed', providerName));
@@ -276,18 +282,158 @@ async function checkApiKeys(): Promise<void> {
       getMessage('setAliyunApiKey')
     ).then(selection => {
       if (selection === getMessage('setZhipuApiKey')) {
-        vscode.commands.executeCommand('Chinese-AI.setApiKey.zhipu');
+        vscode.commands.executeCommand('coding-plans.setApiKey.zhipu');
       } else if (selection === getMessage('setKimiApiKey')) {
-        vscode.commands.executeCommand('Chinese-AI.setApiKey.kimi');
+        vscode.commands.executeCommand('coding-plans.setApiKey.kimi');
       } else if (selection === getMessage('setVolcengineApiKey')) {
-        vscode.commands.executeCommand('Chinese-AI.setApiKey.volcengine');
+        vscode.commands.executeCommand('coding-plans.setApiKey.volcengine');
       } else if (selection === getMessage('setMinimaxApiKey')) {
-        vscode.commands.executeCommand('Chinese-AI.setApiKey.minimax');
+        vscode.commands.executeCommand('coding-plans.setApiKey.minimax');
       } else if (selection === getMessage('setAliyunApiKey')) {
-        vscode.commands.executeCommand('Chinese-AI.setApiKey.aliyun');
+        vscode.commands.executeCommand('coding-plans.setApiKey.aliyun');
       }
     });
   }
+}
+
+async function migrateChineseAISettingsToCodingPlans(context: vscode.ExtensionContext): Promise<void> {
+  const config = vscode.workspace.getConfiguration();
+  const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
+
+  let sawAnyOldKey = false;
+  let migratedAnyPlainApiKey = false;
+
+  const migrateKeyGlobalAndWorkspace = async <T>(oldKey: string, newKey: string): Promise<void> => {
+    const oldInspect = config.inspect<T>(oldKey);
+    const newInspect = config.inspect<T>(newKey);
+    if (!oldInspect) {
+      return;
+    }
+
+    const updates: Array<Thenable<void>> = [];
+
+    if (oldInspect.globalValue !== undefined) {
+      sawAnyOldKey = true;
+      if (newInspect?.globalValue === undefined) {
+        updates.push(config.update(newKey, oldInspect.globalValue, vscode.ConfigurationTarget.Global));
+      }
+      updates.push(config.update(oldKey, undefined, vscode.ConfigurationTarget.Global));
+    }
+
+    if (oldInspect.workspaceValue !== undefined) {
+      sawAnyOldKey = true;
+      if (newInspect?.workspaceValue === undefined) {
+        updates.push(config.update(newKey, oldInspect.workspaceValue, vscode.ConfigurationTarget.Workspace));
+      }
+      updates.push(config.update(oldKey, undefined, vscode.ConfigurationTarget.Workspace));
+    }
+
+    if (updates.length > 0) {
+      await Promise.all(updates);
+    }
+  };
+
+  const migrateKeyWorkspaceFolder = async <T>(oldKey: string, newKey: string): Promise<void> => {
+    if (workspaceFolders.length === 0) {
+      return;
+    }
+
+    await Promise.all(workspaceFolders.map(async folder => {
+      const folderConfig = vscode.workspace.getConfiguration(undefined, folder.uri);
+      const oldInspect = folderConfig.inspect<T>(oldKey);
+      const newInspect = folderConfig.inspect<T>(newKey);
+      if (!oldInspect) {
+        return;
+      }
+
+      const updates: Array<Thenable<void>> = [];
+      if (oldInspect.workspaceFolderValue !== undefined) {
+        sawAnyOldKey = true;
+        if (newInspect?.workspaceFolderValue === undefined) {
+          updates.push(folderConfig.update(newKey, oldInspect.workspaceFolderValue, vscode.ConfigurationTarget.WorkspaceFolder));
+        }
+        updates.push(folderConfig.update(oldKey, undefined, vscode.ConfigurationTarget.WorkspaceFolder));
+      }
+
+      if (updates.length > 0) {
+        await Promise.all(updates);
+      }
+    }));
+  };
+
+  const migrateKeyAllScopes = async <T>(oldKey: string, newKey: string): Promise<void> => {
+    await migrateKeyGlobalAndWorkspace<T>(oldKey, newKey);
+    await migrateKeyWorkspaceFolder<T>(oldKey, newKey);
+  };
+
+  // commit message settings
+  await migrateKeyAllScopes<string>(`${OLD_NAMESPACE}.commitMessage.language`, `${NEW_NAMESPACE}.commitMessage.language`);
+  await migrateKeyAllScopes<string>(`${OLD_NAMESPACE}.commitMessage.modelVendor`, `${NEW_NAMESPACE}.commitMessage.modelVendor`);
+  await migrateKeyAllScopes<string>(`${OLD_NAMESPACE}.commitMessage.modelId`, `${NEW_NAMESPACE}.commitMessage.modelId`);
+
+  // provider region flags
+  await Promise.all(PROVIDER_KEYS.map(async providerKey => {
+    await migrateKeyAllScopes<boolean>(`${OLD_NAMESPACE}.${providerKey}.region`, `${NEW_NAMESPACE}.${providerKey}.region`);
+  }));
+
+  // best-effort apiKey migration from plaintext settings to new Secret Storage
+  for (const providerKey of PROVIDER_KEYS) {
+    const oldKey = `${OLD_NAMESPACE}.${providerKey}.apiKey`;
+    const newSecretKey = `${NEW_NAMESPACE}.${providerKey}.apiKey`;
+
+    const existingSecret = (await context.secrets.get(newSecretKey))?.trim() ?? '';
+    if (existingSecret.length > 0) {
+      // Still clear any legacy plaintext key to reduce exposure.
+      await migrateKeyAllScopes<string>(oldKey, oldKey);
+      continue;
+    }
+
+    let plaintextApiKey: string | undefined;
+
+    // Prefer workspaceFolder > workspace > global, first folder wins.
+    for (const folder of workspaceFolders) {
+      const folderConfig = vscode.workspace.getConfiguration(undefined, folder.uri);
+      const inspect = folderConfig.inspect<string>(oldKey);
+      if (inspect?.workspaceFolderValue && typeof inspect.workspaceFolderValue === 'string' && inspect.workspaceFolderValue.trim().length > 0) {
+        plaintextApiKey = inspect.workspaceFolderValue.trim();
+        break;
+      }
+    }
+
+    if (!plaintextApiKey) {
+      const inspect = config.inspect<string>(oldKey);
+      const workspaceValue = inspect?.workspaceValue;
+      const globalValue = inspect?.globalValue;
+      if (typeof workspaceValue === 'string' && workspaceValue.trim().length > 0) {
+        plaintextApiKey = workspaceValue.trim();
+      } else if (typeof globalValue === 'string' && globalValue.trim().length > 0) {
+        plaintextApiKey = globalValue.trim();
+      }
+    }
+
+    if (plaintextApiKey) {
+      await context.secrets.store(newSecretKey, plaintextApiKey);
+      migratedAnyPlainApiKey = true;
+    }
+
+    // Always remove plaintext API keys from settings once seen.
+    await migrateKeyAllScopes<string>(oldKey, oldKey);
+  }
+
+  if (!sawAnyOldKey) {
+    return;
+  }
+
+  if (context.globalState.get<boolean>(MIGRATION_NOTICE_SHOWN_KEY) === true) {
+    return;
+  }
+
+  await context.globalState.update(MIGRATION_NOTICE_SHOWN_KEY, true);
+  if (migratedAnyPlainApiKey) {
+    void vscode.window.showInformationMessage(getMessage('migrationCompletedWithApiKey'));
+    return;
+  }
+  void vscode.window.showInformationMessage(getMessage('migrationCompletedNoApiKey'));
 }
 
 export function deactivate(): void {

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-export const MODEL_VERSION_LABEL = 'Chinese AI Copilot';
+export const MODEL_VERSION_LABEL = 'Coding Plans for Copilot';
 
 export interface ModelCapabilities {
   toolCalling?: boolean | number;

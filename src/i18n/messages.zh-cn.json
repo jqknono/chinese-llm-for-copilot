@@ -1,7 +1,7 @@
 {
-  "extensionActivated": "中国 AI Copilot 扩展已激活",
-  "extensionDeactivated": "中国 AI Copilot 扩展已停用",
-  "welcomeTitle": "欢迎使用中国 AI Copilot！请先设置至少一个提供商的 API Key。",
+  "extensionActivated": "编码套餐 for Copilot 扩展已激活",
+  "extensionDeactivated": "编码套餐 for Copilot 扩展已停用",
+  "welcomeTitle": "欢迎使用编码套餐 for Copilot！请先设置至少一个提供商的 API Key。",
   "setZhipuApiKey": "设置智谱 API Key",
   "setKimiApiKey": "设置 Kimi API Key",
   "setVolcengineApiKey": "设置火山云 API Key",
@@ -44,6 +44,8 @@
   "unsupportedModelDetail": "暂未支持",
   "unsupportedModelResponse": "{0} 暂未提供可用模型查询接口，当前暂不支持。",
   "betaProviderWarning": "{0} 当前为 Beta（尚未测试），如遇问题请提交 Issue。",
+  "migrationCompletedWithApiKey": "设置迁移完成：已将设置中明文保存的 API Key 迁移到 Secret Storage。",
+  "migrationCompletedNoApiKey": "设置迁移完成：无法从旧插件的 Secret Storage 迁移 API Key，请重新配置 API Key。",
   "zhipuApiError": "智谱 API 请求失败:",
   "kimiApiError": "Kimi API 请求失败:",
   "volcengineApiError": "火山云 API 请求失败:",
@@ -62,7 +64,7 @@
   "commitMessageModelSaved": "已保存提交消息模型：{0}",
   "commitMessageNoChanges": "未发现暂存或未暂存的更改。",
   "commitMessageNoModel": "没有可用的语言模型，请先配置至少一个 AI 提供商。",
-  "commitMessageCopilotQuotaExceeded": "Copilot Chat 配额已用尽。请选择中国 AI 提供商的模型（需先配置 API Key），或等待配额恢复。",
+  "commitMessageCopilotQuotaExceeded": "Copilot Chat 配额已用尽。请选择本插件配置的供应商模型（需先配置 API Key），或等待配额恢复。",
   "commitMessageFailed": "生成提交消息失败: {0}",
   "commitMessageDiffTooLarge": "差异内容过大（{0} 字符），已截断为 {1} 字符。",
   "commitMessageNoGitRepo": "当前工作区未找到 Git 仓库。"

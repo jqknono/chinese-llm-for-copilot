@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { getMessage } from './i18n/i18n';
 
 const MAX_DIFF_CHARS = 20000;
-const COMMIT_MESSAGE_MODEL_STATE_KEY = 'Chinese-AI.commitMessage.selectedModel'; // legacy globalState key (<=0.0.4)
 const COMMIT_MESSAGE_MODEL_VENDOR_SETTING_KEY = 'commitMessage.modelVendor';
 const COMMIT_MESSAGE_MODEL_ID_SETTING_KEY = 'commitMessage.modelId';
 const CHINESE_AI_VENDORS = new Set(['zhipu-ai', 'kimi-ai', 'volcengine-ai', 'minimax-ai', 'aliyun-ai']);
@@ -24,7 +23,7 @@ interface GitRepository {
 
 function getCommitLanguageInstruction(): string {
   const configured = vscode.workspace
-    .getConfiguration('Chinese-AI')
+    .getConfiguration('coding-plans')
     .get<string>('commitMessage.language', 'auto');
 
   if (configured === 'zh-cn') {
@@ -92,32 +91,7 @@ function modelSortKey(model: vscode.LanguageModelChat): [number, string, string,
 }
 
 function getCommitMessageConfig(): vscode.WorkspaceConfiguration {
-  return vscode.workspace.getConfiguration('Chinese-AI');
-}
-
-async function migrateLegacySelectedModelToSettings(context: vscode.ExtensionContext): Promise<void> {
-  const config = getCommitMessageConfig();
-  const existingVendor = (config.get<string>(COMMIT_MESSAGE_MODEL_VENDOR_SETTING_KEY, '') || '').trim();
-  const existingId = (config.get<string>(COMMIT_MESSAGE_MODEL_ID_SETTING_KEY, '') || '').trim();
-
-  if (existingVendor.length > 0 || existingId.length > 0) {
-    // Already configured via settings, nothing to migrate.
-    if (context.globalState.get(COMMIT_MESSAGE_MODEL_STATE_KEY) !== undefined) {
-      await context.globalState.update(COMMIT_MESSAGE_MODEL_STATE_KEY, undefined);
-    }
-    return;
-  }
-
-  const legacy = context.globalState.get<{ vendor: string; id: string }>(COMMIT_MESSAGE_MODEL_STATE_KEY);
-  if (!legacy) {
-    return;
-  }
-
-  await Promise.all([
-    config.update(COMMIT_MESSAGE_MODEL_VENDOR_SETTING_KEY, legacy.vendor, vscode.ConfigurationTarget.Global),
-    config.update(COMMIT_MESSAGE_MODEL_ID_SETTING_KEY, legacy.id, vscode.ConfigurationTarget.Global)
-  ]);
-  await context.globalState.update(COMMIT_MESSAGE_MODEL_STATE_KEY, undefined);
+  return vscode.workspace.getConfiguration('coding-plans');
 }
 
 function readConfiguredModelSelector(): { vendor?: string; id?: string } {
@@ -139,7 +113,6 @@ async function saveModelSelection(model: vscode.LanguageModelChat): Promise<void
 }
 
 async function selectModel(
-  context: vscode.ExtensionContext,
   allowPrompt: boolean,
   forcePrompt = false
 ): Promise<ModelSelectionResult> {
@@ -159,8 +132,6 @@ async function selectModel(
   if (models.length === 0) {
     return { kind: 'noModels' };
   }
-
-  await migrateLegacySelectedModelToSettings(context);
 
   if (!forcePrompt) {
     const selector = readConfiguredModelSelector();
@@ -230,8 +201,8 @@ function isLanguageModelBlockedError(error: unknown): boolean {
   return typeof code === 'string' && code === vscode.LanguageModelError.Blocked.name;
 }
 
-export async function selectCommitMessageModel(context: vscode.ExtensionContext): Promise<void> {
-  const selection = await selectModel(context, true, true);
+export async function selectCommitMessageModel(): Promise<void> {
+  const selection = await selectModel(true, true);
   if (selection.kind === 'cancelled') {
     vscode.window.showInformationMessage(getMessage('requestCancelled'));
     return;
@@ -245,7 +216,7 @@ export async function selectCommitMessageModel(context: vscode.ExtensionContext)
   );
 }
 
-export async function generateCommitMessage(context: vscode.ExtensionContext): Promise<void> {
+export async function generateCommitMessage(): Promise<void> {
   try {
     const repo = await getGitRepository();
     if (!repo) {
@@ -267,7 +238,7 @@ export async function generateCommitMessage(context: vscode.ExtensionContext): P
       );
     }
 
-    const selection = await selectModel(context, true);
+    const selection = await selectModel(true);
     if (selection.kind === 'cancelled') {
       vscode.window.showInformationMessage(getMessage('requestCancelled'));
       return;
