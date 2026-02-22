@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-16T14:15:34.759Z",
+  "generatedAt": "2026-02-22T03:04:14.606Z",
   "providers": [
     {
       "provider": "zhipu-ai",
@@ -9,7 +9,7 @@
         "https://bigmodel.cn/js/chunk-0d4f69d1.c1011781.js",
         "https://docs.bigmodel.cn/cn/coding-plan/overview"
       ],
-      "fetchedAt": "2026-02-16T14:15:29.775Z",
+      "fetchedAt": "2026-02-22T03:03:48.010Z",
       "plans": [
         {
           "name": "GLM Coding Lite (月)",
@@ -100,7 +100,7 @@
         "https://www.kimi.com/code/zh",
         "https://www.kimi.com/apiv2/kimi.gateway.order.v1.GoodsService/ListGoods"
       ],
-      "fetchedAt": "2026-02-16T14:15:29.928Z",
+      "fetchedAt": "2026-02-22T03:03:48.679Z",
       "plans": [
         {
           "name": "Adagio (月)",
@@ -192,7 +192,7 @@
         "https://www.volcengine.com/activity/codingplan/garrmodlistv3",
         "https://lf6-cdn2-tos.bytegoofy.com/gftar/toutiao/fe_arch/fes2_app_17635357794962595/1.0.0.27/index.js"
       ],
-      "fetchedAt": "2026-02-16T14:15:33.861Z",
+      "fetchedAt": "2026-02-22T03:04:08.773Z",
       "plans": [
         {
           "name": "Coding Plan Lite 月套餐",
@@ -220,7 +220,7 @@
         "https://platform.minimaxi.com/docs/guides/pricing-coding-plan",
         "https://platform.minimaxi.com/subscribe/coding-plan"
       ],
-      "fetchedAt": "2026-02-16T14:15:34.437Z",
+      "fetchedAt": "2026-02-22T03:04:11.315Z",
       "plans": [
         {
           "name": "Plus-极速版",
@@ -331,36 +331,9 @@
           "notes": "用量: 300 prompts / 每 5 小时"
         }
       ]
-    },
-    {
-      "provider": "aliyun-ai",
-      "sourceUrls": [
-        "https://www.aliyun.com/benefit/scene/codingplan",
-        "https://cloud-assets.alicdn.com/lowcode/entry/prod/d7c8f41e1aff3d91c271812d90dffb5c.js",
-        "https://common-buy.aliyun.com/?commodityCode=sfm_codingplan_public_cn#/buy"
-      ],
-      "fetchedAt": "2026-02-16T14:15:34.759Z",
-      "plans": [
-        {
-          "name": "Lite 基础套餐",
-          "currentPrice": 10,
-          "currentPriceText": "10元/首月",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "首月",
-          "notes": "Claude Code 的 3 倍用量；固定月费，每月1.8万次请求；百炼新客 10元/首月，下单立减30元；下单立减30元"
-        },
-        {
-          "name": "Pro 高级套餐",
-          "currentPrice": 50,
-          "currentPriceText": "50元/首月",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "首月",
-          "notes": "Lite 套餐的 5 倍用量；固定月费，每月9万次请求；百炼新客 50元/首月，下单立减150元；下单立减150元"
-        }
-      ]
     }
   ],
-  "failures": []
+  "failures": [
+    "Unable to parse Aliyun coding plans"
+  ]
 }
