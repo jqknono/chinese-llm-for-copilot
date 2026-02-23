@@ -1,0 +1,88 @@
+name: Create Version Tag
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "package.json"
+      - ".github/workflows/create-version-tag.yml"
+  workflow_dispatch:
+
+jobs:
+  tag-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect version change
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CURRENT_VERSION="$(node -p "require('./package.json').version")"
+          if [[ -z "${CURRENT_VERSION}" ]]; then
+            echo "version is empty in package.json"
+            exit 1
+          fi
+
+          BEFORE_SHA="${{ github.event.before }}"
+          PREVIOUS_VERSION=""
+          ZERO_SHA="0000000000000000000000000000000000000000"
+
+          if [[ "${BEFORE_SHA}" != "${ZERO_SHA}" ]] && git cat-file -e "${BEFORE_SHA}:package.json" 2>/dev/null; then
+            PREVIOUS_VERSION="$(git show "${BEFORE_SHA}:package.json" | node -p "const fs=require('node:fs'); const raw=fs.readFileSync(0,'utf8'); JSON.parse(raw).version || ''")"
+          fi
+
+          CHANGED="false"
+          if [[ "${CURRENT_VERSION}" != "${PREVIOUS_VERSION}" ]]; then
+            CHANGED="true"
+          fi
+
+          TAG_NAME="v${CURRENT_VERSION}"
+          echo "current=${CURRENT_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "previous=${PREVIOUS_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "changed=${CHANGED}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${TAG_NAME}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check tag exists on remote
+        id: tag_exists
+        if: steps.version.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG_NAME="${{ steps.version.outputs.tag }}"
+          if git ls-remote --tags origin "refs/tags/${TAG_NAME}" | grep -q .; then
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Create and push tag
+        if: steps.version.outputs.changed == 'true' && steps.tag_exists.outputs.exists == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG_NAME="${{ steps.version.outputs.tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "Release ${TAG_NAME}"
+          git push origin "${TAG_NAME}"
+
+      - name: Summary
+        shell: bash
+        run: |
+          echo "Current version: ${{ steps.version.outputs.current }}"
+          echo "Previous version: ${{ steps.version.outputs.previous }}"
+          echo "Version changed: ${{ steps.version.outputs.changed }}"
+          echo "Target tag: ${{ steps.version.outputs.tag }}"
+          if [[ "${{ steps.version.outputs.changed }}" == "true" ]]; then
+            echo "Tag already exists: ${{ steps.tag_exists.outputs.exists }}"
+          fi

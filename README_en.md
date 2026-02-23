@@ -1,11 +1,11 @@
 
 # Coding Plans for Copilot
 
-Integrate Zhipu z.ai (verified) into VS Code Copilot, with Beta support for Kimi, Volcano Cloud, Minimax, and Alibaba Cloud (untested).
+Integrate Zhipu (verified) into VS Code Copilot, with Beta support for Kimi, Volcano Cloud, Minimax, and Alibaba Cloud (untested).
 
 ## Features
 
-- Supports dynamic querying of Zhipu z.ai models (verified)
+- Supports dynamic querying of Zhipu models (verified)
 - Beta support for Kimi, Volcano Cloud, Minimax, and Alibaba Cloud models (untested)
 - For non-z.ai providers, please submit Issues if encountering problems
 - Seamless integration with VS Code Copilot Chat
@@ -16,7 +16,7 @@ Integrate Zhipu z.ai (verified) into VS Code Copilot, with Beta support for Kimi
 
 ## Service Status
 
-- **Zhipu z.ai**: Verified
+- **Zhipu**: Verified
 - **Kimi / Volcano Cloud / Minimax / Alibaba Cloud**: Beta (untested)
 - Submit Issues if encountering problems with Beta services
 
@@ -39,7 +39,7 @@ To switch VS Code's UI language:
 
 ## Supported Models
 
-### Zhipu z.ai (Verified)
+### Zhipu (Verified)
 - Model list dynamically returned via provider API
 
 ### Kimi AI (Beta, untested)
@@ -89,7 +89,7 @@ code --install-extension coding-plans-for-copilot-0.1.0.vsix
 
 Get API Keys from your chosen provider:
 
-- **Zhipu z.ai (Verified)**: Visit [Zhipu AI Open Platform](https://open.bigmodel.cn/)
+- **Zhipu (Verified)**: Visit [Zhipu AI Open Platform](https://open.bigmodel.cn/)
 - **Kimi AI (Beta, untested)**: Visit [Kimi Open Platform](https://platform.moonshot.cn/)
 - **Volcano Cloud (Beta, untested)**: Visit [Volcano Engine](https://www.volcengine.com/)
 - **Minimax (Beta, untested)**: Visit [Minimax Open Platform](https://platform.minimaxi.com/)
@@ -100,7 +100,7 @@ Get API Keys from your chosen provider:
 
 In VS Code:
 
-#### Zhipu z.ai
+#### Zhipu
 - Press `Ctrl+Shift+P` (or `Cmd+Shift+P`), type `Coding Plans: Set Zhipu API Key`
 
 #### Kimi AI
@@ -121,30 +121,11 @@ API keys are stored in VS Code Secret Storage (not in `settings.json`).
 
 Configure these options in VS Code Settings:
 
-### Zhipu z.ai (Verified)
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `coding-plans.zhipu.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
+| `coding-plans.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
 
-### Kimi AI (Beta, untested)
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `coding-plans.kimi.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
-
-### Volcano Cloud (Beta, untested)
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `coding-plans.volcengine.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
-
-### Minimax AI (Beta, untested)
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `coding-plans.minimax.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
-
-### Alibaba Cloud Tongyi Qianwen (Beta, untested)
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| (none) | - | - | API keys are stored in Secret Storage via the command palette |
+API keys for all providers are stored in Secret Storage via the command palette.
 
 ## Development
 
@@ -195,7 +176,7 @@ A: AI APIs typically have rate limits. Try again later or upgrade your account f
 A: Use the model selector in Copilot Chat panel.
 
 ### Q: Can I use multiple providers simultaneously?
-A: Yes! Configure API Keys for multiple providers and switch as needed. Note: Only Zhipu z.ai is verified; others are Beta (untested).
+A: Yes! Configure API Keys for multiple providers and switch as needed. Note: Only Zhipu is verified; others are Beta (untested).
 
 ### Q: Issues with Beta providers?
 A: Submit an Issue with error details, requested model, and reproduction steps.

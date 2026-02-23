@@ -24,17 +24,9 @@ interface GitRepository {
 function getCommitLanguageInstruction(): string {
   const configured = vscode.workspace
     .getConfiguration('coding-plans')
-    .get<string>('commitMessage.language', 'auto');
+    .get<string>('commitMessage.language', 'en');
 
   if (configured === 'zh-cn') {
-    return 'You MUST write the commit message in Chinese (简体中文).';
-  }
-  if (configured === 'en') {
-    return 'You MUST write the commit message in English.';
-  }
-
-  const locale = vscode.env.language;
-  if (locale.startsWith('zh')) {
     return 'You MUST write the commit message in Chinese (简体中文).';
   }
   return 'You MUST write the commit message in English.';
@@ -90,6 +82,98 @@ function modelSortKey(model: vscode.LanguageModelChat): [number, string, string,
   return [tier, model.vendor, model.family, model.name, model.id];
 }
 
+function getVendorDisplayName(vendor: string): string {
+  switch (vendor) {
+    case 'zhipu-ai':
+      return 'Coding Plan - Zhipu';
+    case 'kimi-ai':
+      return 'Coding Plan - Kimi';
+    case 'volcengine-ai':
+      return 'Coding Plan - Volcengine';
+    case 'minimax-ai':
+      return 'Coding Plan - Minimax';
+    case 'aliyun-ai':
+      return 'Coding Plan - Aliyun Bailian';
+    default:
+      return vendor;
+  }
+}
+
+function normalizeValue(value: string | undefined): string {
+  return (value || '').trim().toLowerCase();
+}
+
+function isDistinctDisplayValue(value: string | undefined, ...others: Array<string | undefined>): boolean {
+  const target = normalizeValue(value);
+  if (!target) {
+    return false;
+  }
+  return others.every(other => normalizeValue(other) !== target);
+}
+
+function toVendorScopedModelQuickPickItem(model: vscode.LanguageModelChat): {
+  label: string;
+  description?: string;
+  detail?: string;
+  model: vscode.LanguageModelChat;
+} {
+  const description = isDistinctDisplayValue(model.family, model.name) ? model.family : undefined;
+  const detail = isDistinctDisplayValue(model.id, model.name, model.family) ? model.id : undefined;
+  return {
+    label: model.name,
+    description,
+    detail,
+    model
+  };
+}
+
+function toGlobalModelQuickPickItem(model: vscode.LanguageModelChat): {
+  label: string;
+  description?: string;
+  detail?: string;
+  model: vscode.LanguageModelChat;
+} {
+  const descriptionParts = [getVendorDisplayName(model.vendor)];
+  if (isDistinctDisplayValue(model.family, model.name)) {
+    descriptionParts.push(model.family);
+  }
+  const detail = isDistinctDisplayValue(model.id, model.name, model.family) ? model.id : undefined;
+  return {
+    label: model.name,
+    description: descriptionParts.join(' · '),
+    detail,
+    model
+  };
+}
+
+async function pickVendor(models: vscode.LanguageModelChat[]): Promise<string | undefined> {
+  const vendors = Array.from(
+    models.reduce((map, model) => {
+      if (!map.has(model.vendor)) {
+        map.set(model.vendor, { vendor: model.vendor, count: 0 });
+      }
+      map.get(model.vendor)!.count += 1;
+      return map;
+    }, new Map<string, { vendor: string; count: number }>())
+      .values()
+  );
+
+  const picked = await vscode.window.showQuickPick(
+    vendors.map(item => ({
+      label: getVendorDisplayName(item.vendor),
+      description: item.vendor,
+      detail: `${item.count} model${item.count > 1 ? 's' : ''}`,
+      vendor: item.vendor
+    })),
+    {
+      ignoreFocusOut: true,
+      placeHolder: getMessage('commitMessageSelectVendor')
+    }
+  );
+
+  return picked?.vendor;
+}
+
 function getCommitMessageConfig(): vscode.WorkspaceConfiguration {
   return vscode.workspace.getConfiguration('coding-plans');
 }
@@ -133,9 +217,9 @@ async function selectModel(
     return { kind: 'noModels' };
   }
 
-  if (!forcePrompt) {
-    const selector = readConfiguredModelSelector();
+  const selector = readConfiguredModelSelector();
 
+  if (!forcePrompt) {
     if (selector.vendor && selector.id) {
       const match = models.find(model => model.vendor === selector.vendor && model.id === selector.id);
       if (match) {
@@ -152,19 +236,34 @@ async function selectModel(
       if (allowPrompt) {
         void vscode.window.showWarningMessage(getMessage('commitMessageConfiguredVendorNotFound', selector.vendor));
       }
-    } else if (selector.id) {
-      const match = models.find(model => model.id === selector.id);
-      if (match) {
-        return { kind: 'selected', model: match };
-      }
-      if (allowPrompt) {
-        void vscode.window.showWarningMessage(getMessage('commitMessageConfiguredModelNotFound'));
-      }
     }
   }
 
   if (!allowPrompt) {
     return { kind: 'selected', model: models[0] };
+  }
+
+  if (!selector.vendor) {
+    const pickedVendor = await pickVendor(models);
+    if (!pickedVendor) {
+      return { kind: 'cancelled' };
+    }
+
+    const vendorModels = models.filter(model => model.vendor === pickedVendor);
+    const pickedModel = await vscode.window.showQuickPick(
+      vendorModels.map(model => toVendorScopedModelQuickPickItem(model)),
+      {
+        ignoreFocusOut: true,
+        placeHolder: getMessage('commitMessageSelectModelForVendor', getVendorDisplayName(pickedVendor))
+      }
+    );
+
+    if (!pickedModel) {
+      return { kind: 'cancelled' };
+    }
+
+    await saveModelSelection(pickedModel.model);
+    return { kind: 'selected', model: pickedModel.model };
   }
 
   if (models.length === 1) {
@@ -173,12 +272,7 @@ async function selectModel(
   }
 
   const picked = await vscode.window.showQuickPick(
-    models.map(model => ({
-      label: model.name,
-      description: `${model.vendor} · ${model.family} · ${model.version}`,
-      detail: model.id,
-      model
-    })),
+    models.map(model => toGlobalModelQuickPickItem(model)),
     {
       ignoreFocusOut: true,
       placeHolder: getMessage('commitMessageSelectModel')

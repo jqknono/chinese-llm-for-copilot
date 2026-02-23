@@ -8,7 +8,8 @@ import {
   ChatToolCall,
   ChatToolDefinition,
   MODEL_VERSION_LABEL,
-  ModelCapabilities
+  ModelCapabilities,
+  getCompactErrorMessage
 } from './baseProvider';
 import { getMessage } from '../i18n/i18n';
 
@@ -105,7 +106,7 @@ export class ZhipuLanguageModel extends BaseLanguageModel {
       if (error instanceof vscode.LanguageModelError) {
         throw error;
       }
-      throw new vscode.LanguageModelError(getMessage('requestFailed', error));
+      throw new vscode.LanguageModelError(getMessage('requestFailed', getCompactErrorMessage(error)));
     }
   }
 }
@@ -155,7 +156,7 @@ export class ZhipuAIProvider extends BaseAIProvider {
   }
 
   getBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration('coding-plans.zhipu');
+    const config = vscode.workspace.getConfiguration('coding-plans');
     const region = config.get<boolean>('region', true);
     if (!region) {
       return ZHIPU_DEFAULT_OVERSEAS_BASE_URL;
@@ -259,22 +260,26 @@ export class ZhipuAIProvider extends BaseAIProvider {
     } catch (error: any) {
       console.error(getMessage('zhipuApiError'), error);
       const detail = this.readApiErrorMessage(error);
+      const compactDetail = detail ? getCompactErrorMessage(detail) : undefined;
 
       if (axios.isCancel(error)) {
         throw new vscode.LanguageModelError(getMessage('requestCancelled'));
       }
 
       if (error.response?.status === 401) {
-        throw new vscode.LanguageModelError(detail || getMessage('apiKeyInvalid'));
+        throw new vscode.LanguageModelError(compactDetail || getMessage('apiKeyInvalid'));
       } else if (error.response?.status === 429) {
-        throw new vscode.LanguageModelError(detail ? `${getMessage('rateLimitExceeded')}: ${detail}` : getMessage('rateLimitExceeded'));
+        throw vscode.LanguageModelError.Blocked(
+          compactDetail ? `${getMessage('rateLimitExceeded')}: ${compactDetail}` : getMessage('rateLimitExceeded')
+        );
       } else if (error.response?.status === 403) {
-        throw new vscode.LanguageModelError(detail || getMessage('apiKeyInvalid'));
+        throw new vscode.LanguageModelError(compactDetail || getMessage('apiKeyInvalid'));
       } else if (error.response?.status === 400) {
-        throw new vscode.LanguageModelError(getMessage('invalidRequest', detail || error.response.data?.error?.message));
+        const invalidDetail = compactDetail || getCompactErrorMessage(error.response.data?.error?.message || '');
+        throw new vscode.LanguageModelError(getMessage('invalidRequest', invalidDetail));
       }
 
-      throw new vscode.LanguageModelError(detail || error.message || getMessage('unknownError'));
+      throw new vscode.LanguageModelError(compactDetail || getCompactErrorMessage(error) || getMessage('unknownError'));
     }
   }
 
@@ -434,6 +439,6 @@ export class ZhipuAIProvider extends BaseAIProvider {
   }
 
   private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
-    return event.affectsConfiguration('coding-plans.zhipu.region');
+    return event.affectsConfiguration('coding-plans.region');
   }
 }

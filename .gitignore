@@ -5,7 +5,6 @@ dist/
 .vscode-test/
 *.log
 .DS_Store
-.vscode/launch.json
 *.log
 minimax-sitemap.xml
 moonshot-sitemap.xml

@@ -7,7 +7,8 @@ import {
   ChatMessage,
   ChatToolCall,
   ChatToolDefinition,
-  MODEL_VERSION_LABEL
+  MODEL_VERSION_LABEL,
+  getCompactErrorMessage
 } from './baseProvider';
 import { getMessage } from '../i18n/i18n';
 
@@ -96,7 +97,7 @@ export class AliyunLanguageModel extends BaseLanguageModel {
       if (error instanceof vscode.LanguageModelError) {
         throw error;
       }
-      throw new vscode.LanguageModelError(getMessage('requestFailed', error));
+      throw new vscode.LanguageModelError(getMessage('requestFailed', getCompactErrorMessage(error)));
     }
   }
 }
@@ -259,22 +260,26 @@ export class AliyunAIProvider extends BaseAIProvider {
     } catch (error: any) {
       console.error(getMessage('aliyunApiError'), error);
       const detail = this.readApiErrorMessage(error);
+      const compactDetail = detail ? getCompactErrorMessage(detail) : undefined;
 
       if (axios.isCancel(error)) {
         throw new vscode.LanguageModelError(getMessage('requestCancelled'));
       }
 
       if (error.response?.status === 401) {
-        throw new vscode.LanguageModelError(detail || getMessage('apiKeyInvalid'));
+        throw new vscode.LanguageModelError(compactDetail || getMessage('apiKeyInvalid'));
       } else if (error.response?.status === 429) {
-        throw new vscode.LanguageModelError(detail ? `${getMessage('rateLimitExceeded')}: ${detail}` : getMessage('rateLimitExceeded'));
+        throw vscode.LanguageModelError.Blocked(
+          compactDetail ? `${getMessage('rateLimitExceeded')}: ${compactDetail}` : getMessage('rateLimitExceeded')
+        );
       } else if (error.response?.status === 403) {
-        throw new vscode.LanguageModelError(detail || getMessage('apiKeyInvalid'));
+        throw new vscode.LanguageModelError(compactDetail || getMessage('apiKeyInvalid'));
       } else if (error.response?.status === 400) {
-        throw new vscode.LanguageModelError(getMessage('invalidRequest', detail || error.response.data?.error?.message));
+        const invalidDetail = compactDetail || getCompactErrorMessage(error.response.data?.error?.message || '');
+        throw new vscode.LanguageModelError(getMessage('invalidRequest', invalidDetail));
       }
 
-      throw new vscode.LanguageModelError(detail || error.message || getMessage('unknownError'));
+      throw new vscode.LanguageModelError(compactDetail || getCompactErrorMessage(error) || getMessage('unknownError'));
     }
   }
 

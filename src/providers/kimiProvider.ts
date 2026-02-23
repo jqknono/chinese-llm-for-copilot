@@ -7,7 +7,8 @@ import {
   ChatMessage,
   ChatToolCall,
   ChatToolDefinition,
-  MODEL_VERSION_LABEL
+  MODEL_VERSION_LABEL,
+  getCompactErrorMessage
 } from './baseProvider';
 import { getMessage } from '../i18n/i18n';
 
@@ -93,7 +94,7 @@ export class KimiLanguageModel extends BaseLanguageModel {
       if (error instanceof vscode.LanguageModelError) {
         throw error;
       }
-      throw new vscode.LanguageModelError(getMessage('requestFailed', error));
+      throw new vscode.LanguageModelError(getMessage('requestFailed', getCompactErrorMessage(error)));
     }
   }
 }
@@ -143,7 +144,7 @@ export class KimiAIProvider extends BaseAIProvider {
   }
 
   getBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration('coding-plans.kimi');
+    const config = vscode.workspace.getConfiguration('coding-plans');
     const region = config.get<boolean>('region', true);
     if (!region) {
       return KIMI_DEFAULT_OVERSEAS_BASE_URL;
@@ -275,12 +276,13 @@ export class KimiAIProvider extends BaseAIProvider {
       if (error.response?.status === 401) {
         throw new vscode.LanguageModelError(getMessage('apiKeyInvalid'));
       } else if (error.response?.status === 429) {
-        throw new vscode.LanguageModelError(getMessage('rateLimitExceeded'));
+        throw vscode.LanguageModelError.Blocked(getMessage('rateLimitExceeded'));
       } else if (error.response?.status === 400) {
-        throw new vscode.LanguageModelError(getMessage('invalidRequest', error.response.data?.error?.message));
+        const invalidDetail = getCompactErrorMessage(error.response.data?.error?.message || '');
+        throw new vscode.LanguageModelError(getMessage('invalidRequest', invalidDetail));
       }
 
-      throw new vscode.LanguageModelError(error.message || getMessage('unknownError'));
+      throw new vscode.LanguageModelError(getCompactErrorMessage(error) || getMessage('unknownError'));
     }
   }
 
@@ -345,6 +347,6 @@ export class KimiAIProvider extends BaseAIProvider {
   }
 
   private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
-    return event.affectsConfiguration('coding-plans.kimi.region');
+    return event.affectsConfiguration('coding-plans.region');
   }
 }

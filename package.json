@@ -2,7 +2,7 @@
     "name": "coding-plans-for-copilot",
     "displayName": "%displayName%",
     "description": "%description%",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "publisher": "techfetch-dev",
     "repository": {
         "type": "git",
@@ -33,12 +33,6 @@
                             "title": "API Key",
                             "description": "Zhipu API key",
                             "secret": true
-                        },
-                        "region": {
-                            "type": "boolean",
-                            "title": "Is China Mainland",
-                            "description": "Whether to use the China mainland endpoint URL",
-                            "default": true
                         }
                     }
                 }
@@ -57,12 +51,6 @@
                             "title": "API Key",
                             "description": "Kimi API key",
                             "secret": true
-                        },
-                        "region": {
-                            "type": "boolean",
-                            "title": "Is China Mainland",
-                            "description": "Whether to use the China mainland endpoint URL",
-                            "default": true
                         }
                     }
                 }
@@ -81,12 +69,6 @@
                             "title": "API Key",
                             "description": "Volcengine API key",
                             "secret": true
-                        },
-                        "region": {
-                            "type": "boolean",
-                            "title": "Is China Mainland",
-                            "description": "Whether to use the China mainland endpoint URL",
-                            "default": true
                         }
                     }
                 }
@@ -105,12 +87,6 @@
                             "title": "API Key",
                             "description": "Minimax API key",
                             "secret": true
-                        },
-                        "region": {
-                            "type": "boolean",
-                            "title": "Is China Mainland",
-                            "description": "Whether to use the China mainland endpoint URL",
-                            "default": true
                         }
                     }
                 }
@@ -243,10 +219,9 @@
             "properties": {
                 "coding-plans.commitMessage.language": {
                     "type": "string",
-                    "default": "auto",
-                    "enum": ["auto", "en", "zh-cn"],
+                    "default": "en",
+                    "enum": ["en", "zh-cn"],
                     "enumDescriptions": [
-                        "%configuration.coding-plans.commitMessage.language.auto%",
                         "English",
                         "中文"
                     ],
@@ -265,29 +240,11 @@
                     "description": "%configuration.coding-plans.commitMessage.modelId.description%",
                     "order": 2
                 },
-                "coding-plans.zhipu.region": {
+                "coding-plans.region": {
                     "type": "boolean",
                     "default": true,
-                    "description": "%configuration.coding-plans.zhipu.region.description%",
+                    "description": "%configuration.coding-plans.region.description%",
                     "order": 3
-                },
-                "coding-plans.kimi.region": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "%configuration.coding-plans.kimi.region.description%",
-                    "order": 4
-                },
-                "coding-plans.volcengine.region": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "%configuration.coding-plans.volcengine.region.description%",
-                    "order": 5
-                },
-                "coding-plans.minimax.region": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "%configuration.coding-plans.minimax.region.description%",
-                    "order": 6
                 }
             }
         }

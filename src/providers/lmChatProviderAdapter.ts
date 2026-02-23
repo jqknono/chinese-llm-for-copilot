@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { BaseAIProvider, BaseLanguageModel, MODEL_VERSION_LABEL } from './baseProvider';
+import { BaseAIProvider, BaseLanguageModel, MODEL_VERSION_LABEL, getCompactErrorMessage } from './baseProvider';
 import { getMessage } from '../i18n/i18n';
 
 interface ProviderPickerConfiguration {
@@ -138,14 +138,20 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
     const hasGroup = typeof pickerOptions.group === 'string' && pickerOptions.group.trim().length > 0;
     const hasConfigurationPayload = this.hasConfigurationPayload(pickerOptions.configuration);
 
-    // VS Code may invoke provider once for base vendor and once per configured group.
-    // Group/configuration calls should be treated as setup sync only, otherwise the same
-    // model list is reported multiple times and UI shows duplicated model rows.
-    if (hasGroup || hasConfigurationPayload) {
-      await this.applyPickerConfiguration(pickerOptions);
+    // Only return model information for explicitly added provider groups.
+    // Base vendor calls are ignored to avoid all providers being listed by default.
+    if (!hasGroup && !hasConfigurationPayload) {
       return [];
     }
 
+    if (hasGroup || hasConfigurationPayload) {
+      await this.applyPickerConfiguration(pickerOptions);
+    }
+
+    return this.buildModelInformation();
+  }
+
+  private buildModelInformation(): vscode.LanguageModelChatInformation[] {
     const models = this.provider.getAvailableModels();
     if (models.length === 0) {
       const apiKey = this.provider.getApiKey().trim();
@@ -192,14 +198,18 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
       throw vscode.LanguageModelError.NotFound(`Model not found: ${model.id}`);
     }
 
-    const response = await targetModel.sendRequest(
-      messages.map(message => this.toChatMessage(message)),
-      options as unknown as vscode.LanguageModelChatRequestOptions,
-      token
-    );
+    try {
+      const response = await targetModel.sendRequest(
+        messages.map(message => this.toChatMessage(message)),
+        options as unknown as vscode.LanguageModelChatRequestOptions,
+        token
+      );
 
-    for await (const part of response.stream) {
-      progress.report(part as vscode.LanguageModelResponsePart);
+      for await (const part of response.stream) {
+        progress.report(part as vscode.LanguageModelResponsePart);
+      }
+    } catch (error) {
+      throw this.toCompactLanguageModelError(error);
     }
   }
 
@@ -252,16 +262,9 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
 
     const configSection = this.provider.getConfigSection();
     const config = vscode.workspace.getConfiguration(configSection);
+    const globalConfig = vscode.workspace.getConfiguration('coding-plans');
     const updates: Array<Thenable<void>> = [];
     let changed = false;
-
-    const setBooleanIfChanged = (key: string, value: boolean): void => {
-      const current = config.get<boolean>(key, true);
-      if (current !== value) {
-        updates.push(config.update(key, value, vscode.ConfigurationTarget.Global));
-        changed = true;
-      }
-    };
 
     if (normalized.apiKey !== undefined) {
       const nextApiKey = normalized.apiKey.trim();
@@ -271,7 +274,11 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
       }
     }
     if (normalized.region !== undefined) {
-      setBooleanIfChanged('region', normalized.region);
+      const currentRegion = globalConfig.get<boolean>('region', true);
+      if (currentRegion !== normalized.region) {
+        updates.push(globalConfig.update('region', normalized.region, vscode.ConfigurationTarget.Global));
+        changed = true;
+      }
     }
     if (updates.length > 0) {
       await Promise.all(updates);
@@ -299,6 +306,69 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
     }
 
     return Object.keys(normalized).length > 0 ? normalized : undefined;
+  }
+
+  private toCompactLanguageModelError(error: unknown): vscode.LanguageModelError {
+    const compactMessage = getCompactErrorMessage(error) || getMessage('unknownError');
+    const code = error instanceof vscode.LanguageModelError ? error.code : undefined;
+    const inferredBlocked = /(?:rate\s*limit|quota|429|速率限制|配额|当前订阅套餐暂未开放)/i.test(compactMessage);
+
+    let wrapped: vscode.LanguageModelError;
+    if (code === vscode.LanguageModelError.Blocked.name || inferredBlocked) {
+      wrapped = vscode.LanguageModelError.Blocked(compactMessage);
+    } else if (code === vscode.LanguageModelError.NoPermissions.name) {
+      wrapped = vscode.LanguageModelError.NoPermissions(compactMessage);
+    } else if (code === vscode.LanguageModelError.NotFound.name) {
+      wrapped = vscode.LanguageModelError.NotFound(compactMessage);
+    } else {
+      wrapped = new vscode.LanguageModelError(compactMessage);
+    }
+
+    return this.compactLanguageModelError(wrapped, compactMessage);
+  }
+
+  private compactLanguageModelError(error: vscode.LanguageModelError, compactMessage: string): vscode.LanguageModelError {
+    const sanitizedMessage = compactMessage || getMessage('unknownError');
+    this.overwriteErrorMessage(error, sanitizedMessage);
+    this.overwriteErrorStack(error, `${error.name}: ${sanitizedMessage}`);
+    this.clearErrorCause(error);
+    return error;
+  }
+
+  private overwriteErrorMessage(error: Error, message: string): void {
+    try {
+      Object.defineProperty(error, 'message', {
+        value: message,
+        configurable: true,
+        writable: true
+      });
+    } catch {
+      // ignore: keep original message when runtime prevents overriding.
+    }
+  }
+
+  private overwriteErrorStack(error: Error, stack: string): void {
+    try {
+      Object.defineProperty(error, 'stack', {
+        value: stack,
+        configurable: true,
+        writable: true
+      });
+    } catch {
+      // ignore: keep original stack when runtime prevents overriding.
+    }
+  }
+
+  private clearErrorCause(error: Error): void {
+    try {
+      Object.defineProperty(error, 'cause', {
+        value: undefined,
+        configurable: true,
+        writable: true
+      });
+    } catch {
+      // ignore: some runtimes define cause as non-configurable.
+    }
   }
 
   dispose(): void {

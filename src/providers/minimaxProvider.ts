@@ -7,7 +7,8 @@ import {
   ChatMessage,
   ChatToolCall,
   ChatToolDefinition,
-  MODEL_VERSION_LABEL
+  MODEL_VERSION_LABEL,
+  getCompactErrorMessage
 } from './baseProvider';
 import { getMessage } from '../i18n/i18n';
 
@@ -93,7 +94,7 @@ export class MinimaxLanguageModel extends BaseLanguageModel {
       if (error instanceof vscode.LanguageModelError) {
         throw error;
       }
-      throw new vscode.LanguageModelError(getMessage('requestFailed', error));
+      throw new vscode.LanguageModelError(getMessage('requestFailed', getCompactErrorMessage(error)));
     }
   }
 }
@@ -143,7 +144,7 @@ export class MinimaxAIProvider extends BaseAIProvider {
   }
 
   getBaseUrl(): string {
-    const config = vscode.workspace.getConfiguration('coding-plans.minimax');
+    const config = vscode.workspace.getConfiguration('coding-plans');
     const region = config.get<boolean>('region', true);
     if (!region) {
       return MINIMAX_DEFAULT_OVERSEAS_BASE_URL;
@@ -227,9 +228,9 @@ export class MinimaxAIProvider extends BaseAIProvider {
         if (status === 401) {
           throw new vscode.LanguageModelError(getMessage('apiKeyInvalid'));
         } else if (status === 429) {
-          throw new vscode.LanguageModelError(getMessage('rateLimitExceeded'));
+          throw vscode.LanguageModelError.Blocked(getMessage('rateLimitExceeded'));
         } else if (status === 400) {
-          throw new vscode.LanguageModelError(getMessage('invalidRequest', data?.error?.message || 'Unknown'));
+          throw new vscode.LanguageModelError(getMessage('invalidRequest', getCompactErrorMessage(data?.error?.message || 'Unknown')));
         } else {
           console.error(`${getMessage('minimaxApiError')} ${JSON.stringify(data)}`);
           throw new vscode.LanguageModelError(getMessage('unknownError'));
@@ -315,7 +316,7 @@ export class MinimaxAIProvider extends BaseAIProvider {
   }
 
   private hasEndpointConfigChanged(event: vscode.ConfigurationChangeEvent): boolean {
-    return event.affectsConfiguration('coding-plans.minimax.region');
+    return event.affectsConfiguration('coding-plans.region');
   }
 
   private readModelEntries(payload: MinimaxModelListResponse | undefined): MinimaxModelListEntry[] {

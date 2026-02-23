@@ -38,6 +38,47 @@ export interface ChatToolDefinition {
   };
 }
 
+export function getCompactErrorMessage(error: unknown): string {
+  if (typeof error === 'string') {
+    return sanitizeErrorMessage(error);
+  }
+
+  if (error && typeof error === 'object') {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return sanitizeErrorMessage(message);
+    }
+  }
+
+  return sanitizeErrorMessage(String(error));
+}
+
+function sanitizeErrorMessage(value: string): string {
+  const collapsed = value
+    .replace(/\r/g, '\n')
+    .split('\n')
+    .map(part => part.trim())
+    .filter(part => part.length > 0)
+    .join(' ')
+    .trim();
+
+  if (collapsed.length === 0) {
+    return collapsed;
+  }
+
+  const detailedStackIndex = collapsed.search(/\s+at\s+[^\s]+\s+\((?:file:\/\/|node:|[A-Za-z]:\\)/i);
+  if (detailedStackIndex >= 0) {
+    return collapsed.slice(0, detailedStackIndex).trim();
+  }
+
+  const genericStackIndex = collapsed.search(/\s+at\s+[^\s]+\s+\(/);
+  if (genericStackIndex >= 0 && /(LanguageModelError|Error:)/.test(collapsed.slice(0, genericStackIndex))) {
+    return collapsed.slice(0, genericStackIndex).trim();
+  }
+
+  return collapsed;
+}
+
 export abstract class BaseLanguageModel implements vscode.LanguageModelChat {
   public readonly id: string;
   public readonly vendor: string;

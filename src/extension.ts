@@ -16,6 +16,7 @@ const OLD_NAMESPACE = 'Chinese-AI';
 const NEW_NAMESPACE = 'coding-plans';
 const MIGRATION_NOTICE_SHOWN_KEY = 'coding-plans.migration.noticeShown';
 const PROVIDER_KEYS = ['zhipu', 'kimi', 'volcengine', 'minimax', 'aliyun'] as const;
+const REGION_PROVIDER_KEYS = ['zhipu', 'kimi', 'volcengine', 'minimax'] as const;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   // 初始化国际化
@@ -52,11 +53,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   registerLanguageModelProvider(context, 'aliyun-ai', aliyunProvider);
 
   // 注册命令
-  registerProviderCommands(context, zhipuProvider, 'zhipu', 'Zhipu z.ai');
+  registerProviderCommands(context, zhipuProvider, 'zhipu', 'Zhipu');
   registerProviderCommands(context, kimiProvider, 'kimi', 'Kimi (Beta)');
   registerProviderCommands(context, volcengineProvider, 'volcengine', 'Volcengine (Beta)');
   registerProviderCommands(context, minimaxProvider, 'minimax', 'Minimax (Beta)');
-  registerProviderCommands(context, aliyunProvider, 'aliyun', 'Aliyun Qwen (Beta)');
+  registerProviderCommands(context, aliyunProvider, 'aliyun', 'Aliyun Bailian Plan (Beta)');
 
   // 注册生成 commit message 命令
   context.subscriptions.push(
@@ -66,8 +67,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand('coding-plans.selectCommitMessageModel', selectCommitMessageModel)
   );
 
-  // 检查是否有 API Key
-  await checkApiKeys();
 }
 
 function registerLanguageModelProvider(
@@ -98,6 +97,7 @@ function registerProviderCommands(
 
   const configSection = `${NEW_NAMESPACE}.${providerKey}`;
   const getProviderConfig = () => vscode.workspace.getConfiguration(configSection);
+  const getGlobalConfig = () => vscode.workspace.getConfiguration(NEW_NAMESPACE);
   const maybeShowBetaWarning = () => {
     if (!BETA_PROVIDER_KEYS.has(providerKey) || warnedBetaProviders.has(providerKey)) {
       return;
@@ -108,7 +108,7 @@ function registerProviderCommands(
   };
 
   const readCurrentRegion = (): ProviderRegion => {
-    return getProviderConfig().get<boolean>('region', true);
+    return getGlobalConfig().get<boolean>('region', true);
   };
 
   const formatRegionLabel = (region: ProviderRegion): string => {
@@ -141,14 +141,14 @@ function registerProviderCommands(
 
     const picked = await vscode.window.showQuickPick(regionItems, {
       ignoreFocusOut: true,
-      placeHolder: getMessage('selectRegionPlaceholder', providerName)
+      placeHolder: getMessage('selectRegionPlaceholder')
     });
 
     return picked?.value;
   };
 
   const applyRegionUpdate = async (region: ProviderRegion): Promise<boolean> => {
-    const config = getProviderConfig();
+    const config = getGlobalConfig();
     const current = config.get<boolean>('region', true);
     if (current === region) {
       return false;
@@ -235,7 +235,7 @@ function registerProviderCommands(
           return;
         }
         await applyUpdates({ region });
-        vscode.window.showInformationMessage(getMessage('regionSaved', providerName, formatRegionLabel(region)));
+        vscode.window.showInformationMessage(getMessage('globalRegionSaved', formatRegionLabel(region)));
         return;
       }
     })
@@ -261,38 +261,9 @@ function registerProviderCommands(
     })
   );
 
-  // 初始化时刷新模型列表
-  void provider.refreshModels();
-}
-
-async function checkApiKeys(): Promise<void> {
-  const zhipuKey = providers.get('zhipu-ai')?.getApiKey() ?? '';
-  const kimiKey = providers.get('kimi-ai')?.getApiKey() ?? '';
-  const volcengineKey = providers.get('volcengine-ai')?.getApiKey() ?? '';
-  const minimaxKey = providers.get('minimax-ai')?.getApiKey() ?? '';
-  const aliyunKey = providers.get('aliyun-ai')?.getApiKey() ?? '';
-
-  if (!zhipuKey && !kimiKey && !volcengineKey && !minimaxKey && !aliyunKey) {
-    vscode.window.showInformationMessage(
-      getMessage('welcomeTitle'),
-      getMessage('setZhipuApiKey'),
-      getMessage('setKimiApiKey'),
-      getMessage('setVolcengineApiKey'),
-      getMessage('setMinimaxApiKey'),
-      getMessage('setAliyunApiKey')
-    ).then(selection => {
-      if (selection === getMessage('setZhipuApiKey')) {
-        vscode.commands.executeCommand('coding-plans.setApiKey.zhipu');
-      } else if (selection === getMessage('setKimiApiKey')) {
-        vscode.commands.executeCommand('coding-plans.setApiKey.kimi');
-      } else if (selection === getMessage('setVolcengineApiKey')) {
-        vscode.commands.executeCommand('coding-plans.setApiKey.volcengine');
-      } else if (selection === getMessage('setMinimaxApiKey')) {
-        vscode.commands.executeCommand('coding-plans.setApiKey.minimax');
-      } else if (selection === getMessage('setAliyunApiKey')) {
-        vscode.commands.executeCommand('coding-plans.setApiKey.aliyun');
-      }
-    });
+  // 仅在已配置 API Key 时预加载模型，避免默认触发全供应商占位模型展示。
+  if (provider.getApiKey().trim().length > 0) {
+    void provider.refreshModels();
   }
 }
 
@@ -371,10 +342,14 @@ async function migrateChineseAISettingsToCodingPlans(context: vscode.ExtensionCo
   await migrateKeyAllScopes<string>(`${OLD_NAMESPACE}.commitMessage.modelVendor`, `${NEW_NAMESPACE}.commitMessage.modelVendor`);
   await migrateKeyAllScopes<string>(`${OLD_NAMESPACE}.commitMessage.modelId`, `${NEW_NAMESPACE}.commitMessage.modelId`);
 
-  // provider region flags
-  await Promise.all(PROVIDER_KEYS.map(async providerKey => {
-    await migrateKeyAllScopes<boolean>(`${OLD_NAMESPACE}.${providerKey}.region`, `${NEW_NAMESPACE}.${providerKey}.region`);
-  }));
+  // region flags: migrate legacy per-provider keys into a single global bool.
+  await migrateKeyAllScopes<boolean>(`${OLD_NAMESPACE}.region`, `${NEW_NAMESPACE}.region`);
+  for (const providerKey of REGION_PROVIDER_KEYS) {
+    await migrateKeyAllScopes<boolean>(`${OLD_NAMESPACE}.${providerKey}.region`, `${NEW_NAMESPACE}.region`);
+  }
+  for (const providerKey of REGION_PROVIDER_KEYS) {
+    await migrateKeyAllScopes<boolean>(`${NEW_NAMESPACE}.${providerKey}.region`, `${NEW_NAMESPACE}.region`);
+  }
 
   // best-effort apiKey migration from plaintext settings to new Secret Storage
   for (const providerKey of PROVIDER_KEYS) {
