@@ -40,9 +40,8 @@ npm run publish:marketplace
 
 ## 编码套餐价格抓取
 
-执行 `npm run pricing:fetch` 抓取编码套餐价格，结果会同时写入：
+执行 `npm run pricing:fetch` 抓取编码套餐价格，结果写入：
 
-- `assets/provider-pricing.json`（扩展内使用）
-- `docs/provider-pricing.json`（GitHub Pages 展示使用）
+- `assets/provider-pricing.json`（扩展和 GitHub Pages 的统一数据源）
 
-GitHub Actions 每周日自动更新价格文件，并触发 GitHub Pages 部署。
+GitHub Pages 部署时会将 `assets/provider-pricing.json` 同步到 `docs/provider-pricing.json` 作为站点构建产物（不入库）。

@@ -49,7 +49,7 @@ npm run compile
 仓库提供了一个 GitHub Pages 静态看板，用于展示抓取到的各家编码套餐信息（价格、备注、来源和更新时间）。
 
 - 访问路径：https://jqknono.github.io/coding-plans-for-copilot/
-- 页面数据文件：`docs/provider-pricing.json`
+- 页面数据源：`assets/provider-pricing.json`
 
 ## 多语言支持
 

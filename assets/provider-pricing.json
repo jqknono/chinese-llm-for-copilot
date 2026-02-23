@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-22T03:04:14.606Z",
+  "generatedAt": "2026-02-23T08:41:10.333Z",
   "providers": [
     {
       "provider": "zhipu-ai",
@@ -9,7 +9,7 @@
         "https://bigmodel.cn/js/chunk-0d4f69d1.c1011781.js",
         "https://docs.bigmodel.cn/cn/coding-plan/overview"
       ],
-      "fetchedAt": "2026-02-22T03:03:48.010Z",
+      "fetchedAt": "2026-02-23T08:41:07.507Z",
       "plans": [
         {
           "name": "GLM Coding Lite (月)",
@@ -100,7 +100,7 @@
         "https://www.kimi.com/code/zh",
         "https://www.kimi.com/apiv2/kimi.gateway.order.v1.GoodsService/ListGoods"
       ],
-      "fetchedAt": "2026-02-22T03:03:48.679Z",
+      "fetchedAt": "2026-02-23T08:41:07.663Z",
       "plans": [
         {
           "name": "Adagio (月)",
@@ -112,9 +112,18 @@
           "notes": null
         },
         {
-          "name": "Moderato (年)",
-          "currentPrice": 180,
-          "currentPriceText": "¥180/年",
+          "name": "Andante (月)",
+          "currentPrice": 49,
+          "currentPriceText": "¥49/月",
+          "originalPrice": null,
+          "originalPriceText": null,
+          "unit": "月",
+          "notes": null
+        },
+        {
+          "name": "Andante (年)",
+          "currentPrice": 468,
+          "currentPriceText": "¥468/年",
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "年",
@@ -122,42 +131,6 @@
         },
         {
           "name": "Moderato (月)",
-          "currentPrice": 19,
-          "currentPriceText": "¥19/月",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "月",
-          "notes": null
-        },
-        {
-          "name": "Allegretto (年)",
-          "currentPrice": 372,
-          "currentPriceText": "¥372/年",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "年",
-          "notes": null
-        },
-        {
-          "name": "Allegretto (月)",
-          "currentPrice": 39,
-          "currentPriceText": "¥39/月",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "月",
-          "notes": null
-        },
-        {
-          "name": "Allegro (年)",
-          "currentPrice": 948,
-          "currentPriceText": "¥948/年",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "年",
-          "notes": null
-        },
-        {
-          "name": "Allegro (月)",
           "currentPrice": 99,
           "currentPriceText": "¥99/月",
           "originalPrice": null,
@@ -166,18 +139,45 @@
           "notes": null
         },
         {
-          "name": "Vivace (年)",
-          "currentPrice": 1908,
-          "currentPriceText": "¥1908/年",
+          "name": "Moderato (年)",
+          "currentPrice": 948,
+          "currentPriceText": "¥948/年",
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "年",
           "notes": null
         },
         {
-          "name": "Vivace (月)",
+          "name": "Allegretto (月)",
           "currentPrice": 199,
           "currentPriceText": "¥199/月",
+          "originalPrice": null,
+          "originalPriceText": null,
+          "unit": "月",
+          "notes": null
+        },
+        {
+          "name": "Allegretto (年)",
+          "currentPrice": 1948,
+          "currentPriceText": "¥1948/年",
+          "originalPrice": null,
+          "originalPriceText": null,
+          "unit": "年",
+          "notes": null
+        },
+        {
+          "name": "Allegro (年)",
+          "currentPrice": 6788,
+          "currentPriceText": "¥6788/年",
+          "originalPrice": null,
+          "originalPriceText": null,
+          "unit": "年",
+          "notes": null
+        },
+        {
+          "name": "Allegro (月)",
+          "currentPrice": 699,
+          "currentPriceText": "¥699/月",
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
@@ -192,7 +192,7 @@
         "https://www.volcengine.com/activity/codingplan/garrmodlistv3",
         "https://lf6-cdn2-tos.bytegoofy.com/gftar/toutiao/fe_arch/fes2_app_17635357794962595/1.0.0.27/index.js"
       ],
-      "fetchedAt": "2026-02-22T03:04:08.773Z",
+      "fetchedAt": "2026-02-23T08:41:09.476Z",
       "plans": [
         {
           "name": "Coding Plan Lite 月套餐",
@@ -220,7 +220,7 @@
         "https://platform.minimaxi.com/docs/guides/pricing-coding-plan",
         "https://platform.minimaxi.com/subscribe/coding-plan"
       ],
-      "fetchedAt": "2026-02-22T03:04:11.315Z",
+      "fetchedAt": "2026-02-23T08:41:10.038Z",
       "plans": [
         {
           "name": "Plus-极速版",
