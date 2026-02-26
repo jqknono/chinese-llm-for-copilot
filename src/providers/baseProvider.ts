@@ -408,12 +408,12 @@ export abstract class BaseAIProvider implements vscode.Disposable {
     modelSettings: Map<string, Partial<ResolvedModelRuntimeSettings>>
   ): ResolvedModelRuntimeSettings {
     const override = modelSettings.get(modelId.toLowerCase());
-    const contextSizeFromDiscovery = discovered?.maxInputTokens;
-    const contextSize = override?.maxInputTokens
-      ?? contextSizeFromDiscovery
+    const maxInputTokenLimitFromDiscovery = discovered?.maxInputTokens;
+    const maxInputTokenLimit = override?.maxInputTokens
+      ?? maxInputTokenLimitFromDiscovery
       ?? DEFAULT_MODEL_CONTEXT_SIZE;
 
-    const maxInputTokens = Math.max(1, Math.floor(contextSize));
+    const maxInputTokens = Math.max(1, Math.floor(maxInputTokenLimit));
     const maxOutputTokens = Math.max(
       1,
       Math.floor(override?.maxOutputTokens ?? discovered?.maxOutputTokens ?? maxInputTokens)
@@ -445,6 +445,8 @@ export abstract class BaseAIProvider implements vscode.Disposable {
       }
 
       const parsed = rawValue as {
+        maxInputTokens?: unknown;
+        maxOutputTokens?: unknown;
         contextSize?: unknown;
         capabilities?: {
           tools?: unknown;
@@ -454,7 +456,9 @@ export abstract class BaseAIProvider implements vscode.Disposable {
         } | unknown;
       };
 
-      const contextSize = this.readPositiveInteger(parsed.contextSize);
+      const legacyContextSize = this.readPositiveInteger(parsed.contextSize);
+      const maxInputTokens = this.readPositiveInteger(parsed.maxInputTokens) ?? legacyContextSize;
+      const maxOutputTokens = this.readPositiveInteger(parsed.maxOutputTokens) ?? legacyContextSize;
 
       const capabilities = parsed.capabilities && typeof parsed.capabilities === 'object'
         ? parsed.capabilities as {
@@ -469,9 +473,11 @@ export abstract class BaseAIProvider implements vscode.Disposable {
       const imageInput = this.readBooleanValue(capabilities?.imageInput ?? capabilities?.vision);
 
       const normalized: Partial<ResolvedModelRuntimeSettings> = {};
-      if (contextSize !== undefined) {
-        normalized.maxInputTokens = contextSize;
-        normalized.maxOutputTokens = contextSize;
+      if (maxInputTokens !== undefined) {
+        normalized.maxInputTokens = maxInputTokens;
+      }
+      if (maxOutputTokens !== undefined) {
+        normalized.maxOutputTokens = maxOutputTokens;
       }
       if (toolCalling !== undefined) {
         normalized.toolCalling = toolCalling;

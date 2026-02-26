@@ -198,7 +198,8 @@ export class GenericAIProvider extends BaseAIProvider {
     vendor: VendorConfig,
     compositeId: string
   ): AIModelConfig {
-    const contextSize = model.contextSize ?? DEFAULT_CONTEXT_SIZE;
+    const maxInputTokens = model.maxInputTokens ?? DEFAULT_CONTEXT_SIZE;
+    const maxOutputTokens = model.maxOutputTokens ?? maxInputTokens;
     const toolCalling = model.capabilities?.tools ?? true;
     const imageInput = model.capabilities?.vision ?? true;
 
@@ -208,9 +209,9 @@ export class GenericAIProvider extends BaseAIProvider {
       family: vendor.name,
       name: model.name,
       version: vendor.name,
-      maxTokens: contextSize,
-      maxInputTokens: contextSize,
-      maxOutputTokens: contextSize,
+      maxTokens: Math.max(maxInputTokens, maxOutputTokens),
+      maxInputTokens,
+      maxOutputTokens,
       capabilities: { toolCalling, imageInput },
       description: model.description || getMessage('genericDynamicModelDescription', vendor.name, model.name)
     };

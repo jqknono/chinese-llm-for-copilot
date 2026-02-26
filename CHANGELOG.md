@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-02-26
+- feat(core): implement unified config and generic provider
+
 ## [0.2.0] - 2026-02-23
 - ci: add version tagging workflow and pricing failure detection
 - feat!: rebrand to "Coding Plans for Copilot" and rename namespace to coding-plans

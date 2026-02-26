@@ -2,7 +2,7 @@
     "name": "coding-plans-for-copilot",
     "displayName": "%displayName%",
     "description": "%description%",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "publisher": "techfetch-dev",
     "repository": {
         "type": "git",
@@ -212,7 +212,11 @@
                                                 }
                                             }
                                         },
-                                        "contextSize": {
+                                        "maxInputTokens": {
+                                            "type": "number",
+                                            "default": 200000
+                                        },
+                                        "maxOutputTokens": {
                                             "type": "number",
                                             "default": 200000
                                         }
@@ -231,17 +235,19 @@
                                     "name": "glm-4.7",
                                     "capabilities": {
                                         "tools": true,
-                                        "vision": true
+                                        "vision": false
                                     },
-                                    "contextSize": 128000
+                                    "maxInputTokens": 128000,
+                                    "maxOutputTokens": 128000
                                 },
                                 {
                                     "name": "glm-5",
                                     "capabilities": {
                                         "tools": true,
-                                        "vision": true
+                                        "vision": false
                                     },
-                                    "contextSize": 128000
+                                    "maxInputTokens": 128000,
+                                    "maxOutputTokens": 128000
                                 }
                             ]
                         },
@@ -254,18 +260,20 @@
                                     "description": "GLM-4.7",
                                     "capabilities": {
                                         "tools": true,
-                                        "vision": true
+                                        "vision": false
                                     },
-                                    "contextSize": 128000
+                                    "maxInputTokens": 128000,
+                                    "maxOutputTokens": 128000
                                 },
                                 {
                                     "name": "glm-5",
                                     "description": "GLM-5",
                                     "capabilities": {
                                         "tools": true,
-                                        "vision": true
+                                        "vision": false
                                     },
-                                    "contextSize": 128000
+                                    "maxInputTokens": 128000,
+                                    "maxOutputTokens": 128000
                                 }
                             ]
                         },

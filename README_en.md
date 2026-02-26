@@ -140,9 +140,9 @@ Configure these options in VS Code Settings as fallback when `/models` is unavai
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `coding-plans.models` | array of string | deepseek/claude/gpt/gemini defaults | Global model IDs shared by all providers |
-| `coding-plans.modelSettings` | object | `{}` | Per-model overrides: `contextSize`, `capabilities.tools`, `capabilities.vision` |
+| `coding-plans.modelSettings` | object | `{}` | Per-model overrides: `maxInputTokens`, `maxOutputTokens`, `capabilities.tools`, `capabilities.vision` |
 
-Default model settings: `contextSize=200000`, `tools=true`, `vision=true`.
+Default model settings: `maxInputTokens=200000`, `maxOutputTokens=200000`, `tools=true`, `vision=true`.
 
 ## Development
 

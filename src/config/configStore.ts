@@ -7,7 +7,8 @@ export interface VendorModelConfig {
     tools?: boolean;
     vision?: boolean;
   };
-  contextSize?: number;
+  maxInputTokens?: number;
+  maxOutputTokens?: number;
 }
 
 export interface VendorConfig {
@@ -99,10 +100,9 @@ export class ConfigStore implements vscode.Disposable {
       typeof obj.description === 'string' && obj.description.trim().length > 0
         ? obj.description.trim()
         : undefined;
-    const contextSize =
-      typeof obj.contextSize === 'number' && obj.contextSize > 0
-        ? obj.contextSize
-        : undefined;
+    const legacyContextSize = this.readPositiveNumber(obj.contextSize);
+    const maxInputTokens = this.readPositiveNumber(obj.maxInputTokens) ?? legacyContextSize;
+    const maxOutputTokens = this.readPositiveNumber(obj.maxOutputTokens) ?? legacyContextSize;
     let capabilities: VendorModelConfig['capabilities'];
     if (obj.capabilities && typeof obj.capabilities === 'object') {
       const cap = obj.capabilities as Record<string, unknown>;
@@ -112,7 +112,20 @@ export class ConfigStore implements vscode.Disposable {
       };
     }
 
-    return { name, description, capabilities, contextSize };
+    return { name, description, capabilities, maxInputTokens, maxOutputTokens };
+  }
+
+  private readPositiveNumber(value: unknown): number | undefined {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = Number(value.trim());
+      if (Number.isFinite(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+    return undefined;
   }
 
   dispose(): void {

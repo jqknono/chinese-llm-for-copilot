@@ -11,6 +11,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   await initI18n();
   console.log(getMessage('extensionActivated'));
 
+  // Register commit-message commands first so they remain available
+  // even if provider initialization fails.
+  context.subscriptions.push(
+    vscode.commands.registerCommand('coding-plans.generateCommitMessage', generateCommitMessage)
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand('coding-plans.selectCommitMessageModel', selectCommitMessageModel)
+  );
+
   const configStore = new ConfigStore(context);
   context.subscriptions.push(configStore);
 
@@ -20,7 +29,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   const adapter = new LMChatProviderAdapter(genericProvider, configStore);
   context.subscriptions.push(adapter);
-  context.subscriptions.push(vscode.lm.registerLanguageModelChatProvider('coding-plans', adapter));
+  try {
+    if (typeof vscode.lm.registerLanguageModelChatProvider === 'function') {
+      context.subscriptions.push(vscode.lm.registerLanguageModelChatProvider('coding-plans', adapter));
+    } else {
+      console.warn('LanguageModelChatProvider API is unavailable; chat provider registration is skipped.');
+    }
+  } catch (error) {
+    console.error('Failed to register language model chat provider.', error);
+  }
 
   context.subscriptions.push(
     vscode.commands.registerCommand('coding-plans.addModels', async () => {
@@ -127,12 +144,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     })
   );
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand('coding-plans.generateCommitMessage', generateCommitMessage)
-  );
-  context.subscriptions.push(
-    vscode.commands.registerCommand('coding-plans.selectCommitMessageModel', selectCommitMessageModel)
-  );
 }
 
 export function deactivate(): void {
