@@ -16,6 +16,7 @@ tsconfig.json
 **/*.tsbuildinfo
 **/*.md
 !README.md
+!CHANGELOG.md
 **/test/**
 .github/**
 docs/**

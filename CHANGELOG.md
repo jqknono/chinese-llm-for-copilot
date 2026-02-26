@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.8] - 2026-02-26
+- refactor(config): 更新默认模型设置并合并供应商模型
+- feat(config): add useModelsEndpoint and improve model discovery
+- feat(commitMessage): 支持命令可见性控制及模仿最近提交风格
+- feat(commit-msg): 改进生成提交信息时的进度反馈
+- refactor(core): 拆分上下文配置为独立的输入输出令牌限制
+- feat(core): implement unified config and generic provider
+- chore(ci): update pricing data and consolidate source of truth
+- ci: add version tagging workflow and pricing failure detection
+- feat!: rebrand to "Coding Plans for Copilot" and rename namespace to coding-plans
+- feat: 添加生成提交消息功能，支持选择模型和语言设置
+- chore: update provider pricing
+- chore: update version
+- feat(docs): 添加 github 仓库链接按钮
+- chore: 更新 GitHub Pages 访问路径，删除 Lint 问题修复计划文档
+- feat: add AI pricing dashboard with provider data and pricing plans
+
 ## [0.4.0] - 2026-02-26
 - feat(core): implement unified config and generic provider
 

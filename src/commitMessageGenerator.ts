@@ -13,7 +13,7 @@ const COMMIT_MESSAGE_OPTIONS_PIPELINE_MODE_KEY = 'pipelineMode';
 const COMMIT_MESSAGE_OPTIONS_SUMMARY_TRIGGER_LINES_KEY = 'summaryTriggerLines';
 const COMMIT_MESSAGE_OPTIONS_SUMMARY_CHUNK_LINES_KEY = 'summaryChunkLines';
 const COMMIT_MESSAGE_OPTIONS_SUMMARY_MAX_CHUNKS_KEY = 'summaryMaxChunks';
-const COMMIT_MESSAGE_OPTIONS_BODY_BULLET_COUNT_KEY = 'bodyBulletCount';
+const COMMIT_MESSAGE_OPTIONS_MAX_BODY_BULLET_COUNT_KEY = 'maxBodyBulletCount';
 const COMMIT_MESSAGE_OPTIONS_SUBJECT_MAX_LENGTH_KEY = 'subjectMaxLength';
 const COMMIT_MESSAGE_OPTIONS_REQUIRE_CONVENTIONAL_TYPE_KEY = 'requireConventionalType';
 const COMMIT_MESSAGE_OPTIONS_WARN_ON_VALIDATION_FAILURE_KEY = 'warnOnValidationFailure';
@@ -25,7 +25,6 @@ const LEGACY_COMMIT_MESSAGE_PIPELINE_MODE_SETTING_KEY = 'commitMessage.pipelineM
 const LEGACY_COMMIT_MESSAGE_SUMMARY_TRIGGER_LINES_SETTING_KEY = 'commitMessage.summaryTriggerLines';
 const LEGACY_COMMIT_MESSAGE_SUMMARY_CHUNK_LINES_SETTING_KEY = 'commitMessage.summaryChunkLines';
 const LEGACY_COMMIT_MESSAGE_SUMMARY_MAX_CHUNKS_SETTING_KEY = 'commitMessage.summaryMaxChunks';
-const LEGACY_COMMIT_MESSAGE_BODY_BULLET_COUNT_SETTING_KEY = 'commitMessage.bodyBulletCount';
 const LEGACY_COMMIT_MESSAGE_SUBJECT_MAX_LENGTH_SETTING_KEY = 'commitMessage.subjectMaxLength';
 const LEGACY_COMMIT_MESSAGE_REQUIRE_CONVENTIONAL_TYPE_SETTING_KEY = 'commitMessage.requireConventionalType';
 const LEGACY_COMMIT_MESSAGE_WARN_ON_VALIDATION_FAILURE_SETTING_KEY = 'commitMessage.warnOnValidationFailure';
@@ -35,7 +34,7 @@ const DEFAULT_PIPELINE_MODE: CommitMessagePipelineMode = 'single';
 const DEFAULT_SUMMARY_TRIGGER_LINES = 1200;
 const DEFAULT_SUMMARY_CHUNK_LINES = 800;
 const DEFAULT_SUMMARY_MAX_CHUNKS = 12;
-const DEFAULT_BODY_BULLET_COUNT = 7;
+const DEFAULT_MAX_BODY_BULLET_COUNT = 7;
 const DEFAULT_SUBJECT_MAX_LENGTH = 72;
 const DEFAULT_REQUIRE_CONVENTIONAL_TYPE = true;
 const DEFAULT_WARN_ON_VALIDATION_FAILURE = true;
@@ -95,7 +94,7 @@ type CommitMessageSettings = {
   summaryTriggerLines: number;
   summaryChunkLines: number;
   summaryMaxChunks: number;
-  bodyBulletCount: number;
+  maxBodyBulletCount: number;
   subjectMaxLength: number;
   requireConventionalType: boolean;
   warnOnValidationFailure: boolean;
@@ -108,7 +107,7 @@ type CommitMessageOptions = {
   summaryTriggerLines?: number;
   summaryChunkLines?: number;
   summaryMaxChunks?: number;
-  bodyBulletCount?: number;
+  maxBodyBulletCount?: number;
   subjectMaxLength?: number;
   requireConventionalType?: boolean;
   warnOnValidationFailure?: boolean;
@@ -210,10 +209,13 @@ function getCommitMessageSettings(): CommitMessageSettings {
       ?? config.get<number>(LEGACY_COMMIT_MESSAGE_SUMMARY_MAX_CHUNKS_SETTING_KEY, DEFAULT_SUMMARY_MAX_CHUNKS),
       DEFAULT_SUMMARY_MAX_CHUNKS
     ),
-    bodyBulletCount: readPositiveIntegerValue(
-      options[COMMIT_MESSAGE_OPTIONS_BODY_BULLET_COUNT_KEY]
-      ?? config.get<number>(LEGACY_COMMIT_MESSAGE_BODY_BULLET_COUNT_SETTING_KEY, DEFAULT_BODY_BULLET_COUNT),
-      DEFAULT_BODY_BULLET_COUNT
+    maxBodyBulletCount: Math.max(
+      2,
+      readPositiveIntegerValue(
+        options[COMMIT_MESSAGE_OPTIONS_MAX_BODY_BULLET_COUNT_KEY]
+        ?? DEFAULT_MAX_BODY_BULLET_COUNT,
+        DEFAULT_MAX_BODY_BULLET_COUNT
+      )
     ),
     subjectMaxLength: readPositiveIntegerValue(
       options[COMMIT_MESSAGE_OPTIONS_SUBJECT_MAX_LENGTH_KEY]
@@ -272,7 +274,7 @@ function getGenerationStructureBlock(settings: CommitMessageSettings, breakingCh
       : '2) Subject SHOULD be concise and descriptive.',
     `3) Subject length SHOULD be <= ${settings.subjectMaxLength} characters.`,
     '4) Add one blank line after the subject.',
-    `5) Then provide ${settings.bodyBulletCount} short bullet points, each prefixed with "- ".`,
+    `5) Then provide 2 to ${settings.maxBodyBulletCount} short bullet points, each prefixed with "- ".`,
     '6) Keep each bullet focused on concrete code changes.'
   ];
 
@@ -687,8 +689,12 @@ function validateCommitMessage(
     }
   }
 
-  if (getBulletCount(normalized) < 2) {
+  const bulletCount = getBulletCount(normalized);
+  if (bulletCount < 2) {
     issues.push('body should contain at least 2 bullet lines');
+  }
+  if (bulletCount > settings.maxBodyBulletCount) {
+    issues.push(`body should contain at most ${settings.maxBodyBulletCount} bullet lines`);
   }
 
   if (breakingChangeExpected && !/^BREAKING CHANGE:/m.test(normalized)) {

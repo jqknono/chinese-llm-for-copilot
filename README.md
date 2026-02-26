@@ -1,102 +1,123 @@
-# 编码套餐 for Copilot
 
-接入 AI 模型套餐到 VS Code Copilot：目前仅验证智谱 z.ai 套餐接入能力；Kimi、火山云、Minimax、阿里云套餐尚未测试。
+# Coding Plans for Copilot
 
-## 演示
+Integrate Zhipu (verified) into VS Code Copilot, with Beta support for Kimi, Volcano Cloud, Minimax, and Alibaba Cloud (untested).
 
-![基本演示](https://i.imgur.com/IERzt05.gif)
+## Features
 
-## 安装方式
+- Supports configuration-driven model list management (shared across all providers)
+- Beta support for Kimi, Volcano Cloud, Minimax, and Alibaba Cloud models (untested)
+- For non-z.ai providers, please submit Issues if encountering problems
+- Seamless integration with VS Code Copilot Chat
+- Supports multi-turn conversations
+- Customizable model parameters
+- Simple API Key configuration
+- **Bilingual UI support (Chinese/English)** (auto-switches based on VS Code language settings)
 
-### 方式一：从 VS Code 插件市场安装（推荐）
+## Service Status
 
-- [点击访问 VS Code 插件市场](https://marketplace.visualstudio.com/items?itemName=techfetch-dev.coding-plans-for-copilot)
+- **Zhipu**: Verified
+- **Kimi / Volcano Cloud / Minimax / Alibaba Cloud**: Beta (untested)
+- Submit Issues if encountering problems with Beta services
 
-### 方式二：在 VS Code 中搜索安装
+## Multilingual Support
 
-1. 打开 VS Code 扩展面板（`Ctrl+Shift+X` 或 `Cmd+Shift+X`）
-2. 搜索 `Coding Plans for Copilot` 或 `编码套餐`
-3. 点击安装
+This extension supports bilingual UI (Chinese/English). The interface language automatically switches based on VS Code settings:
 
-### 方式三：从源码安装
+- **Chinese environment** (VS Code set to Chinese): Displays Chinese UI
+- **English environment** (VS Code set to English): Displays English UI
+- **Default language**: Chinese
 
-1. 克隆本仓库
-2. 安装依赖：
+### How to Change VS Code Language
+
+To switch VS Code's UI language:
+
+1. Open VS Code Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`)
+2. Type and select `Configure Display Language`
+3. Choose your preferred language (e.g., `zh-cn` or `en`)
+4. Restart VS Code
+
+## Supported Models
+
+### Zhipu (Verified)
+- By default, model list comes from each vendor's `models` config
+- Set `useModelsEndpoint: true` on a vendor to fetch and refresh models via `/models`
+- `useModelsEndpoint` defaults to `false`
+
+### Kimi AI (Beta, untested)
+- Same behavior as above
+
+### Volcano Cloud (Beta, untested)
+- Same behavior as above
+
+### Minimax (Beta, untested)
+- Same behavior as above
+
+### Alibaba Cloud Tongyi Qianwen (Beta, untested)
+- Same behavior as above
+
+## Installation
+
+### Install from Source
+
+1. Clone this repository
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-3. 编译：
+3. Compile:
 ```bash
 npm run compile
 ```
 
-4. 在 VS Code 中，按 `F5` 启动扩展开发主机进行测试
+4. In VS Code, press `F5` to launch the extension development host for testing
 
-## 功能特性
+### Package for Release
 
-- 支持通过配置文件管理模型列表（全供应商共享）
-- 支持 Kimi、火山云、Minimax、阿里云套餐模型接入（尚未测试）
-- 非 z.ai 提供商如遇问题，请提交 Issue 反馈
-- 无缝集成到 VS Code Copilot Chat
-- 支持多轮对话
-- 可自定义模型参数
-- 简单的 API Key 配置
-- **中英双语界面支持，默认使用中文**（根据 VS Code 语言设置自动切换）
+```bash
+npm install -g vsce
+vsce package
+```
 
-## GitHub Pages 套餐看板
+This generates a `.vsix` file. Install it via:
+```bash
+code --install-extension coding-plans-for-copilot-0.1.0.vsix
+```
 
-仓库提供了一个 GitHub Pages 静态看板，用于展示抓取到的各家编码套餐信息（价格、备注、来源和更新时间）。
+## Usage
 
-- 访问路径：https://jqknono.github.io/coding-plans-for-copilot/
-- 页面数据源：`assets/provider-pricing.json`
+### 1. Obtain API Key
 
-## 多语言支持
+Get API Keys from your chosen provider:
 
-支持中英双语界面，根据 VS Code 语言设置自动切换（默认中文）。
+- **Zhipu (Verified)**: Visit [Zhipu AI Open Platform](https://open.bigmodel.cn/)
+- **Kimi AI (Beta, untested)**: Visit [Kimi Open Platform](https://platform.moonshot.cn/)
+- **Volcano Cloud (Beta, untested)**: Visit [Volcano Engine](https://www.volcengine.com/)
+- **Minimax (Beta, untested)**: Visit [Minimax Open Platform](https://platform.minimaxi.com/)
+- **Alibaba Cloud (Beta, untested)**: Visit [Alibaba Cloud DashScope](https://dashscope.aliyun.com/)
+- Submit Issues if encountering problems with Beta services
 
-## 支持的套餐
+### 2. Configure API Key
 
-| 提供商 | 状态 | 备注 |
-| --- | --- | --- |
-| 智谱 z.ai | 已验证 | 推荐优先使用 |
-| Kimi AI | 尚未测试 | 如遇问题请提交 Issue |
-| 火山云 | 尚未测试 | 如遇问题请提交 Issue |
-| Minimax | 尚未测试 | 如遇问题请提交 Issue |
-| 阿里云百炼套餐 | 尚未测试 | 如遇问题请提交 Issue |
+In VS Code:
 
-模型列表获取策略：
+- Press `Ctrl+Shift+P` (or `Cmd+Shift+P`), type `Coding Plans: Manage Coding Plans Configuration`
+- Use:
+  - `Select Vendor` to choose the active vendor profile
+  - `Set API Key` to store the API key in the config file
+  - `Set Relay Base URL` to update the vendor base URL
+  - `Open Config File` to edit `coding-plans.config.json`
 
-- 默认仅使用每个 vendor 的 `models` 配置
-- 可为单个 vendor 设置 `useModelsEndpoint: true`，刷新时调用 `/models` 更新模型列表
-- `useModelsEndpoint` 默认值为 `false`
+### 3. Use Copilot Chat
 
-## 使用方法
+1. Open Copilot Chat panel (`Ctrl+L` or `Cmd+L`)
+2. Select AI provider and model from the model selector
+3. Start chatting!
 
-### 1. 获取 API Key
+## Configuration Options
 
-- [智谱 z.ai](https://open.bigmodel.cn/)
-- [Kimi AI](https://platform.moonshot.cn/)
-- [火山云](https://www.volcengine.com/)
-- [Minimax](https://platform.minimaxi.com/)
-- [阿里云](https://dashscope.aliyun.com/)
-
-### 2. 配置供应商与 API Key
-
-按 `Ctrl+Shift+P`，输入 `编码套餐: 管理编码套餐配置`，可执行：
-
-- `选择供应商`：从预配置供应商中选择当前使用的 vendor
-- `设置 API Key`：写入当前 vendor 的 API Key（保存在配置文件中）
-- `设置中转站地址`：更新当前 vendor 的 baseUrl
-- `打开配置文件`：手动编辑 `coding-plans.config.json`
-
-### 3. 使用 Copilot Chat
-
-打开 Copilot Chat 面板（`Ctrl+L`），选择 AI 提供商和模型，开始对话。
-
-## 配置选项
-
-配置文件 `coding-plans.config.json`（工作区根目录；无工作区时存放在扩展全局存储）包含可用供应商、baseUrl、API Key、模型与能力。示例：
+The config file `coding-plans.config.json` (workspace root; falls back to extension global storage) defines vendors, baseUrl, apiKey, models, and capabilities. Example:
 
 ```json
 {
@@ -115,33 +136,100 @@ npm run compile
   ]
 }
 ```
-`apiType` 支持 `openai` 或 `anthropic`。可选 `anthropicVersion`（默认 `2023-06-01`）。
+`apiType` supports `openai` or `anthropic`. Optional `anthropicVersion` defaults to `2023-06-01`.
 
-在 VS Code 设置中仍可配置（作为 /models 失败时的兜底）：
+Configure these options in VS Code Settings as fallback when `/models` is unavailable:
 
-- `coding-plans.models`：全局模型 ID 列表（默认包含 deepseek/claude/gpt/gemini 常用模型）
-- `coding-plans.modelSettings`：按模型覆盖参数（`maxInputTokens`、`maxOutputTokens`、`capabilities.tools`、`capabilities.vision`）
-模型默认参数：`maxInputTokens=200000`、`maxOutputTokens=200000`、`tools=true`、`vision=false`。
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `coding-plans.models` | array of string | deepseek/claude/gpt/gemini defaults | Global model IDs shared by all providers |
+| `coding-plans.modelSettings` | object | `{}` | Per-model overrides: `maxInputTokens`, `maxOutputTokens`, `capabilities.tools`, `capabilities.vision` |
 
-## 开发
+Default model settings: `maxInputTokens=200000`, `maxOutputTokens=200000`, `tools=true`, `vision=false`.
 
-详细的开发指南请查看 [DEV.md](DEV.md)
+Commit message generation advanced settings example (`settings.json`):
 
-## 相关链接
+```json
+{
+  "coding-plans.commitMessage.options": {
+    "maxBodyBulletCount": 7,
+    "subjectMaxLength": 72,
+    "requireConventionalType": true
+  }
+}
+```
 
-- [智谱 AI 开放平台](https://open.bigmodel.cn/)
-- [智谱 API 文档](https://open.bigmodel.cn/dev/api)
-- [Kimi 开放平台](https://platform.moonshot.cn/)
-- [Kimi API 文档](https://platform.moonshot.cn/docs)
-- [火山引擎](https://www.volcengine.com/)
-- [火山云 API 文档](https://www.volcengine.com/docs/82379)
-- [VS Code 扩展 API](https://code.visualstudio.com/api)
-- 服务问题反馈：请在仓库提交 Issue
+`maxBodyBulletCount` is the upper bound for body bullets (not an exact required count).
 
-## 许可证
+## Development
+
+### Project Structure
+
+```
+china-lm-for-copilot/
+├── src/
+│   ├── extension.ts                  # Extension entry file
+│   └── providers/                    # Model providers directory
+│       ├── baseProvider.ts           # Base provider abstract class
+│       ├── genericProvider.ts        # Generic provider (OpenAI/Anthropic)
+│       └── baseProvider.ts           # Base provider abstract class
+│   └── config/
+│       └── configStore.ts            # Vendor config loader
+├── package.json                      # Extension configuration
+├── tsconfig.json                     # TypeScript configuration
+└── README.md                         # Documentation
+```
+
+### Compile
+
+```bash
+npm run compile
+```
+
+### Watch Mode
+
+```bash
+npm run watch
+```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+## FAQ
+
+### Q: "API Key invalid or expired" error
+A: Verify your API Key is correct and hasn't expired on the AI platform.
+
+### Q: "Rate limit reached" error
+A: AI APIs typically have rate limits. Try again later or upgrade your account for higher quotas.
+
+### Q: How to switch providers/models?
+A: Use the model selector in Copilot Chat panel.
+
+### Q: Can I use multiple providers simultaneously?
+A: Yes! Configure API Keys for multiple providers and switch as needed. Note: Only Zhipu is verified; others are Beta (untested).
+
+### Q: Issues with Beta providers?
+A: Submit an Issue with error details, requested model, and reproduction steps.
+
+## Related Links
+
+- [Zhipu AI Open Platform](https://open.bigmodel.cn/)
+- [Zhipu API Documentation](https://open.bigmodel.cn/dev/api)
+- [Kimi Open Platform](https://platform.moonshot.cn/)
+- [Kimi API Documentation](https://platform.moonshot.cn/docs)
+- [Volcano Engine](https://www.volcengine.com/)
+- [Volcano Cloud API Documentation](https://www.volcengine.com/docs/82379)
+- [VS Code Extension API](https://code.visualstudio.com/api)
+- Beta service issues: Submit Issues in repository
+
+## License
 
 MIT License
 
-## 贡献
+## Contribution
 
-欢迎提交 Issue 和 Pull Request！
+Issues and Pull Requests are welcome!
