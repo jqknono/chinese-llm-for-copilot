@@ -1045,40 +1045,48 @@ export async function selectCommitMessageModel(): Promise<void> {
 
 export async function generateCommitMessage(): Promise<void> {
   try {
-    const repo = await getGitRepository();
-    if (!repo) {
-      vscode.window.showWarningMessage(getMessage('commitMessageNoGitRepo'));
-      return;
-    }
-
-    const diff = await getDiff(repo);
-    if (diff.trim().length === 0) {
-      vscode.window.showInformationMessage(getMessage('commitMessageNoChanges'));
-      return;
-    }
-
-    const selection = await selectModel(true);
-    if (selection.kind === 'cancelled') {
-      vscode.window.showInformationMessage(getMessage('requestCancelled'));
-      return;
-    }
-    if (selection.kind === 'noModels') {
-      vscode.window.showWarningMessage(getMessage('commitMessageNoModel'));
-      return;
-    }
-    const model = selection.model;
-    const settings = getCommitMessageSettings();
-    const language = getCommitLanguage();
-
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.SourceControl,
         title: getMessage('commitMessageGenerating')
       },
       async (progress, token) => {
-        progress.report({ message: getMessage('commitMessageProgressPreparing') });
+        // Yield once so progress UI can render immediately after button click.
+        progress.report({ message: getMessage('commitMessageProgressCheckingRepo'), increment: 1 });
+        await Promise.resolve();
+
+        const repo = await getGitRepository();
+        if (!repo) {
+          vscode.window.showWarningMessage(getMessage('commitMessageNoGitRepo'));
+          return;
+        }
+
+        progress.report({ message: getMessage('commitMessageProgressReadingDiff'), increment: 9 });
+        const diff = await getDiff(repo);
+        if (diff.trim().length === 0) {
+          vscode.window.showInformationMessage(getMessage('commitMessageNoChanges'));
+          return;
+        }
+
+        progress.report({ message: getMessage('commitMessageProgressSelectingModel'), increment: 10 });
+        const selection = await selectModel(true);
+        if (selection.kind === 'cancelled') {
+          vscode.window.showInformationMessage(getMessage('requestCancelled'));
+          return;
+        }
+        if (selection.kind === 'noModels') {
+          vscode.window.showWarningMessage(getMessage('commitMessageNoModel'));
+          return;
+        }
+
+        const model = selection.model;
+        const settings = getCommitMessageSettings();
+        const language = getCommitLanguage();
+
+        progress.report({ message: getMessage('commitMessageProgressPreparing'), increment: 20 });
         const preparedInput = await prepareGenerationInput(model, diff, settings, token);
         progress.report({
+          increment: 20,
           message:
             preparedInput.kind === 'summary'
               ? getMessage('commitMessageProgressGeneratingFromSummary')
@@ -1109,6 +1117,7 @@ export async function generateCommitMessage(): Promise<void> {
         );
 
         repo.inputBox.value = normalizedMessage;
+        progress.report({ increment: 40 });
         vscode.window.showInformationMessage(
           getMessage('commitMessageGenerated', getCommitMessagePreview(normalizedMessage))
         );
