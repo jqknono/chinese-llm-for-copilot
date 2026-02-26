@@ -2,7 +2,7 @@
     "name": "coding-plans-for-copilot",
     "displayName": "%displayName%",
     "description": "%description%",
-    "version": "0.4.2",
+    "version": "0.4.3",
     "publisher": "techfetch-dev",
     "repository": {
         "type": "git",
@@ -76,13 +76,25 @@
                 {
                     "command": "coding-plans.generateCommitMessage",
                     "group": "navigation",
-                    "when": "scmProvider == git"
+                    "when": "scmProvider == git && codingPlans.showGenerateCommitMessage"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "coding-plans.generateCommitMessage",
+                    "when": "codingPlans.showGenerateCommitMessage"
                 }
             ]
         },
         "configuration": {
             "title": "%configuration.title%",
             "properties": {
+                "coding-plans.commitMessage.showGenerateCommand": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "%configuration.coding-plans.commitMessage.showGenerateCommand.description%",
+                    "order": 0
+                },
                 "coding-plans.commitMessage.language": {
                     "type": "string",
                     "default": "en",
@@ -95,19 +107,25 @@
                         "中文"
                     ],
                     "description": "%configuration.coding-plans.commitMessage.language.description%",
-                    "order": 0
+                    "order": 1
+                },
+                "coding-plans.commitMessage.useRecentCommitStyle": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%configuration.coding-plans.commitMessage.useRecentCommitStyle.description%",
+                    "order": 2
                 },
                 "coding-plans.commitMessage.modelVendor": {
                     "type": "string",
                     "default": "",
                     "description": "%configuration.coding-plans.commitMessage.modelVendor.description%",
-                    "order": 1
+                    "order": 3
                 },
                 "coding-plans.commitMessage.modelId": {
                     "type": "string",
                     "default": "",
                     "description": "%configuration.coding-plans.commitMessage.modelId.description%",
-                    "order": 2
+                    "order": 4
                 },
                 "coding-plans.commitMessage.options": {
                     "type": "object",
@@ -168,7 +186,7 @@
                         "warnOnValidationFailure": true
                     },
                     "description": "%configuration.coding-plans.commitMessage.options.description%",
-                    "order": 3
+                    "order": 5
                 },
                 "coding-plans.vendors": {
                     "type": "array",
@@ -314,7 +332,7 @@
                         }
                     ],
                     "description": "%configuration.coding-plans.vendors.description%",
-                    "order": 4
+                    "order": 6
                 }
             }
         }

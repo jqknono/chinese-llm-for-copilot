@@ -6,10 +6,35 @@ import { initI18n, getMessage } from './i18n/i18n';
 import { generateCommitMessage, selectCommitMessageModel } from './commitMessageGenerator';
 
 let providers: Map<string, GenericAIProvider> = new Map();
+const COMMIT_MESSAGE_SHOW_GENERATE_SETTING_KEY = 'commitMessage.showGenerateCommand';
+const COMMIT_MESSAGE_SHOW_GENERATE_CONTEXT_KEY = 'codingPlans.showGenerateCommitMessage';
+
+function shouldShowGenerateCommitMessageCommand(): boolean {
+  return vscode.workspace
+    .getConfiguration('coding-plans')
+    .get<boolean>(COMMIT_MESSAGE_SHOW_GENERATE_SETTING_KEY, true);
+}
+
+async function syncGenerateCommitMessageCommandVisibility(): Promise<void> {
+  await vscode.commands.executeCommand(
+    'setContext',
+    COMMIT_MESSAGE_SHOW_GENERATE_CONTEXT_KEY,
+    shouldShowGenerateCommitMessageCommand()
+  );
+}
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   await initI18n();
   console.log(getMessage('extensionActivated'));
+
+  await syncGenerateCommitMessageCommandVisibility();
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (event.affectsConfiguration(`coding-plans.${COMMIT_MESSAGE_SHOW_GENERATE_SETTING_KEY}`)) {
+        void syncGenerateCommitMessageCommandVisibility();
+      }
+    })
+  );
 
   // Register commit-message commands first so they remain available
   // even if provider initialization fails.

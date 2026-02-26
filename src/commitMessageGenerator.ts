@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
+import { execFile } from 'node:child_process';
 import { getMessage } from './i18n/i18n';
 
 const COMMIT_MESSAGE_MODEL_VENDOR_SETTING_KEY = 'commitMessage.modelVendor';
 const COMMIT_MESSAGE_MODEL_ID_SETTING_KEY = 'commitMessage.modelId';
+const COMMIT_MESSAGE_USE_RECENT_STYLE_SETTING_KEY = 'commitMessage.useRecentCommitStyle';
 const COMMIT_MESSAGE_OPTIONS_SETTING_KEY = 'commitMessage.options';
 const COMMIT_MESSAGE_OPTIONS_PROMPT_KEY = 'prompt';
 const COMMIT_MESSAGE_OPTIONS_MAX_DIFF_LINES_KEY = 'maxDiffLines';
@@ -36,6 +38,10 @@ const DEFAULT_BODY_BULLET_COUNT = 7;
 const DEFAULT_SUBJECT_MAX_LENGTH = 72;
 const DEFAULT_REQUIRE_CONVENTIONAL_TYPE = true;
 const DEFAULT_WARN_ON_VALIDATION_FAILURE = true;
+const DEFAULT_RECENT_COMMIT_STYLE_SAMPLE_SIZE = 20;
+const RECENT_COMMIT_STYLE_MAX_ENTRY_LENGTH = 500;
+const RECENT_COMMIT_STYLE_MAX_TOTAL_LENGTH = 5000;
+const COMMIT_LOG_ENTRY_SEPARATOR = '\u001e';
 
 const CODING_PLANS_VENDOR = 'coding-plans';
 const COMMIT_MESSAGE_TASK_BLOCK = [
@@ -68,6 +74,7 @@ interface GitAPI {
 }
 
 interface GitRepository {
+  rootUri?: vscode.Uri;
   inputBox: { value: string };
   diff(cached?: boolean): Promise<string>;
   state: { indexChanges: unknown[]; workingTreeChanges: unknown[] };
@@ -138,6 +145,12 @@ function getCommitLanguage(): CommitMessageLanguage {
     return 'zh-cn';
   }
   return 'en';
+}
+
+function shouldUseRecentCommitStyle(): boolean {
+  return vscode.workspace
+    .getConfiguration('coding-plans')
+    .get<boolean>(COMMIT_MESSAGE_USE_RECENT_STYLE_SETTING_KEY, false);
 }
 
 function normalizePipelineMode(value: string | undefined): CommitMessagePipelineMode {
@@ -272,50 +285,68 @@ function buildDiffGenerationPrompt(
   diff: string,
   language: CommitMessageLanguage,
   settings: CommitMessageSettings,
-  breakingChangeExpected: boolean
+  breakingChangeExpected: boolean,
+  styleReferenceBlock?: string
 ): string {
   const languageEnforcementBlock = getCommitLanguageEnforcementBlock(language);
   const formatPrompt = getCommitFormatPrompt();
   const structureBlock = getGenerationStructureBlock(settings, breakingChangeExpected);
 
-  return [
+  const promptSections = [
     COMMIT_MESSAGE_TASK_BLOCK,
     '',
     languageEnforcementBlock,
     '',
     formatPrompt,
     '',
-    structureBlock,
+    structureBlock
+  ];
+
+  if (styleReferenceBlock) {
+    promptSections.push('', styleReferenceBlock);
+  }
+
+  promptSections.push(
     '',
     '--- BEGIN DIFF ---',
     diff,
     '--- END DIFF ---'
-  ].join('\n');
+  );
+  return promptSections.join('\n');
 }
 
 function buildSummaryGenerationPrompt(
   summary: DiffSummary,
   language: CommitMessageLanguage,
-  settings: CommitMessageSettings
+  settings: CommitMessageSettings,
+  styleReferenceBlock?: string
 ): string {
   const languageEnforcementBlock = getCommitLanguageEnforcementBlock(language);
   const formatPrompt = getCommitFormatPrompt();
   const structureBlock = getGenerationStructureBlock(settings, summary.breakingChange);
 
-  return [
+  const promptSections = [
     COMMIT_MESSAGE_TASK_BLOCK,
     '',
     languageEnforcementBlock,
     '',
     formatPrompt,
     '',
-    structureBlock,
+    structureBlock
+  ];
+
+  if (styleReferenceBlock) {
+    promptSections.push('', styleReferenceBlock);
+  }
+
+  promptSections.push(
     '',
     'Use the following structured summary as the only source of truth.',
     '--- BEGIN CHANGE SUMMARY JSON ---',
     JSON.stringify(summary, null, 2),
     '--- END CHANGE SUMMARY JSON ---'
-  ].join('\n');
+  );
+  return promptSections.join('\n');
 }
 
 function buildChunkSummaryPrompt(chunk: string, chunkIndex: number, totalChunks: number): string {
@@ -353,6 +384,88 @@ function buildAggregateSummaryPrompt(chunkSummaries: DiffSummary[]): string {
 
 function normalizeNewlines(text: string): string {
   return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+}
+
+function getRepositoryRootPath(repo: GitRepository): string | undefined {
+  const rootPath = repo.rootUri?.fsPath?.trim();
+  if (!rootPath) {
+    return undefined;
+  }
+  return rootPath;
+}
+
+function trimCommitStyleSample(message: string): string {
+  const normalized = normalizeNewlines(message).trim();
+  if (!normalized) {
+    return '';
+  }
+  if (normalized.length <= RECENT_COMMIT_STYLE_MAX_ENTRY_LENGTH) {
+    return normalized;
+  }
+  return `${normalized.slice(0, RECENT_COMMIT_STYLE_MAX_ENTRY_LENGTH - 3)}...`;
+}
+
+async function getRecentCommitMessages(repo: GitRepository, count: number): Promise<string[]> {
+  const rootPath = getRepositoryRootPath(repo);
+  if (!rootPath) {
+    return [];
+  }
+
+  const safeCount = Math.max(1, Math.floor(count));
+  const stdout = await new Promise<string>((resolve) => {
+    execFile(
+      'git',
+      ['-C', rootPath, 'log', `-${safeCount}`, `--pretty=format:%B${COMMIT_LOG_ENTRY_SEPARATOR}`],
+      { encoding: 'utf8', maxBuffer: 1024 * 1024 },
+      (error, out) => {
+        if (error) {
+          resolve('');
+          return;
+        }
+        resolve(out);
+      }
+    );
+  });
+
+  if (!stdout.trim()) {
+    return [];
+  }
+
+  const messages = normalizeNewlines(stdout)
+    .split(COMMIT_LOG_ENTRY_SEPARATOR)
+    .map(trimCommitStyleSample)
+    .filter(message => message.length > 0);
+
+  let totalLength = 0;
+  const limited: string[] = [];
+  for (const message of messages) {
+    if (totalLength + message.length > RECENT_COMMIT_STYLE_MAX_TOTAL_LENGTH) {
+      break;
+    }
+    limited.push(message);
+    totalLength += message.length;
+  }
+
+  return limited;
+}
+
+function buildStyleReferenceBlock(recentMessages: string[]): string | undefined {
+  if (recentMessages.length === 0) {
+    return undefined;
+  }
+
+  const examples = recentMessages
+    .map((message, index) => `[${index + 1}]\n${message}`)
+    .join('\n\n');
+
+  return [
+    'STYLE REFERENCE (optional):',
+    'Mimic tone and structure from these recent commit messages.',
+    'Do not copy exact change details, identifiers, or scopes unless required by the current diff.',
+    '--- BEGIN RECENT COMMIT MESSAGES ---',
+    examples,
+    '--- END RECENT COMMIT MESSAGES ---'
+  ].join('\n');
 }
 
 function stripMarkdownFences(text: string): string {
@@ -1082,9 +1195,13 @@ export async function generateCommitMessage(): Promise<void> {
         const model = selection.model;
         const settings = getCommitMessageSettings();
         const language = getCommitLanguage();
+        const styleReferenceBlockPromise = shouldUseRecentCommitStyle()
+          ? getRecentCommitMessages(repo, DEFAULT_RECENT_COMMIT_STYLE_SAMPLE_SIZE).then(buildStyleReferenceBlock)
+          : Promise.resolve<string | undefined>(undefined);
 
         progress.report({ message: getMessage('commitMessageProgressPreparing'), increment: 20 });
         const preparedInput = await prepareGenerationInput(model, diff, settings, token);
+        const styleReferenceBlock = await styleReferenceBlockPromise;
         progress.report({
           increment: 20,
           message:
@@ -1094,8 +1211,14 @@ export async function generateCommitMessage(): Promise<void> {
         });
         const prompt =
           preparedInput.kind === 'summary'
-            ? buildSummaryGenerationPrompt(preparedInput.summary, language, settings)
-            : buildDiffGenerationPrompt(preparedInput.diff, language, settings, preparedInput.breakingChangeExpected);
+            ? buildSummaryGenerationPrompt(preparedInput.summary, language, settings, styleReferenceBlock)
+            : buildDiffGenerationPrompt(
+              preparedInput.diff,
+              language,
+              settings,
+              preparedInput.breakingChangeExpected,
+              styleReferenceBlock
+            );
 
         const rawResult = await sendPrompt(
           model,
