@@ -1293,19 +1293,6 @@ export async function selectCommitMessageModel(): Promise<void> {
 }
 
 export async function generateCommitMessage(): Promise<void> {
-  let isGenerated = false;
-  let statusBarDisposable: vscode.Disposable | undefined;
-  const updateStatusBarProgress = (message: string): void => {
-    statusBarDisposable?.dispose();
-    statusBarDisposable = vscode.window.setStatusBarMessage(
-      `$(sync~spin) ${getMessage('commitMessageStatusBarProgress', message)}`
-    );
-  };
-  const clearStatusBarProgress = (): void => {
-    statusBarDisposable?.dispose();
-    statusBarDisposable = undefined;
-  };
-
   try {
     await vscode.window.withProgress(
       {
@@ -1316,7 +1303,6 @@ export async function generateCommitMessage(): Promise<void> {
       async (progress, token) => {
         const reportProgress = (message: string, increment: number): void => {
           progress.report({ message, increment });
-          updateStatusBarProgress(message);
         };
 
         // Yield once so progress UI can render immediately after button click.
@@ -1400,25 +1386,18 @@ export async function generateCommitMessage(): Promise<void> {
         );
 
         repo.inputBox.value = normalizedMessage;
-        isGenerated = true;
         progress.report({ increment: 40 });
         vscode.window.showInformationMessage(
           getMessage('commitMessageGenerated', getCommitMessagePreview(normalizedMessage))
         );
       }
     );
-    clearStatusBarProgress();
-    if (isGenerated) {
-      vscode.window.setStatusBarMessage(`$(check) ${getMessage('commitMessageStatusBarDone')}`, 4000);
-    }
   } catch (error: unknown) {
-    clearStatusBarProgress();
     if (isRequestCancelledError(error)) {
       vscode.window.showInformationMessage(getMessage('requestCancelled'));
       return;
     }
     console.error('Failed to generate commit message.', error);
-    vscode.window.setStatusBarMessage(`$(error) ${getMessage('commitMessageStatusBarFailed')}`, 5000);
     const detail = formatErrorDetail(error);
     vscode.window.showErrorMessage(getMessage('commitMessageFailed', detail));
   }

@@ -68,55 +68,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   context.subscriptions.push(
     vscode.commands.registerCommand('coding-plans.manage', async () => {
-      const actions = [
-        { id: 'setApiKey', label: getMessage('manageActionApiKey') },
-        { id: 'openSettings', label: getMessage('manageActionOpenSettings') }
-      ];
-
-      const picked = await vscode.window.showQuickPick(actions, {
-        ignoreFocusOut: true,
-        placeHolder: getMessage('manageActionPlaceholder', 'Coding Plan')
-      });
-
-      if (!picked) {
-        return;
-      }
-
-      if (picked.id === 'setApiKey') {
-        const vendors = configStore.getVendors();
-        if (vendors.length === 0) {
-          vscode.window.showWarningMessage(getMessage('vendorNotConfigured'));
-          return;
-        }
-
-        const vendorPick = await vscode.window.showQuickPick(
-          vendors.map(v => ({ label: v.name, description: v.baseUrl, vendor: v })),
-          { ignoreFocusOut: true, placeHolder: getMessage('manageActionSelectVendor') }
-        );
-        if (!vendorPick) {
-          return;
-        }
-
-        const apiKey = await vscode.window.showInputBox({
-          prompt: getMessage('inputApiKey', vendorPick.vendor.name),
-          password: true,
-          ignoreFocusOut: true,
-          placeHolder: getMessage('inputPlaceholder')
-        });
-        if (apiKey === undefined) {
-          return;
-        }
-
-        await configStore.setApiKey(vendorPick.vendor.name, apiKey.trim());
-        await genericProvider.refreshModels();
-        vscode.window.showInformationMessage(getMessage('apiKeySaved', vendorPick.vendor.name));
-        return;
-      }
-
-      if (picked.id === 'openSettings') {
-        await vscode.commands.executeCommand('workbench.action.openSettings', 'coding-plans.vendors');
-        return;
-      }
+      await vscode.commands.executeCommand('workbench.action.openSettings', 'coding-plans.vendors');
     })
   );
 

@@ -121,7 +121,7 @@ npm run compile
 
 - `coding-plans.models`：全局模型 ID 列表（默认包含 deepseek/claude/gpt/gemini 常用模型）
 - `coding-plans.modelSettings`：按模型覆盖参数（`maxInputTokens`、`maxOutputTokens`、`capabilities.tools`、`capabilities.vision`）
-模型默认参数：`maxInputTokens=200000`、`maxOutputTokens=200000`、`tools=true`、`vision=true`。
+模型默认参数：`maxInputTokens=200000`、`maxOutputTokens=200000`、`tools=true`、`vision=false`。
 
 ## 开发
 

@@ -69,6 +69,8 @@ interface VendorDiscoveryState {
 
 const DEFAULT_CONTEXT_SIZE = 200000;
 const DEFAULT_MAX_TOKENS = 4000;
+const DEFAULT_MODEL_TOOLS = true;
+const DEFAULT_MODEL_VISION = false;
 const NON_RETRYABLE_DISCOVERY_STATUS_CODES = new Set([400, 401, 403, 404]);
 
 export class GenericLanguageModel extends BaseLanguageModel {
@@ -218,9 +220,18 @@ export class GenericAIProvider extends BaseAIProvider {
         continue;
       }
 
-      const resolvedModels = discovered.models.length > 0 ? discovered.models : configuredModels;
+      const mergedVendorModels = this.mergeVendorModelConfigs(vendor.models, discovered.models);
+      const resolvedModels = this.buildConfiguredModelsFromVendorModels(vendor, mergedVendorModels);
+      const mergedSignature = this.buildVendorDiscoverySignature({ ...vendor, models: mergedVendorModels }, apiKey);
+
+      try {
+        await this.configStore.updateVendorModels(vendor.name, mergedVendorModels);
+      } catch (error) {
+        console.warn(`Failed to update models config for ${vendor.name}.`, error);
+      }
+
       this.vendorDiscoveryState.set(vendorKey, {
-        signature,
+        signature: mergedSignature,
         suppressRetry: false,
         cachedModels: resolvedModels
       });
@@ -264,9 +275,9 @@ export class GenericAIProvider extends BaseAIProvider {
     compositeId: string
   ): AIModelConfig {
     const maxInputTokens = model.maxInputTokens ?? DEFAULT_CONTEXT_SIZE;
-    const maxOutputTokens = model.maxOutputTokens ?? maxInputTokens;
-    const toolCalling = model.capabilities?.tools ?? true;
-    const imageInput = model.capabilities?.vision ?? true;
+    const maxOutputTokens = model.maxOutputTokens ?? DEFAULT_CONTEXT_SIZE;
+    const toolCalling = model.capabilities?.tools ?? DEFAULT_MODEL_TOOLS;
+    const imageInput = model.capabilities?.vision ?? DEFAULT_MODEL_VISION;
 
     return {
       id: compositeId,
@@ -283,8 +294,12 @@ export class GenericAIProvider extends BaseAIProvider {
   }
 
   private buildConfiguredModelsForVendor(vendor: VendorConfig): AIModelConfig[] {
+    return this.buildConfiguredModelsFromVendorModels(vendor, vendor.models);
+  }
+
+  private buildConfiguredModelsFromVendorModels(vendor: VendorConfig, vendorModels: VendorModelConfig[]): AIModelConfig[] {
     const models: AIModelConfig[] = [];
-    for (const model of vendor.models) {
+    for (const model of vendorModels) {
       const compositeId = `${vendor.name}/${model.name}`;
       models.push(this.buildModelFromVendorConfig(model, vendor, compositeId));
     }
@@ -349,7 +364,7 @@ export class GenericAIProvider extends BaseAIProvider {
           maxTokens: DEFAULT_CONTEXT_SIZE,
           maxInputTokens: DEFAULT_CONTEXT_SIZE,
           maxOutputTokens: DEFAULT_CONTEXT_SIZE,
-          capabilities: { toolCalling: true, imageInput: true },
+          capabilities: { toolCalling: DEFAULT_MODEL_TOOLS, imageInput: DEFAULT_MODEL_VISION },
           description: getMessage('genericDynamicModelDescription', vendor.name, modelId)
         });
       }
@@ -369,6 +384,83 @@ export class GenericAIProvider extends BaseAIProvider {
 
   private shouldSuppressDiscoveryRetry(status: number | undefined): boolean {
     return typeof status === 'number' && NON_RETRYABLE_DISCOVERY_STATUS_CODES.has(status);
+  }
+
+  private mergeVendorModelConfigs(
+    configuredModels: VendorModelConfig[],
+    discoveredModels: AIModelConfig[]
+  ): VendorModelConfig[] {
+    const mergedByName = new Map<string, VendorModelConfig>();
+
+    for (const model of configuredModels) {
+      const normalized = this.withModelDefaults(model);
+      if (!normalized) {
+        continue;
+      }
+      const key = normalized.name.toLowerCase();
+      if (!mergedByName.has(key)) {
+        mergedByName.set(key, normalized);
+      }
+    }
+
+    for (const model of discoveredModels) {
+      const discovered = this.toVendorModelConfig(model);
+      if (!discovered) {
+        continue;
+      }
+      const key = discovered.name.toLowerCase();
+      if (!mergedByName.has(key)) {
+        mergedByName.set(key, discovered);
+      }
+    }
+
+    return Array.from(mergedByName.values());
+  }
+
+  private withModelDefaults(model: VendorModelConfig): VendorModelConfig | undefined {
+    const name = model.name.trim();
+    if (name.length === 0) {
+      return undefined;
+    }
+
+    return {
+      name,
+      description: model.description?.trim() || undefined,
+      maxInputTokens: this.readPositiveTokenInteger(model.maxInputTokens) ?? DEFAULT_CONTEXT_SIZE,
+      maxOutputTokens: this.readPositiveTokenInteger(model.maxOutputTokens) ?? DEFAULT_CONTEXT_SIZE,
+      capabilities: {
+        tools: model.capabilities?.tools ?? DEFAULT_MODEL_TOOLS,
+        vision: model.capabilities?.vision ?? DEFAULT_MODEL_VISION
+      }
+    };
+  }
+
+  private toVendorModelConfig(model: AIModelConfig): VendorModelConfig | undefined {
+    const name = model.name.trim();
+    if (name.length === 0) {
+      return undefined;
+    }
+
+    const toolCalling = model.capabilities?.toolCalling;
+    const tools = typeof toolCalling === 'number' ? toolCalling > 0 : (toolCalling ?? DEFAULT_MODEL_TOOLS);
+
+    return {
+      name,
+      description: model.description?.trim() || undefined,
+      maxInputTokens: this.readPositiveTokenInteger(model.maxInputTokens) ?? DEFAULT_CONTEXT_SIZE,
+      maxOutputTokens: this.readPositiveTokenInteger(model.maxOutputTokens) ?? DEFAULT_CONTEXT_SIZE,
+      capabilities: {
+        tools,
+        vision: model.capabilities?.imageInput ?? DEFAULT_MODEL_VISION
+      }
+    };
+  }
+
+  private readPositiveTokenInteger(value: number | undefined): number | undefined {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+      return undefined;
+    }
+    return Math.floor(value);
   }
 
   private toVendorStateKey(vendorName: string): string {

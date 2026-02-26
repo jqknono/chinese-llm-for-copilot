@@ -19,6 +19,10 @@ export interface VendorConfig {
 }
 
 const VENDOR_API_KEY_PREFIX = 'coding-plans.vendor.apiKey.';
+const DEFAULT_MODEL_MAX_INPUT_TOKENS = 200000;
+const DEFAULT_MODEL_MAX_OUTPUT_TOKENS = 200000;
+const DEFAULT_MODEL_CAPABILITIES_TOOLS = true;
+const DEFAULT_MODEL_CAPABILITIES_VISION = false;
 
 export class ConfigStore implements vscode.Disposable {
   private readonly onDidChangeEmitter = new vscode.EventEmitter<void>();
@@ -58,6 +62,59 @@ export class ConfigStore implements vscode.Disposable {
     } else {
       await this.context.secrets.delete(secretKey);
     }
+    this.onDidChangeEmitter.fire();
+  }
+
+  async updateVendorModels(vendorName: string, models: VendorModelConfig[]): Promise<void> {
+    const config = vscode.workspace.getConfiguration('coding-plans');
+    const rawVendors = config.get<unknown[]>('vendors', []);
+    if (!Array.isArray(rawVendors)) {
+      return;
+    }
+
+    const normalizedVendorName = vendorName.trim();
+    if (normalizedVendorName.length === 0) {
+      return;
+    }
+
+    const nextModels = models.map(model => this.withModelDefaults(model));
+    const nextModelsSignature = JSON.stringify(nextModels);
+    let changed = false;
+
+    const updatedVendors = rawVendors.map(rawVendor => {
+      if (!rawVendor || typeof rawVendor !== 'object') {
+        return rawVendor;
+      }
+
+      const vendorObj = rawVendor as Record<string, unknown>;
+      const name = typeof vendorObj.name === 'string' ? vendorObj.name.trim() : '';
+      if (name !== normalizedVendorName) {
+        return rawVendor;
+      }
+
+      const currentModels = Array.isArray(vendorObj.models)
+        ? vendorObj.models
+            .map(model => this.normalizeModel(model))
+            .filter((model): model is VendorModelConfig => model !== undefined)
+            .map(model => this.withModelDefaults(model))
+        : [];
+
+      if (JSON.stringify(currentModels) === nextModelsSignature) {
+        return rawVendor;
+      }
+
+      changed = true;
+      return {
+        ...vendorObj,
+        models: nextModels
+      };
+    });
+
+    if (!changed) {
+      return;
+    }
+
+    await config.update('vendors', updatedVendors, this.resolveVendorsConfigTarget());
     this.onDidChangeEmitter.fire();
   }
 
@@ -115,6 +172,36 @@ export class ConfigStore implements vscode.Disposable {
     }
 
     return { name, description, capabilities, maxInputTokens, maxOutputTokens };
+  }
+
+  private withModelDefaults(model: VendorModelConfig): VendorModelConfig {
+    const maxInputTokens = model.maxInputTokens ?? DEFAULT_MODEL_MAX_INPUT_TOKENS;
+    const maxOutputTokens = model.maxOutputTokens ?? DEFAULT_MODEL_MAX_OUTPUT_TOKENS;
+    return {
+      name: model.name,
+      description: model.description,
+      maxInputTokens,
+      maxOutputTokens,
+      capabilities: {
+        tools: model.capabilities?.tools ?? DEFAULT_MODEL_CAPABILITIES_TOOLS,
+        vision: model.capabilities?.vision ?? DEFAULT_MODEL_CAPABILITIES_VISION
+      }
+    };
+  }
+
+  private resolveVendorsConfigTarget(): vscode.ConfigurationTarget {
+    const config = vscode.workspace.getConfiguration('coding-plans');
+    const inspected = config.inspect<unknown[]>('vendors');
+    if (inspected?.workspaceFolderValue !== undefined) {
+      return vscode.ConfigurationTarget.WorkspaceFolder;
+    }
+    if (inspected?.workspaceValue !== undefined) {
+      return vscode.ConfigurationTarget.Workspace;
+    }
+    if (inspected?.globalValue !== undefined) {
+      return vscode.ConfigurationTarget.Global;
+    }
+    return vscode.ConfigurationTarget.Global;
   }
 
   private readPositiveNumber(value: unknown): number | undefined {
