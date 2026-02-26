@@ -466,6 +466,89 @@ async function parseAliyunCodingPlans() {
   }
 
   if (plans.length === 0) {
+    const extractRuleTexts = () => {
+      const texts = [];
+      const regex = /richTextContent":"([^"]+)"/g;
+      let ruleMatch;
+      while ((ruleMatch = regex.exec(entryJs)) !== null) {
+        const decoded = decodeUnicodeLiteral(ruleMatch[1])
+          .replace(/<br\s*\/?>/gi, "；")
+          .replace(/<\/br>/gi, "；");
+        const text = normalizeText(stripTags(decoded));
+        if (text) {
+          texts.push(text);
+        }
+      }
+      return texts;
+    };
+
+    const extractPlanCards = () => {
+      const info = new Map();
+      const regex = /"title":"\s*([^"]*(Lite|Pro)[^"]*)"[\s\S]{0,400}?"desc":"([^"]+)"/g;
+      let cardMatch;
+      while ((cardMatch = regex.exec(entryJs)) !== null) {
+        const rawTitle = normalizeText(decodeUnicodeLiteral(cardMatch[1]));
+        const tier = /lite/i.test(rawTitle) ? "Lite" : /pro/i.test(rawTitle) ? "Pro" : null;
+        if (!tier) {
+          continue;
+        }
+        const desc = normalizeText(
+          stripTags(decodeUnicodeLiteral(cardMatch[3]).replace(/<br\s*\/?>/gi, "；")),
+        );
+        const existing = info.get(tier) || {};
+        info.set(tier, {
+          title: rawTitle || existing.title,
+          desc: desc || existing.desc,
+        });
+      }
+      return info;
+    };
+
+    const ruleText = extractRuleTexts().join(" ");
+    const tierNote = (tier) => {
+      if (!ruleText) {
+        return null;
+      }
+      const regex = new RegExp(`${tier}[^。；]*首月[^。；]*(?:；[^。；]*次月[^。；]*)?`, "i");
+      const match = ruleText.match(regex);
+      return match ? normalizeText(match[0]) : null;
+    };
+    const priceFromRule = (tier) => {
+      if (!ruleText) {
+        return null;
+      }
+      const regex = new RegExp(`${tier}[^。；]*首月\\s*([0-9]+(?:\\.[0-9]+)?)\\s*元`, "i");
+      const match = ruleText.match(regex);
+      if (!match) {
+        return null;
+      }
+      return {
+        amount: Number(match[1]),
+        text: `${match[1]}元/首月`,
+      };
+    };
+
+    const cardInfo = extractPlanCards();
+    for (const tier of ["Lite", "Pro"]) {
+      const price = priceFromRule(tier);
+      if (!price || !Number.isFinite(price.amount)) {
+        continue;
+      }
+      const info = cardInfo.get(tier) || {};
+      const notes = [info.desc, tierNote(tier)].filter(Boolean).join("；") || null;
+      plans.push(
+        asPlan({
+          name: `Coding Plan ${tier}`,
+          currentPriceText: price.text,
+          currentPrice: price.amount,
+          unit: "月",
+          notes,
+        }),
+      );
+    }
+  }
+
+  if (plans.length === 0) {
     throw new Error("Unable to parse Aliyun coding plans");
   }
 

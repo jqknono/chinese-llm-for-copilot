@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
 
 export const MODEL_VERSION_LABEL = 'Coding Plans for Copilot';
+export const DEFAULT_CONFIGURED_MODELS: readonly string[] = [];
+
+const DEFAULT_MODEL_CONTEXT_SIZE = 200000;
 
 export interface ModelCapabilities {
   toolCalling?: boolean | number;
@@ -36,6 +39,28 @@ export interface ChatToolDefinition {
     description?: string;
     parameters?: object;
   };
+}
+
+export function normalizeHttpBaseUrl(value: string | undefined): string | undefined {
+  const trimmed = (value || '').trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return undefined;
+    }
+
+    let normalized = url.toString();
+    if (normalized.endsWith('/')) {
+      normalized = normalized.slice(0, -1);
+    }
+    return normalized;
+  } catch {
+    return undefined;
+  }
 }
 
 export function getCompactErrorMessage(error: unknown): string {
@@ -103,7 +128,7 @@ export abstract class BaseLanguageModel implements vscode.LanguageModelChat {
     this.maxOutputTokens = modelInfo.maxOutputTokens ?? modelInfo.maxTokens;
     this.capabilities = modelInfo.capabilities ?? {
       toolCalling: true,
-      imageInput: false
+      imageInput: true
     };
     this.description = modelInfo.description;
   }
@@ -128,7 +153,7 @@ export abstract class BaseLanguageModel implements vscode.LanguageModelChat {
         : text.content.map(part => 'value' in part ? (part as any).value : '').join('');
     }
 
-    // 简单的 token 估算：每个字符约 0.5 个 token
+    // 简单的 token 估算：每个字符约 0.5 个 token。
     return Promise.resolve(Math.ceil(contentText.length * 0.5));
   }
 }
@@ -140,10 +165,39 @@ export interface ChatMessage {
   tool_call_id?: string;
 }
 
+interface GenericModelListEntry {
+  id?: unknown;
+  model?: unknown;
+  name?: unknown;
+  max_tokens?: unknown;
+  context_length?: unknown;
+  max_input_tokens?: unknown;
+  max_output_tokens?: unknown;
+  input_token_limit?: unknown;
+  output_token_limit?: unknown;
+  tool_calling?: unknown;
+  function_calling?: unknown;
+  image_input?: unknown;
+  vision?: unknown;
+  capabilities?: {
+    tool_calling?: unknown;
+    function_calling?: unknown;
+    image_input?: unknown;
+    vision?: unknown;
+  } | unknown;
+}
+
+interface ResolvedModelRuntimeSettings {
+  maxInputTokens: number;
+  maxOutputTokens: number;
+  toolCalling: boolean | number;
+  imageInput: boolean;
+}
+
 export abstract class BaseAIProvider implements vscode.Disposable {
   protected models: BaseLanguageModel[];
   protected disposables: vscode.Disposable[] = [];
-  private readonly modelChangedEmitter = new vscode.EventEmitter<void>();
+  protected readonly modelChangedEmitter = new vscode.EventEmitter<void>();
   private modelDiscoveryUnsupported = false;
   private apiKey = '';
   private apiKeyInitializationPromise: Promise<void> | undefined;
@@ -179,8 +233,6 @@ export abstract class BaseAIProvider implements vscode.Disposable {
     } else {
       await this.context.secrets.delete(secretKey);
     }
-
-    await this.clearLegacyApiKeyFromConfiguration();
   }
 
   protected readApiKey(): string {
@@ -189,7 +241,6 @@ export abstract class BaseAIProvider implements vscode.Disposable {
 
   async refreshModels(): Promise<void> {
     await this.initialize();
-    await this.migrateLegacyApiKeyFromConfiguration();
     const apiKey = this.getApiKey();
 
     if (!apiKey) {
@@ -216,6 +267,393 @@ export abstract class BaseAIProvider implements vscode.Disposable {
     return this.getPredefinedModels();
   }
 
+  protected getConfiguredModelIds(): string[] {
+    const config = vscode.workspace.getConfiguration('coding-plans');
+    const configured = config.get<string[]>('models', [...DEFAULT_CONFIGURED_MODELS]);
+    const deduped = new Set<string>();
+    const models: string[] = [];
+
+    for (const rawModelId of configured) {
+      if (typeof rawModelId !== 'string') {
+        continue;
+      }
+      const modelId = rawModelId.trim();
+      if (modelId.length === 0) {
+        continue;
+      }
+
+      const dedupeKey = modelId.toLowerCase();
+      if (deduped.has(dedupeKey)) {
+        continue;
+      }
+      deduped.add(dedupeKey);
+      models.push(modelId);
+    }
+
+    return models;
+  }
+
+  protected buildConfiguredModelConfigs(
+    describe: (modelId: string) => string,
+    fallbackFamily: string
+  ): AIModelConfig[] {
+    const modelSettings = this.readModelSettingsById();
+    return this.getConfiguredModelIds().map(modelId => this.buildModelConfig(
+      modelId,
+      undefined,
+      describe,
+      fallbackFamily,
+      modelSettings
+    ));
+  }
+
+  protected async resolveModelConfigsFromGenericModelApi(
+    fetchPayload: () => Promise<unknown>,
+    describe: (modelId: string) => string,
+    fallbackFamily: string
+  ): Promise<AIModelConfig[]> {
+    try {
+      const payload = await fetchPayload();
+      const discoveredModels = this.buildModelConfigsFromGenericPayload(payload, describe, fallbackFamily);
+      if (discoveredModels.length > 0) {
+        return discoveredModels;
+      }
+    } catch (error) {
+      console.warn(`Failed to fetch model list from generic API for ${this.getVendor()}.`, error);
+    }
+
+    return this.buildConfiguredModelConfigs(describe, fallbackFamily);
+  }
+
+  protected buildModelConfigsFromGenericPayload(
+    payload: unknown,
+    describe: (modelId: string) => string,
+    fallbackFamily: string
+  ): AIModelConfig[] {
+    const modelSettings = this.readModelSettingsById();
+    const deduped = new Set<string>();
+    const models: AIModelConfig[] = [];
+    const entries = this.readGenericModelEntries(payload);
+
+    for (const entry of entries) {
+      const modelId = this.readModelId(entry);
+      if (!modelId || !this.isLikelyChatModel(modelId)) {
+        continue;
+      }
+
+      const dedupeKey = modelId.toLowerCase();
+      if (deduped.has(dedupeKey)) {
+        continue;
+      }
+      deduped.add(dedupeKey);
+
+      models.push(this.buildModelConfig(
+        modelId,
+        this.readRuntimeFromGenericModelEntry(entry),
+        describe,
+        fallbackFamily,
+        modelSettings
+      ));
+    }
+
+    return models;
+  }
+
+  protected inferModelFamily(modelId: string, fallbackFamily: string): string {
+    const parts = modelId.split('-').filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0]}-${parts[1]}`;
+    }
+    return parts[0] || fallbackFamily;
+  }
+
+  protected isLikelyChatModel(modelId: string): boolean {
+    const lower = modelId.toLowerCase();
+    return !lower.includes('embedding')
+      && !lower.includes('rerank')
+      && !lower.includes('speech')
+      && !lower.includes('tts')
+      && !lower.includes('asr')
+      && !lower.includes('audio');
+  }
+
+  private buildModelConfig(
+    modelId: string,
+    discovered: Partial<ResolvedModelRuntimeSettings> | undefined,
+    describe: (modelId: string) => string,
+    fallbackFamily: string,
+    modelSettings: Map<string, Partial<ResolvedModelRuntimeSettings>>
+  ): AIModelConfig {
+    const runtime = this.resolveModelRuntimeSettings(modelId, discovered, modelSettings);
+    return {
+      id: modelId,
+      vendor: this.getVendor(),
+      family: this.inferModelFamily(modelId, fallbackFamily),
+      name: modelId,
+      version: MODEL_VERSION_LABEL,
+      maxTokens: Math.max(runtime.maxInputTokens, runtime.maxOutputTokens),
+      maxInputTokens: runtime.maxInputTokens,
+      maxOutputTokens: runtime.maxOutputTokens,
+      capabilities: {
+        toolCalling: runtime.toolCalling,
+        imageInput: runtime.imageInput
+      },
+      description: describe(modelId)
+    };
+  }
+
+  private resolveModelRuntimeSettings(
+    modelId: string,
+    discovered: Partial<ResolvedModelRuntimeSettings> | undefined,
+    modelSettings: Map<string, Partial<ResolvedModelRuntimeSettings>>
+  ): ResolvedModelRuntimeSettings {
+    const override = modelSettings.get(modelId.toLowerCase());
+    const contextSizeFromDiscovery = discovered?.maxInputTokens;
+    const contextSize = override?.maxInputTokens
+      ?? contextSizeFromDiscovery
+      ?? DEFAULT_MODEL_CONTEXT_SIZE;
+
+    const maxInputTokens = Math.max(1, Math.floor(contextSize));
+    const maxOutputTokens = Math.max(
+      1,
+      Math.floor(override?.maxOutputTokens ?? discovered?.maxOutputTokens ?? maxInputTokens)
+    );
+    const toolCalling = override?.toolCalling ?? discovered?.toolCalling ?? true;
+    const imageInput = override?.imageInput ?? discovered?.imageInput ?? true;
+
+    return {
+      maxInputTokens,
+      maxOutputTokens,
+      toolCalling,
+      imageInput
+    };
+  }
+
+  private readModelSettingsById(): Map<string, Partial<ResolvedModelRuntimeSettings>> {
+    const settingsByModel = new Map<string, Partial<ResolvedModelRuntimeSettings>>();
+    const config = vscode.workspace.getConfiguration('coding-plans');
+    const modelSettingsRaw = config.get<Record<string, unknown>>('modelSettings', {});
+
+    if (!modelSettingsRaw || typeof modelSettingsRaw !== 'object') {
+      return settingsByModel;
+    }
+
+    for (const [rawModelId, rawValue] of Object.entries(modelSettingsRaw)) {
+      const modelId = rawModelId.trim().toLowerCase();
+      if (modelId.length === 0 || !rawValue || typeof rawValue !== 'object') {
+        continue;
+      }
+
+      const parsed = rawValue as {
+        contextSize?: unknown;
+        capabilities?: {
+          tools?: unknown;
+          vision?: unknown;
+          toolCalling?: unknown;
+          imageInput?: unknown;
+        } | unknown;
+      };
+
+      const contextSize = this.readPositiveInteger(parsed.contextSize);
+
+      const capabilities = parsed.capabilities && typeof parsed.capabilities === 'object'
+        ? parsed.capabilities as {
+          tools?: unknown;
+          vision?: unknown;
+          toolCalling?: unknown;
+          imageInput?: unknown;
+        }
+        : undefined;
+
+      const toolCalling = this.readToolCallingValue(capabilities?.toolCalling ?? capabilities?.tools);
+      const imageInput = this.readBooleanValue(capabilities?.imageInput ?? capabilities?.vision);
+
+      const normalized: Partial<ResolvedModelRuntimeSettings> = {};
+      if (contextSize !== undefined) {
+        normalized.maxInputTokens = contextSize;
+        normalized.maxOutputTokens = contextSize;
+      }
+      if (toolCalling !== undefined) {
+        normalized.toolCalling = toolCalling;
+      }
+      if (imageInput !== undefined) {
+        normalized.imageInput = imageInput;
+      }
+
+      if (Object.keys(normalized).length > 0) {
+        settingsByModel.set(modelId, normalized);
+      }
+    }
+
+    return settingsByModel;
+  }
+
+  private readGenericModelEntries(payload: unknown): GenericModelListEntry[] {
+    if (Array.isArray(payload)) {
+      return payload as GenericModelListEntry[];
+    }
+
+    if (!payload || typeof payload !== 'object') {
+      return [];
+    }
+
+    const maybeData = (payload as { data?: unknown }).data;
+    if (Array.isArray(maybeData)) {
+      return maybeData as GenericModelListEntry[];
+    }
+
+    const maybeModels = (payload as { models?: unknown }).models;
+    if (Array.isArray(maybeModels)) {
+      return maybeModels as GenericModelListEntry[];
+    }
+
+    return [];
+  }
+
+  private readModelId(entry: GenericModelListEntry): string | undefined {
+    const candidates = [entry.id, entry.model, entry.name];
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string') {
+        const normalized = candidate.trim();
+        if (normalized.length > 0) {
+          return normalized;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  private readRuntimeFromGenericModelEntry(entry: GenericModelListEntry): Partial<ResolvedModelRuntimeSettings> {
+    const maxInputTokens = this.pickPositiveInteger([
+      entry.max_input_tokens,
+      entry.input_token_limit,
+      entry.context_length,
+      entry.max_tokens
+    ]);
+    const maxOutputTokens = this.pickPositiveInteger([
+      entry.max_output_tokens,
+      entry.output_token_limit,
+      entry.context_length,
+      entry.max_tokens,
+      maxInputTokens
+    ]);
+    const toolCalling = this.readToolCallingValue(
+      this.readFromCapabilities(entry, 'tool_calling')
+      ?? this.readFromCapabilities(entry, 'function_calling')
+      ?? entry.tool_calling
+      ?? entry.function_calling
+    );
+    const imageInput = this.readBooleanValue(
+      this.readFromCapabilities(entry, 'image_input')
+      ?? this.readFromCapabilities(entry, 'vision')
+      ?? entry.image_input
+      ?? entry.vision
+    );
+
+    const runtime: Partial<ResolvedModelRuntimeSettings> = {};
+    if (maxInputTokens !== undefined) {
+      runtime.maxInputTokens = maxInputTokens;
+    }
+    if (maxOutputTokens !== undefined) {
+      runtime.maxOutputTokens = maxOutputTokens;
+    }
+    if (toolCalling !== undefined) {
+      runtime.toolCalling = toolCalling;
+    }
+    if (imageInput !== undefined) {
+      runtime.imageInput = imageInput;
+    }
+
+    return runtime;
+  }
+
+  private readFromCapabilities(entry: GenericModelListEntry, key: 'tool_calling' | 'function_calling' | 'image_input' | 'vision'): unknown {
+    if (!entry.capabilities || typeof entry.capabilities !== 'object') {
+      return undefined;
+    }
+    return (entry.capabilities as Record<string, unknown>)[key];
+  }
+
+  private readToolCallingValue(value: unknown): boolean | number | undefined {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'true') {
+        return true;
+      }
+      if (normalized === 'false') {
+        return false;
+      }
+      const parsed = Number(normalized);
+      if (Number.isFinite(parsed) && parsed >= 0) {
+        return parsed;
+      }
+    }
+
+    return undefined;
+  }
+
+  private readBooleanValue(value: unknown): boolean | undefined {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value > 0;
+    }
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'true') {
+        return true;
+      }
+      if (normalized === 'false') {
+        return false;
+      }
+      const parsed = Number(normalized);
+      if (Number.isFinite(parsed)) {
+        return parsed > 0;
+      }
+    }
+    return undefined;
+  }
+
+  private pickPositiveInteger(values: unknown[]): number | undefined {
+    for (const value of values) {
+      const parsed = this.readPositiveInteger(value);
+      if (parsed !== undefined) {
+        return parsed;
+      }
+    }
+    return undefined;
+  }
+
+  private readPositiveInteger(value: unknown): number | undefined {
+    const parsed = this.readPositiveNumber(value);
+    if (parsed === undefined) {
+      return undefined;
+    }
+    return Math.floor(parsed);
+  }
+
+  private readPositiveNumber(value: unknown): number | undefined {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = Number(value.trim());
+      if (Number.isFinite(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+    return undefined;
+  }
+
   protected abstract createModel(modelInfo: AIModelConfig): BaseLanguageModel;
 
   getAvailableModels(): BaseLanguageModel[] {
@@ -238,42 +676,6 @@ export abstract class BaseAIProvider implements vscode.Disposable {
     const secretKey = this.getApiKeySecretStorageKey();
     const stored = await this.context.secrets.get(secretKey);
     this.apiKey = (stored || '').trim();
-    await this.migrateLegacyApiKeyFromConfiguration();
-  }
-
-  private async migrateLegacyApiKeyFromConfiguration(): Promise<void> {
-    const config = vscode.workspace.getConfiguration(this.getConfigSection());
-    const legacyValue = (config.get<string>('apiKey', '') || '').trim();
-    if (legacyValue.length === 0) {
-      return;
-    }
-
-    if (!this.apiKey) {
-      this.apiKey = legacyValue;
-      await this.context.secrets.store(this.getApiKeySecretStorageKey(), legacyValue);
-    }
-
-    await this.clearLegacyApiKeyFromConfiguration(config);
-  }
-
-  private async clearLegacyApiKeyFromConfiguration(config?: vscode.WorkspaceConfiguration): Promise<void> {
-    const targetConfig = config ?? vscode.workspace.getConfiguration(this.getConfigSection());
-    const inspected = targetConfig.inspect<string>('apiKey');
-    const updates: Array<Thenable<void>> = [];
-
-    if (inspected?.globalValue !== undefined) {
-      updates.push(targetConfig.update('apiKey', undefined, vscode.ConfigurationTarget.Global));
-    }
-    if (inspected?.workspaceValue !== undefined) {
-      updates.push(targetConfig.update('apiKey', undefined, vscode.ConfigurationTarget.Workspace));
-    }
-    if (inspected?.workspaceFolderValue !== undefined) {
-      updates.push(targetConfig.update('apiKey', undefined, vscode.ConfigurationTarget.WorkspaceFolder));
-    }
-
-    if (updates.length > 0) {
-      await Promise.all(updates);
-    }
   }
 
   getModel(modelId: string): BaseLanguageModel | undefined {

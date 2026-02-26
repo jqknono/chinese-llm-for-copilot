@@ -1,11 +1,14 @@
 import * as vscode from 'vscode';
 import { BaseAIProvider, BaseLanguageModel, MODEL_VERSION_LABEL, getCompactErrorMessage } from './baseProvider';
+import { ConfigStore } from '../config/configStore';
 import { getMessage } from '../i18n/i18n';
+
+let hasShownVendorNotConfiguredWarning = false;
 
 interface ProviderPickerConfiguration {
   name?: unknown;
+  vendorName?: unknown;
   apiKey?: unknown;
-  region?: unknown;
 }
 
 interface PrepareLanguageModelChatModelOptionsWithConfiguration extends vscode.PrepareLanguageModelChatModelOptions {
@@ -29,16 +32,8 @@ function toLanguageModelInfo(model: BaseLanguageModel): vscode.LanguageModelChat
 
 function getProviderDisplayName(vendor: string): string {
   switch (vendor) {
-    case 'zhipu-ai':
-      return 'Zhipu';
-    case 'kimi-ai':
-      return 'Kimi';
-    case 'volcengine-ai':
-      return 'Volcengine';
-    case 'minimax-ai':
-      return 'Minimax';
-    case 'aliyun-ai':
-      return 'Aliyun';
+    case 'coding-plans':
+      return 'Coding Plan';
     default:
       return vendor;
   }
@@ -56,10 +51,15 @@ function getUnsupportedPlaceholderModelId(vendor: string): string {
   return `${vendor}__unsupported__`;
 }
 
+function getVendorNotConfiguredPlaceholderModelId(vendor: string): string {
+  return `${vendor}__vendor_not_configured__`;
+}
+
 function isPlaceholderModel(vendor: string, modelId: string): boolean {
   return modelId === getPlaceholderModelId(vendor)
     || modelId === getNoModelsPlaceholderModelId(vendor)
-    || modelId === getUnsupportedPlaceholderModelId(vendor);
+    || modelId === getUnsupportedPlaceholderModelId(vendor)
+    || modelId === getVendorNotConfiguredPlaceholderModelId(vendor);
 }
 
 function getPlaceholderModel(vendor: string): vscode.LanguageModelChatInformation {
@@ -116,13 +116,33 @@ function getUnsupportedPlaceholderModel(vendor: string): vscode.LanguageModelCha
   };
 }
 
+function getVendorNotConfiguredPlaceholderModel(vendor: string): vscode.LanguageModelChatInformation {
+  return {
+    id: getVendorNotConfiguredPlaceholderModelId(vendor),
+    name: getMessage('vendorNotConfiguredName'),
+    family: 'vendor-not-configured',
+    tooltip: getMessage('vendorNotConfiguredTooltip'),
+    detail: getMessage('vendorNotConfiguredDetail'),
+    version: MODEL_VERSION_LABEL,
+    maxInputTokens: 1,
+    maxOutputTokens: 1,
+    capabilities: {
+      toolCalling: false,
+      imageInput: false
+    }
+  };
+}
+
 export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, vscode.Disposable {
   private readonly onDidChangeLanguageModelChatInformationEmitter = new vscode.EventEmitter<void>();
   public readonly onDidChangeLanguageModelChatInformation =
     this.onDidChangeLanguageModelChatInformationEmitter.event;
   private readonly disposables: vscode.Disposable[] = [];
 
-  constructor(private readonly provider: BaseAIProvider) {
+  constructor(
+    private readonly provider: BaseAIProvider,
+    private readonly configStore?: ConfigStore
+  ) {
     this.disposables.push(
       this.provider.onDidChangeModels(() => {
         this.onDidChangeLanguageModelChatInformationEmitter.fire();
@@ -148,27 +168,44 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
       await this.applyPickerConfiguration(pickerOptions);
     }
 
-    return this.buildModelInformation();
+    return this.buildModelInformation(pickerOptions.configuration);
   }
 
-  private buildModelInformation(): vscode.LanguageModelChatInformation[] {
+  private async buildModelInformation(
+    configuration?: ProviderPickerConfiguration
+  ): Promise<vscode.LanguageModelChatInformation[]> {
     const models = this.provider.getAvailableModels();
-    if (models.length === 0) {
-      const apiKey = this.provider.getApiKey().trim();
-      if (apiKey.length === 0) {
-        return [getPlaceholderModel(this.provider.getVendor())];
+    const requestedVendor = this.resolveRequestedVendorName(configuration);
+    const resolvedVendor = this.resolveConfiguredVendorName(requestedVendor);
+    if (requestedVendor && !resolvedVendor && this.configStore) {
+      return [getVendorNotConfiguredPlaceholderModel(this.provider.getVendor())];
+    }
+    const vendorForFiltering = resolvedVendor || requestedVendor;
+    const filteredModels = vendorForFiltering
+      ? models.filter(model => model.family.toLowerCase() === vendorForFiltering.toLowerCase())
+      : models;
+
+    if (filteredModels.length === 0) {
+      if (vendorForFiltering && this.configStore) {
+        const apiKey = (await this.configStore.getApiKey(vendorForFiltering)).trim();
+        if (apiKey.length === 0) {
+          return [getPlaceholderModel(this.provider.getVendor())];
+        }
+      } else {
+        const apiKey = this.provider.getApiKey().trim();
+        if (apiKey.length === 0) {
+          return [getPlaceholderModel(this.provider.getVendor())];
+        }
       }
+
       if (this.provider.isModelDiscoveryUnsupported()) {
         return [getUnsupportedPlaceholderModel(this.provider.getVendor())];
       }
+
       return [getNoModelsPlaceholderModel(this.provider.getVendor())];
     }
 
-    if (models.length > 0) {
-      return models.map(model => toLanguageModelInfo(model));
-    }
-
-    return [getPlaceholderModel(this.provider.getVendor())];
+    return filteredModels.map(model => toLanguageModelInfo(model));
   }
 
   async provideLanguageModelChatResponse(
@@ -187,6 +224,10 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
       }
       if (model.id === getNoModelsPlaceholderModelId(vendor)) {
         progress.report(new vscode.LanguageModelTextPart(getMessage('noModelResponse', providerName)));
+        return;
+      }
+      if (model.id === getVendorNotConfiguredPlaceholderModelId(vendor)) {
+        progress.report(new vscode.LanguageModelTextPart(getMessage('vendorNotConfiguredResponse')));
         return;
       }
       progress.report(new vscode.LanguageModelTextPart(getMessage('setupModelResponse', providerName)));
@@ -260,52 +301,86 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
       return;
     }
 
-    const configSection = this.provider.getConfigSection();
-    const config = vscode.workspace.getConfiguration(configSection);
-    const globalConfig = vscode.workspace.getConfiguration('coding-plans');
-    const updates: Array<Thenable<void>> = [];
     let changed = false;
 
-    if (normalized.apiKey !== undefined) {
+    const vendorName = normalized.vendorName;
+    if (vendorName && this.configStore) {
+      const resolvedVendor = this.resolveConfiguredVendorName(vendorName);
+      if (!resolvedVendor) {
+        await this.warnVendorNotConfigured(vendorName);
+        return;
+      }
+      if (normalized.apiKey !== undefined) {
+        await this.configStore.setApiKey(resolvedVendor, normalized.apiKey);
+        changed = true;
+      }
+    } else if (normalized.apiKey !== undefined) {
       const nextApiKey = normalized.apiKey.trim();
       if (this.provider.getApiKey() !== nextApiKey) {
         await this.provider.setApiKey(nextApiKey);
         changed = true;
       }
     }
-    if (normalized.region !== undefined) {
-      const currentRegion = globalConfig.get<boolean>('region', true);
-      if (currentRegion !== normalized.region) {
-        updates.push(globalConfig.update('region', normalized.region, vscode.ConfigurationTarget.Global));
-        changed = true;
-      }
-    }
-    if (updates.length > 0) {
-      await Promise.all(updates);
-    }
+
     if (changed) {
       await this.provider.refreshModels();
     }
   }
 
   private normalizePickerConfiguration(raw: ProviderPickerConfiguration): {
+    vendorName?: string;
     apiKey?: string;
-    region?: boolean;
   } | undefined {
     const normalized: {
+      vendorName?: string;
       apiKey?: string;
-      region?: boolean;
     } = {};
 
+    if (typeof raw.vendorName === 'string') {
+      normalized.vendorName = raw.vendorName.trim();
+    }
     if (typeof raw.apiKey === 'string') {
       normalized.apiKey = raw.apiKey.trim();
     }
 
-    if (typeof raw.region === 'boolean') {
-      normalized.region = raw.region;
+    return Object.keys(normalized).length > 0 ? normalized : undefined;
+  }
+
+  private resolveRequestedVendorName(configuration?: ProviderPickerConfiguration): string {
+    if (configuration && typeof configuration.vendorName === 'string') {
+      const fromConfig = configuration.vendorName.trim();
+      if (fromConfig.length > 0) {
+        return fromConfig;
+      }
     }
 
-    return Object.keys(normalized).length > 0 ? normalized : undefined;
+    return '';
+  }
+
+  private resolveConfiguredVendorName(raw: string): string | undefined {
+    const trimmed = raw.trim();
+    if (trimmed.length === 0 || !this.configStore) {
+      return undefined;
+    }
+
+    const vendors = this.configStore.getVendors();
+    const match = vendors.find(v => v.name.toLowerCase() === trimmed.toLowerCase());
+    return match?.name;
+  }
+
+  private async warnVendorNotConfigured(vendorName: string): Promise<void> {
+    if (hasShownVendorNotConfiguredWarning) {
+      return;
+    }
+    hasShownVendorNotConfiguredWarning = true;
+
+    const message = getMessage('vendorNotConfiguredMatch', vendorName.trim());
+    const action = getMessage('manageActionOpenSettings');
+    void vscode.window.showWarningMessage(message, action).then(picked => {
+      if (picked) {
+        void vscode.commands.executeCommand('workbench.action.openSettings', 'coding-plans.vendors');
+      }
+    });
   }
 
   private toCompactLanguageModelError(error: unknown): vscode.LanguageModelError {

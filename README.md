@@ -35,7 +35,7 @@ npm run compile
 
 ## 功能特性
 
-- 支持智谱 z.ai 套餐模型动态查询（已验证）
+- 支持通过配置文件管理模型列表（全供应商共享）
 - 支持 Kimi、火山云、Minimax、阿里云套餐模型接入（尚未测试）
 - 非 z.ai 提供商如遇问题，请提交 Issue 反馈
 - 无缝集成到 VS Code Copilot Chat
@@ -65,7 +65,10 @@ npm run compile
 | Minimax | 尚未测试 | 如遇问题请提交 Issue |
 | 阿里云百炼套餐 | 尚未测试 | 如遇问题请提交 Issue |
 
-模型列表由厂商接口动态返回
+模型列表获取策略：
+
+- 优先调用通用模型接口 `GET /models`
+- 若接口返回空或不可用，则回退到 `coding-plans.models` 预置模型列表
 
 ## 使用方法
 
@@ -77,9 +80,14 @@ npm run compile
 - [Minimax](https://platform.minimaxi.com/)
 - [阿里云](https://dashscope.aliyun.com/)
 
-### 2. 配置 API Key
+### 2. 配置供应商与 API Key
 
-按 `Ctrl+Shift+P`，输入 `编码套餐: 设置 [提供商] API Key`。API Key 会保存到 VS Code Secret Storage。
+按 `Ctrl+Shift+P`，输入 `编码套餐: 管理编码套餐配置`，可执行：
+
+- `选择供应商`：从预配置供应商中选择当前使用的 vendor
+- `设置 API Key`：写入当前 vendor 的 API Key（保存在配置文件中）
+- `设置中转站地址`：更新当前 vendor 的 baseUrl
+- `打开配置文件`：手动编辑 `coding-plans.config.json`
 
 ### 3. 使用 Copilot Chat
 
@@ -87,7 +95,31 @@ npm run compile
 
 ## 配置选项
 
-在 VS Code 设置中配置 `coding-plans.region`：`true` 为中国大陆接口，`false` 为海外接口。
+配置文件 `coding-plans.config.json`（工作区根目录；无工作区时存放在扩展全局存储）包含可用供应商、baseUrl、API Key、模型与能力。示例：
+
+```json
+{
+  "schemaVersion": 1,
+  "activeVendorId": "aliyun",
+  "vendors": [
+    {
+      "id": "aliyun",
+      "displayName": "Aliyun Bailian",
+      "apiType": "openai",
+      "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
+      "apiKey": "YOUR_API_KEY",
+      "models": []
+    }
+  ]
+}
+```
+`apiType` 支持 `openai` 或 `anthropic`。可选 `anthropicVersion`（默认 `2023-06-01`）。
+
+在 VS Code 设置中仍可配置（作为 /models 失败时的兜底）：
+
+- `coding-plans.models`：全局模型 ID 列表（默认包含 deepseek/claude/gpt/gemini 常用模型）
+- `coding-plans.modelSettings`：按模型覆盖参数（`contextSize`、`capabilities.tools`、`capabilities.vision`）
+模型默认参数：`contextSize=200000`、`tools=true`、`vision=true`。
 
 ## 开发
 

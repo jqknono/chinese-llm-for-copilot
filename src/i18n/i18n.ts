@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 interface Messages {
   [key: string]: string;
@@ -14,11 +16,26 @@ export async function initI18n(): Promise<void> {
 
   try {
     const messageFile = locale === 'zh-cn' ? 'messages.zh-cn.json' : 'messages.en.json';
-    const messagePath = __dirname + '/' + messageFile;
+    const candidatePaths = [
+      path.join(__dirname, 'i18n', messageFile),
+      path.join(__dirname, messageFile)
+    ];
 
-    // 在实际运行时，消息文件会被编译到 out/i18n 目录
-    const messages = await import(messagePath);
-    currentMessages = messages.default || messages;
+    let loaded: Messages | undefined;
+    for (const candidatePath of candidatePaths) {
+      try {
+        const fileContent = await fs.readFile(candidatePath, 'utf8');
+        loaded = JSON.parse(fileContent) as Messages;
+        break;
+      } catch {
+        // Try next candidate path.
+      }
+    }
+
+    if (!loaded) {
+      throw new Error(`Message file not found: ${messageFile}`);
+    }
+    currentMessages = loaded;
   } catch (error) {
     console.error('Failed to load messages:', error);
     // 回退到英文

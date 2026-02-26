@@ -5,7 +5,7 @@ Integrate Zhipu (verified) into VS Code Copilot, with Beta support for Kimi, Vol
 
 ## Features
 
-- Supports dynamic querying of Zhipu models (verified)
+- Supports configuration-driven model list management (shared across all providers)
 - Beta support for Kimi, Volcano Cloud, Minimax, and Alibaba Cloud models (untested)
 - For non-z.ai providers, please submit Issues if encountering problems
 - Seamless integration with VS Code Copilot Chat
@@ -40,19 +40,19 @@ To switch VS Code's UI language:
 ## Supported Models
 
 ### Zhipu (Verified)
-- Model list dynamically returned via provider API
+- Model list is fetched from generic `GET /models` first, then falls back to `coding-plans.models` if unavailable or empty
 
 ### Kimi AI (Beta, untested)
-- Model list dynamically returned via provider API
+- Model list is fetched from generic `GET /models` first, then falls back to `coding-plans.models` if unavailable or empty
 
 ### Volcano Cloud (Beta, untested)
-- Model list dynamically returned via provider API
+- Model list is fetched from generic `GET /models` first, then falls back to `coding-plans.models` if unavailable or empty
 
 ### Minimax (Beta, untested)
-- Model list dynamically returned via provider API
+- Model list is fetched from generic `GET /models` first, then falls back to `coding-plans.models` if unavailable or empty
 
 ### Alibaba Cloud Tongyi Qianwen (Beta, untested)
-- Model list dynamically returned via provider API
+- Model list is fetched from generic `GET /models` first, then falls back to `coding-plans.models` if unavailable or empty
 
 ## Installation
 
@@ -100,16 +100,12 @@ Get API Keys from your chosen provider:
 
 In VS Code:
 
-#### Zhipu
-- Press `Ctrl+Shift+P` (or `Cmd+Shift+P`), type `Coding Plans: Set Zhipu API Key`
-
-#### Kimi AI
-- Press `Ctrl+Shift+P`, type `Coding Plans: Set Kimi API Key`
-
-#### Volcano Cloud
-- Press `Ctrl+Shift+P`, type `Coding Plans: Set Volcano Cloud API Key`
-
-API keys are stored in VS Code Secret Storage (not in `settings.json`).
+- Press `Ctrl+Shift+P` (or `Cmd+Shift+P`), type `Coding Plans: Manage Coding Plans Configuration`
+- Use:
+  - `Select Vendor` to choose the active vendor profile
+  - `Set API Key` to store the API key in the config file
+  - `Set Relay Base URL` to update the vendor base URL
+  - `Open Config File` to edit `coding-plans.config.json`
 
 ### 3. Use Copilot Chat
 
@@ -119,13 +115,34 @@ API keys are stored in VS Code Secret Storage (not in `settings.json`).
 
 ## Configuration Options
 
-Configure these options in VS Code Settings:
+The config file `coding-plans.config.json` (workspace root; falls back to extension global storage) defines vendors, baseUrl, apiKey, models, and capabilities. Example:
+
+```json
+{
+  "schemaVersion": 1,
+  "activeVendorId": "aliyun",
+  "vendors": [
+    {
+      "id": "aliyun",
+      "displayName": "Aliyun Bailian",
+      "apiType": "openai",
+      "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
+      "apiKey": "YOUR_API_KEY",
+      "models": []
+    }
+  ]
+}
+```
+`apiType` supports `openai` or `anthropic`. Optional `anthropicVersion` defaults to `2023-06-01`.
+
+Configure these options in VS Code Settings as fallback when `/models` is unavailable:
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `coding-plans.region` | boolean | true | Use Mainland China interface (`true` for Mainland, `false` for overseas) |
+| `coding-plans.models` | array of string | deepseek/claude/gpt/gemini defaults | Global model IDs shared by all providers |
+| `coding-plans.modelSettings` | object | `{}` | Per-model overrides: `contextSize`, `capabilities.tools`, `capabilities.vision` |
 
-API keys for all providers are stored in Secret Storage via the command palette.
+Default model settings: `contextSize=200000`, `tools=true`, `vision=true`.
 
 ## Development
 
@@ -137,10 +154,10 @@ china-lm-for-copilot/
 │   ├── extension.ts                  # Extension entry file
 │   └── providers/                    # Model providers directory
 │       ├── baseProvider.ts           # Base provider abstract class
-│       ├── zhipuProvider.ts          # Zhipu GLM provider
-│       ├── kimiProvider.ts           # Kimi AI provider
-│       ├── volcengineProvider.ts     # Volcano Cloud provider
-│       └── minimaxProvider.ts        # Minimax provider
+│       ├── genericProvider.ts        # Generic provider (OpenAI/Anthropic)
+│       └── baseProvider.ts           # Base provider abstract class
+│   └── config/
+│       └── configStore.ts            # Vendor config loader
 ├── package.json                      # Extension configuration
 ├── tsconfig.json                     # TypeScript configuration
 └── README.md                         # Documentation

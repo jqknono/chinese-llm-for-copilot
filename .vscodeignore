@@ -2,6 +2,7 @@
 .vscode-test/**
 .translation-cache/**
 .git/**
+node_modules/**
 src/**
 plans/**
 scripts/**
@@ -16,3 +17,9 @@ tsconfig.json
 **/*.md
 !README.md
 **/test/**
+.github/**
+docs/**
+minimax-sitemap.xml
+moonshot-sitemap.xml
+assets/icon.svg
+assets/provider-pricing.json

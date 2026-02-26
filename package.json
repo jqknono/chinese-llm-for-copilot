@@ -2,14 +2,14 @@
     "name": "coding-plans-for-copilot",
     "displayName": "%displayName%",
     "description": "%description%",
-    "version": "0.2.0",
+    "version": "0.4.0",
     "publisher": "techfetch-dev",
     "repository": {
         "type": "git",
-        "url": "https://github.com/jqknono/chinese-llm-for-copilot.git"
+        "url": "https://github.com/jqknono/coding-plans-for-copilot.git"
     },
     "engines": {
-        "vscode": "^1.95.0"
+        "vscode": "^1.109.0"
     },
     "categories": [
         "Machine Learning",
@@ -20,170 +20,43 @@
     "contributes": {
         "languageModelChatProviders": [
             {
-                "vendor": "zhipu-ai",
-                "displayName": "%providers.zhipu.displayName%",
+                "vendor": "coding-plans",
+                "displayName": "%providers.codingPlans.displayName%",
                 "configuration": {
-                    "type": "object",
-                    "required": [
-                        "apiKey"
-                    ],
                     "properties": {
+                        "vendorName": {
+                            "type": "string",
+                            "title": "%providers.codingPlans.config.vendorName.title%",
+                            "description": "%providers.codingPlans.config.vendorName.description%"
+                        },
                         "apiKey": {
                             "type": "string",
-                            "title": "API Key",
-                            "description": "Zhipu API key",
-                            "secret": true
+                            "secret": true,
+                            "title": "%providers.codingPlans.config.apiKey.title%",
+                            "description": "%providers.codingPlans.config.apiKey.description%"
                         }
-                    }
-                }
-            },
-            {
-                "vendor": "kimi-ai",
-                "displayName": "%providers.kimi.displayName%",
-                "configuration": {
-                    "type": "object",
+                    },
                     "required": [
+                        "vendorName",
                         "apiKey"
-                    ],
-                    "properties": {
-                        "apiKey": {
-                            "type": "string",
-                            "title": "API Key",
-                            "description": "Kimi API key",
-                            "secret": true
-                        }
-                    }
-                }
-            },
-            {
-                "vendor": "volcengine-ai",
-                "displayName": "%providers.volcengine.displayName%",
-                "configuration": {
-                    "type": "object",
-                    "required": [
-                        "apiKey"
-                    ],
-                    "properties": {
-                        "apiKey": {
-                            "type": "string",
-                            "title": "API Key",
-                            "description": "Volcengine API key",
-                            "secret": true
-                        }
-                    }
-                }
-            },
-            {
-                "vendor": "minimax-ai",
-                "displayName": "%providers.minimax.displayName%",
-                "configuration": {
-                    "type": "object",
-                    "required": [
-                        "apiKey"
-                    ],
-                    "properties": {
-                        "apiKey": {
-                            "type": "string",
-                            "title": "API Key",
-                            "description": "Minimax API key",
-                            "secret": true
-                        }
-                    }
-                }
-            },
-            {
-                "vendor": "aliyun-ai",
-                "displayName": "%providers.aliyun.displayName%",
-                "configuration": {
-                    "type": "object",
-                    "required": [
-                        "apiKey"
-                    ],
-                    "properties": {
-                        "apiKey": {
-                            "type": "string",
-                            "title": "API Key",
-                            "description": "Aliyun DashScope API key",
-                            "secret": true
-                        }
-                    }
+                    ]
                 }
             }
         ],
         "commands": [
             {
-                "command": "coding-plans.manage.zhipu",
-                "title": "%commands.coding-plans.manage.zhipu.title%",
+                "command": "coding-plans.manage",
+                "title": "%commands.coding-plans.manage.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "coding-plans.setApiKey.zhipu",
-                "title": "%commands.coding-plans.setApiKey.zhipu.title%",
+                "command": "coding-plans.addModels",
+                "title": "%commands.coding-plans.addModels.title%",
                 "category": "%commands.category%"
             },
             {
-                "command": "coding-plans.refreshModels.zhipu",
-                "title": "%commands.coding-plans.refreshModels.zhipu.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.manage.kimi",
-                "title": "%commands.coding-plans.manage.kimi.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.setApiKey.kimi",
-                "title": "%commands.coding-plans.setApiKey.kimi.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.refreshModels.kimi",
-                "title": "%commands.coding-plans.refreshModels.kimi.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.manage.volcengine",
-                "title": "%commands.coding-plans.manage.volcengine.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.setApiKey.volcengine",
-                "title": "%commands.coding-plans.setApiKey.volcengine.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.refreshModels.volcengine",
-                "title": "%commands.coding-plans.refreshModels.volcengine.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.manage.minimax",
-                "title": "%commands.coding-plans.manage.minimax.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.setApiKey.minimax",
-                "title": "%commands.coding-plans.setApiKey.minimax.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.refreshModels.minimax",
-                "title": "%commands.coding-plans.refreshModels.minimax.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.manage.aliyun",
-                "title": "%commands.coding-plans.manage.aliyun.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.setApiKey.aliyun",
-                "title": "%commands.coding-plans.setApiKey.aliyun.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.refreshModels.aliyun",
-                "title": "%commands.coding-plans.refreshModels.aliyun.title%",
+                "command": "coding-plans.refreshModels",
+                "title": "%commands.coding-plans.refreshModels.title%",
                 "category": "%commands.category%"
             },
             {
@@ -196,13 +69,6 @@
                 "command": "coding-plans.selectCommitMessageModel",
                 "title": "%commands.coding-plans.selectCommitMessageModel.title%",
                 "category": "%commands.category%"
-            }
-        ],
-        "keybindings": [
-            {
-                "command": "coding-plans.generateCommitMessage",
-                "key": "ctrl+shift+g ctrl+shift+m",
-                "mac": "cmd+shift+g cmd+shift+m"
             }
         ],
         "menus": {
@@ -220,7 +86,10 @@
                 "coding-plans.commitMessage.language": {
                     "type": "string",
                     "default": "en",
-                    "enum": ["en", "zh-cn"],
+                    "enum": [
+                        "en",
+                        "zh-cn"
+                    ],
                     "enumDescriptions": [
                         "English",
                         "中文"
@@ -240,34 +109,233 @@
                     "description": "%configuration.coding-plans.commitMessage.modelId.description%",
                     "order": 2
                 },
-                "coding-plans.region": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "%configuration.coding-plans.region.description%",
+                "coding-plans.commitMessage.options": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "prompt": {
+                            "type": "string"
+                        },
+                        "maxDiffLines": {
+                            "type": "number",
+                            "minimum": 1
+                        },
+                        "pipelineMode": {
+                            "type": "string",
+                            "enum": [
+                                "single",
+                                "two-stage",
+                                "auto"
+                            ]
+                        },
+                        "summaryTriggerLines": {
+                            "type": "number",
+                            "minimum": 1
+                        },
+                        "summaryChunkLines": {
+                            "type": "number",
+                            "minimum": 1
+                        },
+                        "summaryMaxChunks": {
+                            "type": "number",
+                            "minimum": 1
+                        },
+                        "bodyBulletCount": {
+                            "type": "number",
+                            "minimum": 2
+                        },
+                        "subjectMaxLength": {
+                            "type": "number",
+                            "minimum": 20
+                        },
+                        "requireConventionalType": {
+                            "type": "boolean"
+                        },
+                        "warnOnValidationFailure": {
+                            "type": "boolean"
+                        }
+                    },
+                    "default": {
+                        "prompt": "FORMAT REQUIREMENT:\nFollow the Conventional Commits format: <type>(<scope>): <description>.\nCommon types: feat, fix, docs, style, refactor, perf, test, build, ci, chore.\nOutput ONLY the commit message, no explanation, no markdown fences.",
+                        "maxDiffLines": 3000,
+                        "pipelineMode": "single",
+                        "summaryTriggerLines": 1200,
+                        "summaryChunkLines": 800,
+                        "summaryMaxChunks": 12,
+                        "bodyBulletCount": 7,
+                        "subjectMaxLength": 72,
+                        "requireConventionalType": true,
+                        "warnOnValidationFailure": true
+                    },
+                    "description": "%configuration.coding-plans.commitMessage.options.description%",
                     "order": 3
+                },
+                "coding-plans.vendors": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "name",
+                            "baseUrl"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "baseUrl": {
+                                "type": "string"
+                            },
+                            "models": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "name"
+                                    ],
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "capabilities": {
+                                            "type": "object",
+                                            "properties": {
+                                                "tools": {
+                                                    "type": "boolean",
+                                                    "default": true
+                                                },
+                                                "vision": {
+                                                    "type": "boolean",
+                                                    "default": true
+                                                }
+                                            }
+                                        },
+                                        "contextSize": {
+                                            "type": "number",
+                                            "default": 200000
+                                        }
+                                    }
+                                },
+                                "default": []
+                            }
+                        }
+                    },
+                    "default": [
+                        {
+                            "name": "zhipu",
+                            "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
+                            "models": [
+                                {
+                                    "name": "glm-4.7",
+                                    "capabilities": {
+                                        "tools": true,
+                                        "vision": true
+                                    },
+                                    "contextSize": 128000
+                                },
+                                {
+                                    "name": "glm-5",
+                                    "capabilities": {
+                                        "tools": true,
+                                        "vision": true
+                                    },
+                                    "contextSize": 128000
+                                }
+                            ]
+                        },
+                        {
+                            "name": "z.ai",
+                            "baseUrl": "https://api.z.ai/api/coding/paas/v4",
+                            "models": [
+                                {
+                                    "name": "glm-4.7",
+                                    "description": "GLM-4.7",
+                                    "capabilities": {
+                                        "tools": true,
+                                        "vision": true
+                                    },
+                                    "contextSize": 128000
+                                },
+                                {
+                                    "name": "glm-5",
+                                    "description": "GLM-5",
+                                    "capabilities": {
+                                        "tools": true,
+                                        "vision": true
+                                    },
+                                    "contextSize": 128000
+                                }
+                            ]
+                        },
+                        {
+                            "name": "火山引擎",
+                            "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
+                            "models": []
+                        },
+                        {
+                            "name": "Volcengine Overseas",
+                            "baseUrl": "https://ark.ap-southeast.bytepluses.com/api/coding/v3",
+                            "models": []
+                        },
+                        {
+                            "name": "MiniMax Mainland",
+                            "baseUrl": "https://api.minimaxi.com/v1",
+                            "models": []
+                        },
+                        {
+                            "name": "MiniMax Overseas",
+                            "baseUrl": "https://api.minimax.io/v1",
+                            "models": []
+                        },
+                        {
+                            "name": "Kimi Mainland",
+                            "baseUrl": "https://api.moonshot.cn/v1",
+                            "models": []
+                        },
+                        {
+                            "name": "Kimi Overseas",
+                            "baseUrl": "https://api.moonshot.ai/v1",
+                            "models": []
+                        },
+                        {
+                            "name": "Aliyun",
+                            "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
+                            "models": []
+                        }
+                    ],
+                    "description": "%configuration.coding-plans.vendors.description%",
+                    "order": 4
                 }
             }
         }
     },
     "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./ && npm run copy-i18n",
-        "watch": "tsc -watch -p ./",
+        "vscode:prepublish": "npm run package",
+        "typecheck": "tsc -p ./ --noEmit",
+        "bundle": "node ./scripts/esbuild.js",
+        "bundle:watch": "node ./scripts/esbuild.js --watch",
+        "bundle:prod": "node ./scripts/esbuild.js --production",
+        "compile": "npm run typecheck && npm run bundle && npm run copy-i18n",
+        "watch": "npm run copy-i18n && npm run bundle:watch",
         "copy-i18n": "copyfiles -u 1 \"src/i18n/*.json\" out/",
         "pretest": "npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js",
         "changelog:update": "node ./scripts/update-changelog.js",
-        "package:vsix": "npm run compile && npx @vscode/vsce package",
-        "publish:marketplace": "npm run compile && node ./scripts/publish-vsce.js",
+        "package": "npm run bundle:prod && npm run copy-i18n",
+        "package:vsix": "npm run package && npx @vscode/vsce package",
+        "publish:marketplace": "npm run package && node ./scripts/publish-vsce.js",
         "pricing:fetch": "node ./scripts/fetch-provider-pricing.js"
     },
     "devDependencies": {
         "@types/node": "^20.14.9",
-        "@types/vscode": "^1.95.0",
+        "@types/vscode": "^1.109.0",
         "@typescript-eslint/eslint-plugin": "^7.13.1",
         "@typescript-eslint/parser": "^7.13.1",
         "copyfiles": "^2.4.1",
+        "esbuild": "^0.25.10",
         "eslint": "^8.57.0",
         "typescript": "^5.4.5"
     },
