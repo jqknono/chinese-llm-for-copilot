@@ -2,7 +2,7 @@
     "name": "coding-plans-for-copilot",
     "displayName": "%displayName%",
     "description": "%description%",
-    "version": "0.4.3",
+    "version": "0.4.6",
     "publisher": "techfetch-dev",
     "repository": {
         "type": "git",
@@ -47,11 +47,6 @@
             {
                 "command": "coding-plans.manage",
                 "title": "%commands.coding-plans.manage.title%",
-                "category": "%commands.category%"
-            },
-            {
-                "command": "coding-plans.addModels",
-                "title": "%commands.coding-plans.addModels.title%",
                 "category": "%commands.category%"
             },
             {
@@ -203,6 +198,11 @@
                             "baseUrl": {
                                 "type": "string"
                             },
+                            "useModelsEndpoint": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "When true, fetch model list from /models during refresh."
+                            },
                             "models": {
                                 "type": "array",
                                 "items": {
@@ -329,6 +329,32 @@
                             "name": "Aliyun",
                             "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
                             "models": []
+                        },
+                        {
+                            "name": "OpenRouter",
+                            "baseUrl": "https://openrouter.ai/api/v1",
+                            "models": [
+                                {
+                                    "name": "openai/gpt-oss-20b:free",
+                                    "description": "https://openrouter.ai/openai/gpt-oss-20b:free",
+                                    "capabilities": {
+                                        "tools": true,
+                                        "vision": false
+                                    },
+                                    "maxInputTokens": 131000,
+                                    "maxOutputTokens": 131000
+                                },
+                                {
+                                    "name": "openai/gpt-oss-120b:free",
+                                    "description": "https://openrouter.ai/openai/gpt-oss-120b:free",
+                                    "capabilities": {
+                                        "tools": true,
+                                        "vision": false
+                                    },
+                                    "maxInputTokens": 131000,
+                                    "maxOutputTokens": 131000
+                                }
+                            ]
                         }
                     ],
                     "description": "%configuration.coding-plans.vendors.description%",

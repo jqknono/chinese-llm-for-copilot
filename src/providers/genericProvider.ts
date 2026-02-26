@@ -55,8 +55,21 @@ interface ModelVendorMapping {
   modelName: string;
 }
 
+interface ModelDiscoveryResult {
+  models: AIModelConfig[];
+  failed: boolean;
+  status?: number;
+}
+
+interface VendorDiscoveryState {
+  signature: string;
+  suppressRetry: boolean;
+  cachedModels: AIModelConfig[];
+}
+
 const DEFAULT_CONTEXT_SIZE = 200000;
 const DEFAULT_MAX_TOKENS = 4000;
+const NON_RETRYABLE_DISCOVERY_STATUS_CODES = new Set([400, 401, 403, 404]);
 
 export class GenericLanguageModel extends BaseLanguageModel {
   constructor(provider: BaseAIProvider, modelInfo: AIModelConfig) {
@@ -89,6 +102,8 @@ export class GenericLanguageModel extends BaseLanguageModel {
 
 export class GenericAIProvider extends BaseAIProvider {
   private modelVendorMap = new Map<string, ModelVendorMapping>();
+  private readonly vendorDiscoveryState = new Map<string, VendorDiscoveryState>();
+  private refreshModelsInFlight: Promise<void> | undefined;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -134,32 +149,82 @@ export class GenericAIProvider extends BaseAIProvider {
   }
 
   async refreshModels(): Promise<void> {
+    if (this.refreshModelsInFlight) {
+      return this.refreshModelsInFlight;
+    }
+
+    const running = this.refreshModelsInternal();
+    this.refreshModelsInFlight = running.finally(() => {
+      if (this.refreshModelsInFlight === running) {
+        this.refreshModelsInFlight = undefined;
+      }
+    });
+    return this.refreshModelsInFlight;
+  }
+
+  private async refreshModelsInternal(): Promise<void> {
     const vendors = this.configStore.getVendors();
     this.modelVendorMap.clear();
     const allModelConfigs: AIModelConfig[] = [];
+    const activeVendorKeys = new Set(vendors.map(vendor => this.toVendorStateKey(vendor.name)));
+
+    for (const vendorKey of Array.from(this.vendorDiscoveryState.keys())) {
+      if (!activeVendorKeys.has(vendorKey)) {
+        this.vendorDiscoveryState.delete(vendorKey);
+      }
+    }
 
     for (const vendor of vendors) {
       if (!vendor.baseUrl) {
         continue;
       }
+      const vendorKey = this.toVendorStateKey(vendor.name);
+      const configuredModels = this.buildConfiguredModelsForVendor(vendor);
 
-      if (vendor.models.length > 0) {
-        for (const model of vendor.models) {
-          const compositeId = `${vendor.name}/${model.name}`;
-          allModelConfigs.push(this.buildModelFromVendorConfig(model, vendor, compositeId));
-          this.modelVendorMap.set(compositeId, { vendor, modelName: model.name });
-        }
-      } else {
-        const apiKey = await this.configStore.getApiKey(vendor.name);
-        if (apiKey) {
-          const discovered = await this.discoverModelsFromApi(vendor, apiKey);
-          for (const m of discovered) {
-            const actualName = m.id.includes('/') ? m.id.substring(m.id.indexOf('/') + 1) : m.id;
-            this.modelVendorMap.set(m.id, { vendor, modelName: actualName });
-          }
-          allModelConfigs.push(...discovered);
-        }
+      if (!vendor.useModelsEndpoint) {
+        this.vendorDiscoveryState.delete(vendorKey);
+        this.appendResolvedModels(vendor, configuredModels, allModelConfigs);
+        continue;
       }
+
+      const apiKey = await this.configStore.getApiKey(vendor.name);
+      if (!apiKey) {
+        this.vendorDiscoveryState.delete(vendorKey);
+        this.appendResolvedModels(vendor, configuredModels, allModelConfigs);
+        continue;
+      }
+
+      const signature = this.buildVendorDiscoverySignature(vendor, apiKey);
+      const previousState = this.vendorDiscoveryState.get(vendorKey);
+
+      if (previousState && previousState.signature === signature && previousState.suppressRetry) {
+        const cached = previousState.cachedModels.length > 0 ? previousState.cachedModels : configuredModels;
+        this.appendResolvedModels(vendor, cached, allModelConfigs);
+        continue;
+      }
+
+      const discovered = await this.discoverModelsFromApi(vendor, apiKey);
+      if (discovered.failed) {
+        const fallbackModels =
+          previousState && previousState.signature === signature && previousState.cachedModels.length > 0
+            ? previousState.cachedModels
+            : configuredModels;
+        this.vendorDiscoveryState.set(vendorKey, {
+          signature,
+          suppressRetry: this.shouldSuppressDiscoveryRetry(discovered.status),
+          cachedModels: fallbackModels
+        });
+        this.appendResolvedModels(vendor, fallbackModels, allModelConfigs);
+        continue;
+      }
+
+      const resolvedModels = discovered.models.length > 0 ? discovered.models : configuredModels;
+      this.vendorDiscoveryState.set(vendorKey, {
+        signature,
+        suppressRetry: false,
+        cachedModels: resolvedModels
+      });
+      this.appendResolvedModels(vendor, resolvedModels, allModelConfigs);
     }
 
     this.models = allModelConfigs.map(m => this.createModel(m));
@@ -217,11 +282,32 @@ export class GenericAIProvider extends BaseAIProvider {
     };
   }
 
-  private async discoverModelsFromApi(vendor: VendorConfig, apiKey: string): Promise<AIModelConfig[]> {
+  private buildConfiguredModelsForVendor(vendor: VendorConfig): AIModelConfig[] {
+    const models: AIModelConfig[] = [];
+    for (const model of vendor.models) {
+      const compositeId = `${vendor.name}/${model.name}`;
+      models.push(this.buildModelFromVendorConfig(model, vendor, compositeId));
+    }
+    return models;
+  }
+
+  private appendResolvedModels(
+    vendor: VendorConfig,
+    models: AIModelConfig[],
+    target: AIModelConfig[]
+  ): void {
+    for (const model of models) {
+      const actualName = model.id.includes('/') ? model.id.substring(model.id.indexOf('/') + 1) : model.id;
+      this.modelVendorMap.set(model.id, { vendor, modelName: actualName });
+    }
+    target.push(...models);
+  }
+
+  private async discoverModelsFromApi(vendor: VendorConfig, apiKey: string): Promise<ModelDiscoveryResult> {
     try {
       const baseUrl = normalizeHttpBaseUrl(vendor.baseUrl);
       if (!baseUrl) {
-        return [];
+        return { models: [], failed: false };
       }
 
       const response = await this.fetchJson<any>(`${baseUrl}/models`, {
@@ -268,11 +354,41 @@ export class GenericAIProvider extends BaseAIProvider {
         });
       }
 
-      return models;
+      return { models, failed: false };
     } catch (error) {
       console.warn(`Failed to discover models from ${vendor.name}:`, error);
-      return [];
+      return {
+        models: [],
+        failed: true,
+        status: typeof (error as { response?: { status?: unknown } })?.response?.status === 'number'
+          ? ((error as { response: { status: number } }).response.status)
+          : undefined
+      };
     }
+  }
+
+  private shouldSuppressDiscoveryRetry(status: number | undefined): boolean {
+    return typeof status === 'number' && NON_RETRYABLE_DISCOVERY_STATUS_CODES.has(status);
+  }
+
+  private toVendorStateKey(vendorName: string): string {
+    return vendorName.trim().toLowerCase();
+  }
+
+  private buildVendorDiscoverySignature(vendor: VendorConfig, apiKey: string): string {
+    const normalizedBaseUrl = normalizeHttpBaseUrl(vendor.baseUrl) || vendor.baseUrl.trim();
+    const modelsSignature = this.hashText(JSON.stringify(vendor.models));
+    const endpointFlag = vendor.useModelsEndpoint ? '1' : '0';
+    return `${this.toVendorStateKey(vendor.name)}|${normalizedBaseUrl.toLowerCase()}|${endpointFlag}|${modelsSignature}|${this.hashText(apiKey.trim())}`;
+  }
+
+  private hashText(value: string): string {
+    let hash = 2166136261;
+    for (let i = 0; i < value.length; i++) {
+      hash ^= value.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16);
   }
 
   private async sendOpenAIRequest(

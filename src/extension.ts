@@ -49,7 +49,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(configStore);
 
   const genericProvider = new GenericAIProvider(context, configStore);
-  await genericProvider.initialize();
+  void genericProvider.initialize().catch(error => {
+    console.error('Failed to initialize generic provider models.', error);
+  });
   providers.set('coding-plans', genericProvider);
 
   const adapter = new LMChatProviderAdapter(genericProvider, configStore);
@@ -63,50 +65,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   } catch (error) {
     console.error('Failed to register language model chat provider.', error);
   }
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand('coding-plans.addModels', async () => {
-      const vendors = configStore.getVendors();
-      if (vendors.length === 0) {
-        const action = await vscode.window.showWarningMessage(
-          getMessage('vendorNotConfigured'),
-          getMessage('manageActionOpenSettings')
-        );
-        if (action) {
-          await vscode.commands.executeCommand('workbench.action.openSettings', 'coding-plans.vendors');
-        }
-        return;
-      }
-
-      const vendorPick = await vscode.window.showQuickPick(
-        vendors.map(v => ({ label: v.name, description: v.baseUrl, vendor: v })),
-        { ignoreFocusOut: true, placeHolder: getMessage('manageActionSelectVendor') }
-      );
-      if (!vendorPick) {
-        return;
-      }
-
-      const apiKey = await vscode.window.showInputBox({
-        prompt: getMessage('inputApiKey', vendorPick.vendor.name),
-        password: true,
-        ignoreFocusOut: true,
-        placeHolder: getMessage('inputPlaceholder')
-      });
-      if (apiKey === undefined) {
-        return;
-      }
-
-      const trimmedKey = apiKey.trim();
-      if (trimmedKey.length === 0) {
-        vscode.window.showWarningMessage(getMessage('apiKeyRequired', vendorPick.vendor.name));
-        return;
-      }
-
-      await configStore.setApiKey(vendorPick.vendor.name, trimmedKey);
-      await genericProvider.refreshModels();
-      vscode.window.showInformationMessage(getMessage('apiKeySaved', vendorPick.vendor.name));
-    })
-  );
 
   context.subscriptions.push(
     vscode.commands.registerCommand('coding-plans.manage', async () => {

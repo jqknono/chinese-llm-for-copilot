@@ -2,7 +2,6 @@
   "displayName": "编码套餐 for Copilot",
   "description": "通过配置的供应商资料接入 AI 模型套餐。",
   "commands.coding-plans.manage.title": "管理编码套餐配置",
-  "commands.coding-plans.addModels.title": "添加编码套餐模型",
   "commands.coding-plans.refreshModels.title": "刷新编码套餐模型列表",
   "commands.category": "编码套餐",
   "configuration.title": "编码套餐",

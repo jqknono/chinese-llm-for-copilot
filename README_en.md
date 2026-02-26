@@ -40,19 +40,21 @@ To switch VS Code's UI language:
 ## Supported Models
 
 ### Zhipu (Verified)
-- Model list is fetched from generic `GET /models` first, then falls back to `coding-plans.models` if unavailable or empty
+- By default, model list comes from each vendor's `models` config
+- Set `useModelsEndpoint: true` on a vendor to fetch and refresh models via `/models`
+- `useModelsEndpoint` defaults to `false`
 
 ### Kimi AI (Beta, untested)
-- Model list is fetched from generic `GET /models` first, then falls back to `coding-plans.models` if unavailable or empty
+- Same behavior as above
 
 ### Volcano Cloud (Beta, untested)
-- Model list is fetched from generic `GET /models` first, then falls back to `coding-plans.models` if unavailable or empty
+- Same behavior as above
 
 ### Minimax (Beta, untested)
-- Model list is fetched from generic `GET /models` first, then falls back to `coding-plans.models` if unavailable or empty
+- Same behavior as above
 
 ### Alibaba Cloud Tongyi Qianwen (Beta, untested)
-- Model list is fetched from generic `GET /models` first, then falls back to `coding-plans.models` if unavailable or empty
+- Same behavior as above
 
 ## Installation
 
@@ -128,6 +130,7 @@ The config file `coding-plans.config.json` (workspace root; falls back to extens
       "apiType": "openai",
       "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
       "apiKey": "YOUR_API_KEY",
+      "useModelsEndpoint": false,
       "models": []
     }
   ]

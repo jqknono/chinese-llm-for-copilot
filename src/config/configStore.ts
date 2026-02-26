@@ -14,6 +14,7 @@ export interface VendorModelConfig {
 export interface VendorConfig {
   name: string;
   baseUrl: string;
+  useModelsEndpoint: boolean;
   models: VendorModelConfig[];
 }
 
@@ -79,12 +80,13 @@ export class ConfigStore implements vscode.Disposable {
       return undefined;
     }
     const baseUrl = typeof obj.baseUrl === 'string' ? obj.baseUrl.trim() : '';
+    const useModelsEndpoint = typeof obj.useModelsEndpoint === 'boolean' ? obj.useModelsEndpoint : false;
     const models = Array.isArray(obj.models)
       ? obj.models
           .map(m => this.normalizeModel(m))
           .filter((m): m is VendorModelConfig => m !== undefined)
       : [];
-    return { name, baseUrl, models };
+    return { name, baseUrl, useModelsEndpoint, models };
   }
 
   private normalizeModel(raw: unknown): VendorModelConfig | undefined {

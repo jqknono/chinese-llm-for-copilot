@@ -8,7 +8,12 @@ const outFile = 'out/extension.js';
 const outDir = path.dirname(outFile);
 
 async function main() {
-  fs.rmSync(outDir, { recursive: true, force: true });
+  // Keep copied runtime assets (for example out/i18n/*.json) in watch mode.
+  // The watch task runs `copy-i18n` before this script, so deleting out/
+  // here would remove those files and cause runtime lookup failures.
+  if (!watch) {
+    fs.rmSync(outDir, { recursive: true, force: true });
+  }
 
   const context = await esbuild.context({
     entryPoints: ['src/extension.ts'],

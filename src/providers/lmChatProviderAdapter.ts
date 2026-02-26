@@ -311,8 +311,12 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
         return;
       }
       if (normalized.apiKey !== undefined) {
-        await this.configStore.setApiKey(resolvedVendor, normalized.apiKey);
-        changed = true;
+        const nextApiKey = normalized.apiKey.trim();
+        const currentApiKey = await this.configStore.getApiKey(resolvedVendor);
+        if (currentApiKey !== nextApiKey) {
+          await this.configStore.setApiKey(resolvedVendor, nextApiKey);
+          changed = true;
+        }
       }
     } else if (normalized.apiKey !== undefined) {
       const nextApiKey = normalized.apiKey.trim();

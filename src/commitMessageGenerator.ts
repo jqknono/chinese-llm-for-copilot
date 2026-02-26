@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { execFile } from 'node:child_process';
 import { getMessage } from './i18n/i18n';
+import { getCompactErrorMessage } from './providers/baseProvider';
 
 const COMMIT_MESSAGE_MODEL_VENDOR_SETTING_KEY = 'commitMessage.modelVendor';
 const COMMIT_MESSAGE_MODEL_ID_SETTING_KEY = 'commitMessage.modelId';
@@ -42,6 +43,8 @@ const DEFAULT_RECENT_COMMIT_STYLE_SAMPLE_SIZE = 20;
 const RECENT_COMMIT_STYLE_MAX_ENTRY_LENGTH = 500;
 const RECENT_COMMIT_STYLE_MAX_TOTAL_LENGTH = 5000;
 const COMMIT_LOG_ENTRY_SEPARATOR = '\u001e';
+const SELECT_CHAT_MODELS_TIMEOUT_MS = 10000;
+const REQUEST_CANCELLED_ERROR_CODE = 'coding-plans.requestCancelled';
 
 const CODING_PLANS_VENDOR = 'coding-plans';
 const COMMIT_MESSAGE_TASK_BLOCK = [
@@ -905,9 +908,12 @@ async function saveModelSelection(model: vscode.LanguageModelChat): Promise<void
 
 async function selectModel(
   allowPrompt: boolean,
-  forcePrompt = false
+  forcePrompt = false,
+  token?: vscode.CancellationToken
 ): Promise<ModelSelectionResult> {
-  const allModels = await vscode.lm.selectChatModels();
+  throwIfCancelled(token);
+  const allModels = await selectChatModelsWithTimeout(token);
+  throwIfCancelled(token);
   const models = allModels
     .filter(model => !isPlaceholderModelId(model.id) && !isCopilotVendor(model.vendor))
     .sort((a, b) => {
@@ -1002,6 +1008,126 @@ async function selectModel(
 
   await saveModelSelection(picked.model);
   return { kind: 'selected', model: picked.model };
+}
+
+async function selectChatModelsWithTimeout(token?: vscode.CancellationToken): Promise<vscode.LanguageModelChat[]> {
+  if (!vscode.lm || typeof vscode.lm.selectChatModels !== 'function') {
+    throw new Error(getMessage('commitMessageModelSelectionUnavailable'));
+  }
+
+  let timeoutHandle: NodeJS.Timeout | undefined;
+  let cancellationDisposable: vscode.Disposable | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(getMessage('commitMessageModelSelectionTimeout')));
+    }, SELECT_CHAT_MODELS_TIMEOUT_MS);
+  });
+  const cancellationPromise = token ? new Promise<never>((_, reject) => {
+    if (token.isCancellationRequested) {
+      reject(createRequestCancelledError());
+      return;
+    }
+    cancellationDisposable = token.onCancellationRequested(() => {
+      reject(createRequestCancelledError());
+    });
+  }) : undefined;
+
+  try {
+    const pending = cancellationPromise
+      ? [vscode.lm.selectChatModels(), timeoutPromise, cancellationPromise]
+      : [vscode.lm.selectChatModels(), timeoutPromise];
+    return await Promise.race(pending);
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
+    cancellationDisposable?.dispose();
+  }
+}
+
+function createRequestCancelledError(): Error {
+  const error = new Error(getMessage('requestCancelled'));
+  (error as { code?: string }).code = REQUEST_CANCELLED_ERROR_CODE;
+  return error;
+}
+
+function throwIfCancelled(token?: vscode.CancellationToken): void {
+  if (token?.isCancellationRequested) {
+    throw createRequestCancelledError();
+  }
+}
+
+function isRequestCancelledError(error: unknown): boolean {
+  const maybeError = error as { code?: unknown; name?: unknown; message?: unknown } | undefined;
+  if (typeof maybeError?.code === 'string' && maybeError.code === REQUEST_CANCELLED_ERROR_CODE) {
+    return true;
+  }
+
+  const message = error instanceof Error
+    ? error.message
+    : typeof maybeError?.message === 'string'
+      ? maybeError.message
+      : String(error ?? '');
+  const normalizedMessage = normalizeValue(message);
+  if (
+    normalizedMessage === normalizeValue(getMessage('requestCancelled'))
+    || normalizedMessage === 'canceled'
+    || normalizedMessage === 'cancelled'
+  ) {
+    return true;
+  }
+
+  const name = typeof maybeError?.name === 'string' ? normalizeValue(maybeError.name) : '';
+  return name === 'cancellationerror' || name === 'canceled' || name === 'cancelled';
+}
+
+function formatErrorDetail(error: unknown): string {
+  const details: string[] = [];
+  const baseMessage = getCompactErrorMessage(error);
+  if (baseMessage.length > 0) {
+    details.push(baseMessage);
+  }
+
+  const maybeError = error as {
+    name?: unknown;
+    code?: unknown;
+    cause?: unknown;
+    response?: { status?: unknown };
+    status?: unknown;
+  } | undefined;
+
+  if (error instanceof vscode.LanguageModelError && typeof error.code === 'string' && error.code.length > 0) {
+    details.push(`lmCode=${error.code}`);
+  }
+
+  const code = maybeError?.code;
+  if (typeof code === 'string' && code.length > 0) {
+    details.push(`code=${code}`);
+  } else if (typeof code === 'number' && Number.isFinite(code)) {
+    details.push(`code=${code}`);
+  }
+
+  const status = typeof maybeError?.response?.status === 'number'
+    ? maybeError.response.status
+    : typeof maybeError?.status === 'number'
+      ? maybeError.status
+      : undefined;
+  if (typeof status === 'number' && Number.isFinite(status)) {
+    details.push(`status=${status}`);
+  }
+
+  const name = maybeError?.name;
+  if (typeof name === 'string' && name.length > 0) {
+    details.push(`name=${name}`);
+  }
+
+  const causeMessage = maybeError?.cause ? getCompactErrorMessage(maybeError.cause) : '';
+  if (causeMessage.length > 0) {
+    details.push(`cause=${causeMessage}`);
+  }
+
+  const unique = Array.from(new Set(details.filter(item => item.trim().length > 0)));
+  return unique.join(' | ') || 'Unknown error';
 }
 
 function isLanguageModelBlockedError(error: unknown): boolean {
@@ -1142,47 +1268,80 @@ function getCommitMessagePreview(message: string): string {
 }
 
 export async function selectCommitMessageModel(): Promise<void> {
-  const selection = await selectModel(true, true);
-  if (selection.kind === 'cancelled') {
-    vscode.window.showInformationMessage(getMessage('requestCancelled'));
-    return;
+  try {
+    const selection = await selectModel(true, true);
+    if (selection.kind === 'cancelled') {
+      vscode.window.showInformationMessage(getMessage('requestCancelled'));
+      return;
+    }
+    if (selection.kind === 'noModels') {
+      vscode.window.showWarningMessage(getMessage('commitMessageNoModel'));
+      return;
+    }
+    vscode.window.showInformationMessage(
+      getMessage('commitMessageModelSaved', `${selection.model.vendor} · ${selection.model.name}`)
+    );
+  } catch (error: unknown) {
+    if (isRequestCancelledError(error)) {
+      vscode.window.showInformationMessage(getMessage('requestCancelled'));
+      return;
+    }
+    console.error('Failed to select commit message model.', error);
+    const detail = formatErrorDetail(error);
+    vscode.window.showErrorMessage(getMessage('commitMessageModelSelectionFailed', detail));
   }
-  if (selection.kind === 'noModels') {
-    vscode.window.showWarningMessage(getMessage('commitMessageNoModel'));
-    return;
-  }
-  vscode.window.showInformationMessage(
-    getMessage('commitMessageModelSaved', `${selection.model.vendor} · ${selection.model.name}`)
-  );
 }
 
 export async function generateCommitMessage(): Promise<void> {
+  let isGenerated = false;
+  let statusBarDisposable: vscode.Disposable | undefined;
+  const updateStatusBarProgress = (message: string): void => {
+    statusBarDisposable?.dispose();
+    statusBarDisposable = vscode.window.setStatusBarMessage(
+      `$(sync~spin) ${getMessage('commitMessageStatusBarProgress', message)}`
+    );
+  };
+  const clearStatusBarProgress = (): void => {
+    statusBarDisposable?.dispose();
+    statusBarDisposable = undefined;
+  };
+
   try {
     await vscode.window.withProgress(
       {
-        location: vscode.ProgressLocation.SourceControl,
-        title: getMessage('commitMessageGenerating')
+        location: vscode.ProgressLocation.Notification,
+        title: getMessage('commitMessageGenerating'),
+        cancellable: true
       },
       async (progress, token) => {
+        const reportProgress = (message: string, increment: number): void => {
+          progress.report({ message, increment });
+          updateStatusBarProgress(message);
+        };
+
         // Yield once so progress UI can render immediately after button click.
-        progress.report({ message: getMessage('commitMessageProgressCheckingRepo'), increment: 1 });
+        reportProgress(getMessage('commitMessageProgressCheckingRepo'), 1);
         await Promise.resolve();
+        throwIfCancelled(token);
 
         const repo = await getGitRepository();
+        throwIfCancelled(token);
         if (!repo) {
           vscode.window.showWarningMessage(getMessage('commitMessageNoGitRepo'));
           return;
         }
 
-        progress.report({ message: getMessage('commitMessageProgressReadingDiff'), increment: 9 });
+        reportProgress(getMessage('commitMessageProgressReadingDiff'), 9);
         const diff = await getDiff(repo);
+        throwIfCancelled(token);
         if (diff.trim().length === 0) {
           vscode.window.showInformationMessage(getMessage('commitMessageNoChanges'));
           return;
         }
 
-        progress.report({ message: getMessage('commitMessageProgressSelectingModel'), increment: 10 });
-        const selection = await selectModel(true);
+        reportProgress(getMessage('commitMessageProgressSelectingModel'), 10);
+        const selection = await selectModel(true, false, token);
+        throwIfCancelled(token);
         if (selection.kind === 'cancelled') {
           vscode.window.showInformationMessage(getMessage('requestCancelled'));
           return;
@@ -1199,16 +1358,16 @@ export async function generateCommitMessage(): Promise<void> {
           ? getRecentCommitMessages(repo, DEFAULT_RECENT_COMMIT_STYLE_SAMPLE_SIZE).then(buildStyleReferenceBlock)
           : Promise.resolve<string | undefined>(undefined);
 
-        progress.report({ message: getMessage('commitMessageProgressPreparing'), increment: 20 });
+        reportProgress(getMessage('commitMessageProgressPreparing'), 20);
         const preparedInput = await prepareGenerationInput(model, diff, settings, token);
+        throwIfCancelled(token);
         const styleReferenceBlock = await styleReferenceBlockPromise;
-        progress.report({
-          increment: 20,
-          message:
-            preparedInput.kind === 'summary'
-              ? getMessage('commitMessageProgressGeneratingFromSummary')
-              : getMessage('commitMessageProgressGeneratingFromDiff')
-        });
+        throwIfCancelled(token);
+        const generationStageMessage =
+          preparedInput.kind === 'summary'
+            ? getMessage('commitMessageProgressGeneratingFromSummary')
+            : getMessage('commitMessageProgressGeneratingFromDiff');
+        reportProgress(generationStageMessage, 20);
         const prompt =
           preparedInput.kind === 'summary'
             ? buildSummaryGenerationPrompt(preparedInput.summary, language, settings, styleReferenceBlock)
@@ -1226,6 +1385,7 @@ export async function generateCommitMessage(): Promise<void> {
           token,
           'Generate a git commit message from code changes.'
         );
+        throwIfCancelled(token);
 
         const normalizedMessage = sanitizeGeneratedCommitMessage(rawResult);
         if (!normalizedMessage) {
@@ -1240,14 +1400,26 @@ export async function generateCommitMessage(): Promise<void> {
         );
 
         repo.inputBox.value = normalizedMessage;
+        isGenerated = true;
         progress.report({ increment: 40 });
         vscode.window.showInformationMessage(
           getMessage('commitMessageGenerated', getCommitMessagePreview(normalizedMessage))
         );
       }
     );
+    clearStatusBarProgress();
+    if (isGenerated) {
+      vscode.window.setStatusBarMessage(`$(check) ${getMessage('commitMessageStatusBarDone')}`, 4000);
+    }
   } catch (error: unknown) {
-    const detail = error instanceof Error ? error.message : String(error);
+    clearStatusBarProgress();
+    if (isRequestCancelledError(error)) {
+      vscode.window.showInformationMessage(getMessage('requestCancelled'));
+      return;
+    }
+    console.error('Failed to generate commit message.', error);
+    vscode.window.setStatusBarMessage(`$(error) ${getMessage('commitMessageStatusBarFailed')}`, 5000);
+    const detail = formatErrorDetail(error);
     vscode.window.showErrorMessage(getMessage('commitMessageFailed', detail));
   }
 }

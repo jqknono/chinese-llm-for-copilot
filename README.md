@@ -67,8 +67,9 @@ npm run compile
 
 模型列表获取策略：
 
-- 优先调用通用模型接口 `GET /models`
-- 若接口返回空或不可用，则回退到 `coding-plans.models` 预置模型列表
+- 默认仅使用每个 vendor 的 `models` 配置
+- 可为单个 vendor 设置 `useModelsEndpoint: true`，刷新时调用 `/models` 更新模型列表
+- `useModelsEndpoint` 默认值为 `false`
 
 ## 使用方法
 
@@ -108,6 +109,7 @@ npm run compile
       "apiType": "openai",
       "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
       "apiKey": "YOUR_API_KEY",
+      "useModelsEndpoint": false,
       "models": []
     }
   ]

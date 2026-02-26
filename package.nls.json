@@ -2,7 +2,6 @@
   "displayName": "Coding Plans for Copilot",
   "description": "Connect AI model plans via a configurable vendor profile.",
   "commands.coding-plans.manage.title": "Manage Coding Plans Configuration",
-  "commands.coding-plans.addModels.title": "Add Coding Plan Models",
   "commands.coding-plans.refreshModels.title": "Refresh Coding Plans Models",
   "commands.category": "Coding Plans",
   "configuration.title": "Coding Plans",
