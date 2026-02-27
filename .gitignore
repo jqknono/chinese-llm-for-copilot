@@ -8,3 +8,4 @@ dist/
 *.log
 minimax-sitemap.xml
 moonshot-sitemap.xml
+.playwright-cli/

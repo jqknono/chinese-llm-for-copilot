@@ -3,15 +3,15 @@
         {
             "sourceFile": {
                 "path": "README.md",
-                "lang": "en-us"
+                "lang": "zh-cn"
             },
             "targetFiles": [
                 {
-                    "path": "README_zh.md",
-                    "lang": "zh-cn"
+                    "path": "README_en.md",
+                    "lang": "en-us"
                 }
             ]
         }
     ],
-    "coding-plans.commitMessage.language": "en"
+    "coding-plans.commitMessage.language": "zh-cn"
 }

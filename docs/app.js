@@ -6,14 +6,26 @@ const PROVIDER_LABELS = {
   "volcengine-ai": "火山引擎",
   "minimax-ai": "MiniMax",
   "aliyun-ai": "阿里云通义千问",
+  "baidu-qianfan-ai": "百度智能云千帆",
+  "kwaikat-ai": "快手 KwaiKAT",
+  "x-aio": "X-AIO",
+  "compshare-ai": "优云智算",
+  "infini-ai": "无问芯穹",
 };
 
-const state = {
-  data: null,
-  unit: "all",
+const PROVIDER_BUY_URLS = {
+  "zhipu-ai": "https://bigmodel.cn/glm-coding",
+  "kimi-ai": "https://www.kimi.com/code/zh",
+  "volcengine-ai": "https://www.volcengine.com/activity/codingplan",
+  "minimax-ai": "https://platform.minimaxi.com/subscribe/coding-plan",
+  "aliyun-ai": "https://common-buy.aliyun.com/?commodityCode=sfm_codingplan_public_cn#/buy",
+  "baidu-qianfan-ai": "https://cloud.baidu.com/product/codingplan.html",
+  "kwaikat-ai": "https://www.streamlake.com/marketing/coding-plan",
+  "x-aio": "https://code.x-aio.com/",
+  "compshare-ai": "https://www.compshare.cn/docs/modelverse/package_plan/package",
+  "infini-ai": "https://cloud.infini-ai.com/platform/ai",
 };
 
-const unitFilterEl = document.querySelector("#unitFilter");
 const reloadButtonEl = document.querySelector("#reloadButton");
 const providerGridEl = document.querySelector("#providerGrid");
 const errorBannerEl = document.querySelector("#errorBanner");
@@ -60,77 +72,148 @@ function normalizeUnit(unit) {
   return String(unit || "").trim() || "未标注";
 }
 
-function collectUnits(providers) {
-  const units = new Set();
-  for (const provider of providers) {
-    for (const plan of provider.plans || []) {
-      units.add(normalizeUnit(plan.unit));
-    }
-  }
-  return [...units].sort((left, right) => left.localeCompare(right, "zh-CN"));
-}
-
-function refreshUnitOptions(providers) {
-  const units = collectUnits(providers);
-  if (state.unit !== "all" && !units.includes(state.unit)) {
-    state.unit = "all";
-  }
-  const options = [{ value: "all", label: "全部" }, ...units.map((unit) => ({ value: unit, label: unit }))];
-  unitFilterEl.replaceChildren();
-  for (const option of options) {
-    const optionEl = createElement("option", "", option.label);
-    optionEl.value = option.value;
-    if (option.value === state.unit) {
-      optionEl.selected = true;
-    }
-    unitFilterEl.append(optionEl);
-  }
-}
-
 function displayPrice(plan) {
   return plan.currentPriceText || (Number.isFinite(plan.currentPrice) ? `¥${plan.currentPrice}` : "价格待确认");
 }
 
+function getPlanServices(plan) {
+  const rawList = Array.isArray(plan?.serviceDetails)
+    ? plan.serviceDetails
+    : plan?.serviceDetails
+      ? [plan.serviceDetails]
+      : [];
+  const normalized = [...new Set(rawList.map((item) => String(item || "").trim()).filter(Boolean))];
+  return normalized;
+}
+
+function formatOfferPriceText(rawValue) {
+  const rawText = String(rawValue || "").trim();
+  if (!rawText) {
+    return null;
+  }
+  const numberMatch = rawText.match(/([0-9]+(?:\.[0-9]+)?)/);
+  if (!numberMatch) {
+    return null;
+  }
+  const amount = numberMatch[1];
+  const hasMonthlyUnit = /\/\s*月|每月|月/.test(rawText);
+  return `¥${amount}${hasMonthlyUnit ? "/月" : "/月"}`;
+}
+
+function getPlanOffer(provider, plan) {
+  if (plan && plan.offerName) {
+    const explicitPriceText = formatOfferPriceText(plan.offerPriceText || plan.offerPrice || "");
+    if (explicitPriceText) {
+      return {
+        title: String(plan.offerName),
+        priceText: explicitPriceText,
+      };
+    }
+  }
+
+  if (plan && plan.firstMonthPriceText) {
+    const firstMonthPriceText = formatOfferPriceText(plan.firstMonthPriceText);
+    if (firstMonthPriceText) {
+      return {
+        title: "首月特惠",
+        priceText: firstMonthPriceText,
+      };
+    }
+  }
+  if (plan && Number.isFinite(plan.firstMonthPrice)) {
+    return {
+      title: "首月特惠",
+      priceText: `¥${plan.firstMonthPrice}/月`,
+    };
+  }
+
+  const notesText = String(plan?.notes || "");
+  const offerPatterns = [
+    /((?:新客|新人|新用户)?\s*首月(?:特惠|优惠)?)[^0-9¥￥]*([¥￥]?\s*[0-9]+(?:\.[0-9]+)?(?:\s*元)?(?:\s*\/\s*月)?)/i,
+    /((?:首购优惠|首购特惠))[:：]?\s*([¥￥]?\s*[0-9]+(?:\.[0-9]+)?(?:\s*元)?(?:\s*\/\s*月)?)/i,
+    /((?:新人专享|新客专享|新用户专享))[^0-9¥￥]*([¥￥]?\s*[0-9]+(?:\.[0-9]+)?(?:\s*元)?(?:\s*\/\s*月)?)/i,
+  ];
+  for (const pattern of offerPatterns) {
+    const matched = notesText.match(pattern);
+    if (!matched) {
+      continue;
+    }
+    const priceText = formatOfferPriceText(matched[2]);
+    if (!priceText) {
+      continue;
+    }
+    return {
+      title: String(matched[1]).replace(/\s+/g, ""),
+      priceText,
+    };
+  }
+
+  const labelOnlyMatch = notesText.match(/(新人专享|新客专享|新用户专享|新客首月|新人首月)/i);
+  if (labelOnlyMatch && plan?.currentPriceText && plan?.originalPriceText) {
+    const currentAsOffer = formatOfferPriceText(plan.currentPriceText);
+    if (currentAsOffer) {
+      return {
+        title: String(labelOnlyMatch[1]).replace(/\s+/g, ""),
+        priceText: currentAsOffer,
+      };
+    }
+  }
+
+  return null;
+}
+
+function getProviderPurchaseUrl(provider) {
+  if (provider && Array.isArray(provider.plans)) {
+    const planWithBuyUrl = provider.plans.find((plan) => plan && plan.buyUrl);
+    if (planWithBuyUrl && planWithBuyUrl.buyUrl) {
+      return String(planWithBuyUrl.buyUrl);
+    }
+  }
+  if (provider && PROVIDER_BUY_URLS[provider.provider]) {
+    return PROVIDER_BUY_URLS[provider.provider];
+  }
+  if (provider && Array.isArray(provider.sourceUrls) && provider.sourceUrls.length > 0) {
+    return provider.sourceUrls[0];
+  }
+  return null;
+}
+
 function renderProviders(data) {
   const providers = Array.isArray(data.providers) ? data.providers : [];
-  const filteredProviders = providers
-    .map((provider) => {
-      const plans = (provider.plans || []).filter((plan) => {
-        if (state.unit === "all") {
-          return true;
-        }
-        return normalizeUnit(plan.unit) === state.unit;
-      });
-      return { ...provider, plans };
-    })
-    .filter((provider) => provider.plans.length > 0);
+  const visibleProviders = providers.filter((provider) => (provider.plans || []).length > 0);
 
   providerGridEl.replaceChildren();
 
-  if (filteredProviders.length === 0) {
-    providerGridEl.append(createElement("article", "empty", "当前筛选条件下没有套餐数据。"));
+  if (visibleProviders.length === 0) {
+    providerGridEl.append(createElement("article", "empty", "暂无可展示的标准月费数据。"));
     providerCountEl.textContent = "0";
     planCountEl.textContent = "0";
     return;
   }
 
   let totalPlans = 0;
-  for (const provider of filteredProviders) {
+  for (const provider of visibleProviders) {
     totalPlans += provider.plans.length;
 
     const card = createElement("article", "provider-card");
     const head = createElement("header", "provider-head");
     const title = createElement("h2", "provider-title", PROVIDER_LABELS[provider.provider] || provider.provider);
-    const meta = createElement("p", "provider-meta", `更新：${formatDate(provider.fetchedAt)}`);
-    head.append(title, meta);
+    head.append(title);
+
+    const providerBuyUrl = getProviderPurchaseUrl(provider);
+    if (providerBuyUrl) {
+      const buyLink = createElement("a", "buy-link", "前往了解");
+      buyLink.href = providerBuyUrl;
+      buyLink.target = "_blank";
+      buyLink.rel = "noopener noreferrer";
+      head.append(buyLink);
+    }
 
     const planList = createElement("ul", "plan-list");
     for (const plan of provider.plans) {
       const item = createElement("li", "plan-item");
       const name = createElement("h3", "plan-name", plan.name || "未命名套餐");
       const priceRow = createElement("p", "price-row");
-      const currentPrice = createElement("span", "price-now", displayPrice(plan));
-      priceRow.append(currentPrice);
 
       const isDiscount =
         plan.originalPriceText &&
@@ -138,7 +221,10 @@ function renderProviders(data) {
         String(plan.originalPriceText).trim() !== "";
 
       if (isDiscount) {
-        priceRow.append(createElement("span", "price-before", plan.originalPriceText));
+        priceRow.append(createElement("span", "price-original", `原价 ${plan.originalPriceText}`));
+        priceRow.append(createElement("span", "price-discount", `优惠价 ${displayPrice(plan)}`));
+      } else {
+        priceRow.append(createElement("span", "price-now", displayPrice(plan)));
       }
 
       if (plan.unit) {
@@ -146,6 +232,28 @@ function renderProviders(data) {
       }
 
       item.append(name, priceRow);
+
+      const offerInfo = getPlanOffer(provider, plan);
+      if (offerInfo) {
+        const offerCard = createElement("div", "offer-card");
+        offerCard.append(
+          createElement("span", "offer-name", offerInfo.title),
+          createElement("span", "offer-price", offerInfo.priceText),
+        );
+        item.append(offerCard);
+      }
+
+      const serviceItems = getPlanServices(plan);
+      if (serviceItems.length > 0) {
+        const serviceBlock = createElement("section", "plan-services");
+        serviceBlock.append(createElement("p", "plan-services-title", "服务内容"));
+        const serviceList = createElement("ul", "plan-service-list");
+        for (const serviceText of serviceItems) {
+          serviceList.append(createElement("li", "plan-service-item", serviceText));
+        }
+        serviceBlock.append(serviceList);
+        item.append(serviceBlock);
+      }
 
       if (plan.notes) {
         item.append(createElement("p", "plan-notes", plan.notes));
@@ -156,27 +264,10 @@ function renderProviders(data) {
 
     card.append(head, planList);
 
-    if (provider.sourceUrls && provider.sourceUrls.length > 0) {
-      const sourceWrap = createElement("details", "sources");
-      const summary = createElement("summary", "", `数据来源 (${provider.sourceUrls.length})`);
-      const sourceList = createElement("ul", "source-list");
-      for (const url of provider.sourceUrls) {
-        const line = createElement("li");
-        const link = createElement("a", "", url);
-        link.href = url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        line.append(link);
-        sourceList.append(line);
-      }
-      sourceWrap.append(summary, sourceList);
-      card.append(sourceWrap);
-    }
-
     providerGridEl.append(card);
   }
 
-  providerCountEl.textContent = String(filteredProviders.length);
+  providerCountEl.textContent = String(visibleProviders.length);
   planCountEl.textContent = String(totalPlans);
 }
 
@@ -199,9 +290,7 @@ async function loadData() {
       throw new Error(`HTTP ${response.status}`);
     }
     const data = await response.json();
-    state.data = data;
     generatedAtEl.textContent = formatDate(data.generatedAt);
-    refreshUnitOptions(data.providers || []);
     renderProviders(data);
     renderFailures(data);
   } catch (error) {
@@ -216,13 +305,6 @@ async function loadData() {
     reloadButtonEl.textContent = "重新加载";
   }
 }
-
-unitFilterEl.addEventListener("change", (event) => {
-  state.unit = event.target.value;
-  if (state.data) {
-    renderProviders(state.data);
-  }
-});
 
 reloadButtonEl.addEventListener("click", () => {
   loadData();

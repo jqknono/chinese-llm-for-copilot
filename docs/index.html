@@ -19,7 +19,7 @@
       <header class="hero">
         <p class="eyebrow">GitHub Pages · 自动抓取</p>
         <h1>编码套餐看板</h1>
-        <p class="subtitle">展示仓库脚本抓取到的最新套餐价格、促销信息和来源链接。</p>
+        <p class="subtitle">仅展示各供应商公开页面可解析到的标准月费与备注信息。</p>
         <div class="hero-actions">
           <a
             class="hero-link"
@@ -37,9 +37,30 @@
         </div>
       </header>
 
+      <section class="plugin-intro">
+        <h2>插件简介与推荐</h2>
+        <p>
+          Coding Plans for Copilot 是一个 VS Code 扩展，帮助你把不同厂商的编码套餐接入 Copilot Chat，统一在编辑器中切换供应商与模型。
+        </p>
+        <ul class="recommend-list">
+          <li>推荐给希望在 VS Code 内统一管理多家编码套餐的开发者。</li>
+          <li>推荐给需要低成本试用不同模型、快速对比体验的团队。</li>
+          <li>推荐优先从 VS Code 插件市场安装，更新与维护更方便。</li>
+        </ul>
+        <div class="plugin-actions">
+          <a
+            class="plugin-link"
+            href="https://marketplace.visualstudio.com/items?itemName=techfetch-dev.coding-plans-for-copilot"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            打开 VS Code 商店插件页
+          </a>
+        </div>
+      </section>
+
       <section class="toolbar">
-        <label for="unitFilter">计费周期筛选</label>
-        <select id="unitFilter" aria-label="计费周期筛选"></select>
+        <p>筛选规则：仅标准月费（不含年费、季费与首月特惠价）。</p>
         <button id="reloadButton" type="button">重新加载</button>
       </section>
 

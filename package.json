@@ -379,7 +379,8 @@
         "package": "npm run bundle:prod && npm run copy-i18n",
         "package:vsix": "npm run package && npx @vscode/vsce package",
         "publish:marketplace": "npm run package && node ./scripts/publish-vsce.js",
-        "pricing:fetch": "node ./scripts/fetch-provider-pricing.js"
+        "pricing:fetch": "node ./scripts/fetch-provider-pricing.js",
+        "pricing:serve": "node ./scripts/serve-pricing-page.js"
     },
     "devDependencies": {
         "@types/node": "^20.14.9",

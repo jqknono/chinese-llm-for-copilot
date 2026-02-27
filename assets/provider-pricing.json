@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-25T10:26:40.061Z",
+  "generatedAt": "2026-02-27T10:19:27.616Z",
   "providers": [
     {
       "provider": "zhipu-ai",
@@ -9,7 +9,6 @@
         "https://bigmodel.cn/js/chunk-0d4f69d1.c1011781.js",
         "https://docs.bigmodel.cn/cn/coding-plan/overview"
       ],
-      "fetchedAt": "2026-02-25T10:26:37.720Z",
       "plans": [
         {
           "name": "GLM Coding Lite (月)",
@@ -18,7 +17,11 @@
           "originalPrice": 49,
           "originalPriceText": null,
           "unit": "月",
-          "notes": "下个月度续费金额：¥49"
+          "notes": "下个月度续费金额：¥49",
+          "serviceDetails": [
+            "每 5 小时限额 （动态刷新，额度在请求消耗 5 小时后刷新重置）: 最多约 80 次 prompts",
+            "每周限额 （自下单时开启，以 7 天为一个周期额度刷新重置）: 最多约 400 次 prompts"
+          ]
         },
         {
           "name": "GLM Coding Pro (月)",
@@ -27,7 +30,11 @@
           "originalPrice": 149,
           "originalPriceText": null,
           "unit": "月",
-          "notes": "下个月度续费金额：¥149"
+          "notes": "下个月度续费金额：¥149",
+          "serviceDetails": [
+            "每 5 小时限额 （动态刷新，额度在请求消耗 5 小时后刷新重置）: 最多约 400 次 prompts",
+            "每周限额 （自下单时开启，以 7 天为一个周期额度刷新重置）: 最多约 2000 次 prompts"
+          ]
         },
         {
           "name": "GLM Coding Max (月)",
@@ -36,61 +43,11 @@
           "originalPrice": 469,
           "originalPriceText": null,
           "unit": "月",
-          "notes": "下个月度续费金额：¥469"
-        },
-        {
-          "name": "GLM Coding Lite (季)",
-          "currentPrice": 132.3,
-          "currentPriceText": "¥132.3/季",
-          "originalPrice": 147,
-          "originalPriceText": "¥147/季",
-          "unit": "季",
-          "notes": "连续包季 9 折；下个季度续费金额：¥132.3"
-        },
-        {
-          "name": "GLM Coding Pro (季)",
-          "currentPrice": 402.3,
-          "currentPriceText": "¥402.3/季",
-          "originalPrice": 447,
-          "originalPriceText": "¥447/季",
-          "unit": "季",
-          "notes": "连续包季 9 折；下个季度续费金额：¥402.3"
-        },
-        {
-          "name": "GLM Coding Max (季)",
-          "currentPrice": 1266.3,
-          "currentPriceText": "¥1266.3/季",
-          "originalPrice": 1407,
-          "originalPriceText": "¥1407/季",
-          "unit": "季",
-          "notes": "连续包季 9 折；下个季度续费金额：¥1266.3"
-        },
-        {
-          "name": "GLM Coding Lite (年)",
-          "currentPrice": 411.6,
-          "currentPriceText": "¥411.6/年",
-          "originalPrice": 588,
-          "originalPriceText": "¥588/年",
-          "unit": "年",
-          "notes": "连续包年 7 折；下个年度续费金额：¥411.6"
-        },
-        {
-          "name": "GLM Coding Pro (年)",
-          "currentPrice": 1251.6,
-          "currentPriceText": "¥1251.6/年",
-          "originalPrice": 1788,
-          "originalPriceText": "¥1788/年",
-          "unit": "年",
-          "notes": "连续包年 7 折；下个年度续费金额：¥1251.6"
-        },
-        {
-          "name": "GLM Coding Max (年)",
-          "currentPrice": 3939.6,
-          "currentPriceText": "¥3939.6/年",
-          "originalPrice": 5628,
-          "originalPriceText": "¥5628/年",
-          "unit": "年",
-          "notes": "连续包年 7 折；下个年度续费金额：¥3939.6"
+          "notes": "下个月度续费金额：¥469",
+          "serviceDetails": [
+            "每 5 小时限额 （动态刷新，额度在请求消耗 5 小时后刷新重置）: 最多约 1600 次 prompts",
+            "每周限额 （自下单时开启，以 7 天为一个周期额度刷新重置）: 最多约 8000 次 prompts"
+          ]
         }
       ]
     },
@@ -98,9 +55,9 @@
       "provider": "kimi-ai",
       "sourceUrls": [
         "https://www.kimi.com/code/zh",
-        "https://www.kimi.com/apiv2/kimi.gateway.order.v1.GoodsService/ListGoods"
+        "https://www.kimi.com/apiv2/kimi.gateway.order.v1.GoodsService/ListGoods",
+        "https://statics.moonshot.cn/kimi-web-seo/assets/common-DWpxLPE7.js"
       ],
-      "fetchedAt": "2026-02-25T10:26:37.880Z",
       "plans": [
         {
           "name": "Adagio (月)",
@@ -109,79 +66,100 @@
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
-          "notes": null
-        },
-        {
-          "name": "Andante (月)",
-          "currentPrice": 49,
-          "currentPriceText": "¥49/月",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "月",
-          "notes": null
-        },
-        {
-          "name": "Andante (年)",
-          "currentPrice": 468,
-          "currentPriceText": "¥468/年",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "年",
-          "notes": null
+          "notes": "试用计划",
+          "serviceDetails": [
+            "会员等级: 免费试用",
+            "体验 Agent 功能",
+            "跨设备同步使用",
+            "搜索实时资讯",
+            "理解图片与文档",
+            "生成代码与数据分析"
+          ]
         },
         {
           "name": "Moderato (月)",
+          "currentPrice": 19,
+          "currentPriceText": "¥19/月",
+          "originalPrice": null,
+          "originalPriceText": null,
+          "unit": "月",
+          "notes": null,
+          "serviceDetails": [
+            "会员等级: 基础会员",
+            "更多 Agent 额度",
+            "Agent 多任务并行",
+            "Agent 4 倍速优先用",
+            "K2.5 提速并提升额度",
+            "PPT 创意视觉 x Nano Banana",
+            "限时活动 Kimi Code 可调用"
+          ]
+        },
+        {
+          "name": "Allegretto (月)",
+          "currentPrice": 39,
+          "currentPriceText": "¥39/月",
+          "originalPrice": null,
+          "originalPriceText": null,
+          "unit": "月",
+          "notes": null,
+          "serviceDetails": [
+            "会员等级: 进阶会员",
+            "Moderato 权益基础上",
+            "2 倍 Agent 额度",
+            "2 倍 K2.5 模型使用额度",
+            "无限 PPT 创意视觉 x Nano Banana",
+            "限时活动 Kimi Code 5 倍额度",
+            "专属助理 一键部署 Kimi Claw",
+            "实验性功能 Agent 集群：",
+            "多 Agent 并行，数倍生产力",
+            "适用海量搜索、长文写作、批量处理"
+          ]
+        },
+        {
+          "name": "Allegro (月)",
           "currentPrice": 99,
           "currentPriceText": "¥99/月",
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
-          "notes": null
+          "notes": null,
+          "serviceDetails": [
+            "会员等级: 高级会员",
+            "Moderato 权益基础上",
+            "5 倍 Agent 额度",
+            "2 倍 Agent 任务并行",
+            "高峰时段获得优先回复",
+            "5 倍 K2.5 模型使用额度",
+            "无限 PPT 创意视觉 x Nano Banana",
+            "限时活动 Kimi Code 15 倍额度",
+            "专属助理 一键部署 Kimi Claw",
+            "实验性功能 Agent 集群：",
+            "多 Agent 并行，数倍生产力",
+            "适用海量搜索、长文写作、批量处理"
+          ]
         },
         {
-          "name": "Moderato (年)",
-          "currentPrice": 948,
-          "currentPriceText": "¥948/年",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "年",
-          "notes": null
-        },
-        {
-          "name": "Allegretto (月)",
+          "name": "Vivace (月)",
           "currentPrice": 199,
           "currentPriceText": "¥199/月",
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
-          "notes": null
-        },
-        {
-          "name": "Allegretto (年)",
-          "currentPrice": 1948,
-          "currentPriceText": "¥1948/年",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "年",
-          "notes": null
-        },
-        {
-          "name": "Allegro (年)",
-          "currentPrice": 6788,
-          "currentPriceText": "¥6788/年",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "年",
-          "notes": null
-        },
-        {
-          "name": "Allegro (月)",
-          "currentPrice": 699,
-          "currentPriceText": "¥699/月",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "月",
-          "notes": null
+          "notes": null,
+          "serviceDetails": [
+            "会员等级: 旗舰会员",
+            "Moderato 权益基础上",
+            "10 倍 Agent 额度",
+            "2 倍 Agent 任务并行",
+            "高峰时段获得优先回复",
+            "10 倍 K2.5 模型使用额度",
+            "无限 PPT 创意视觉 x Nano Banana",
+            "限时活动 Kimi Code 30 倍额度",
+            "专属助理 一键部署 Kimi Claw",
+            "实验性功能 Agent 集群：",
+            "多 Agent 并行，数倍生产力",
+            "适用海量搜索、长文写作、批量处理"
+          ]
         }
       ]
     },
@@ -189,28 +167,36 @@
       "provider": "volcengine-ai",
       "sourceUrls": [
         "https://www.volcengine.com/activity/codingplan",
-        "https://www.volcengine.com/activity/codingplan/garrmodlistv3",
-        "https://lf6-cdn2-tos.bytegoofy.com/gftar/toutiao/fe_arch/fes2_app_17635357794962595/1.0.0.27/index.js"
+        "https://lf6-cdn2-tos.bytegoofy.com/gftar/toutiao/fe_arch/fes2_app_1761224550685339/1.0.0.156/index.js"
       ],
-      "fetchedAt": "2026-02-25T10:26:39.250Z",
       "plans": [
         {
           "name": "Coding Plan Lite 月套餐",
-          "currentPrice": 0,
-          "currentPriceText": "0 成本试错",
-          "originalPrice": null,
-          "originalPriceText": null,
+          "currentPrice": 9.9,
+          "currentPriceText": "¥9.9/月",
+          "originalPrice": 40,
+          "originalPriceText": "¥40/月（续费价格）",
           "unit": "月",
-          "notes": "按钮: 领取福利；标签: 0成本试错；购买: https://console.volcengine.com/common-buy/fast/ark_bd%7C%7Ccu3pq57og65ta2ostdvg"
+          "notes": null,
+          "serviceDetails": [
+            "能力: 支持 Doubao、GLM、DeepSeek、Kimi等模型",
+            "适配: 支持自由切换模型，或开启Auto模式",
+            "工具: 支持 Claude Code、Cursor等主流编程工具"
+          ]
         },
         {
           "name": "Coding Plan Pro 月套餐",
           "currentPrice": 49.9,
-          "currentPriceText": "49.9元/月",
+          "currentPriceText": "¥49.9/月",
           "originalPrice": 200,
-          "originalPriceText": "200元/月（续费价格）",
+          "originalPriceText": "¥200/月（续费价格）",
           "unit": "月",
-          "notes": "按钮: 立即订阅；标签: 仅首次订阅可享 / 低至5折；购买: https://console.volcengine.com/common-buy/fast/ark_bd%7C%7Cd2a7m37ditkldl312h1g"
+          "notes": null,
+          "serviceDetails": [
+            "能力: 包含lite套餐全部权益",
+            "适配: 满足高阶用户的大规模编程需求",
+            "用量: 用量达 Claude Max（5x）的 3 倍，lite 套餐用量的5倍"
+          ]
         }
       ]
     },
@@ -220,7 +206,6 @@
         "https://platform.minimaxi.com/docs/guides/pricing-coding-plan",
         "https://platform.minimaxi.com/subscribe/coding-plan"
       ],
-      "fetchedAt": "2026-02-25T10:26:39.800Z",
       "plans": [
         {
           "name": "Plus-极速版",
@@ -229,7 +214,13 @@
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
-          "notes": "用量: 100 prompts / 每 5 小时"
+          "notes": "用量: 100 prompts / 每 5 小时",
+          "serviceDetails": [
+            "用量: 100 prompts / 每 5 小时",
+            "支持模型: MiniMax M2.5-highspeed MiniMax M2.5 MiniMax M2.1 MiniMax M2",
+            "套餐资源: 2.5 倍 Starter 套餐用量",
+            "适用场景: 适合专业开发场景 满足复杂开发任务需求"
+          ]
         },
         {
           "name": "Max-极速版 超值之选",
@@ -238,7 +229,13 @@
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
-          "notes": "用量: 300 prompts / 每 5 小时"
+          "notes": "用量: 300 prompts / 每 5 小时",
+          "serviceDetails": [
+            "用量: 300 prompts / 每 5 小时",
+            "支持模型: MiniMax M2.5-highspeed MiniMax M2.5 MiniMax M2.1 MiniMax M2",
+            "套餐资源: 7.5 倍 Starter 套餐用量",
+            "适用场景: 适合高级开发场景 满足大量编程辅助需求"
+          ]
         },
         {
           "name": "Ultra-极速版 极速畅用",
@@ -247,7 +244,13 @@
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
-          "notes": "用量: 2000 prompts / 每 5 小时"
+          "notes": "用量: 2000 prompts / 每 5 小时",
+          "serviceDetails": [
+            "用量: 2000 prompts / 每 5 小时",
+            "支持模型: MiniMax M2.5-highspeed MiniMax M2.5 MiniMax M2.1 MiniMax M2",
+            "套餐资源: 50 倍 Starter 套餐用量",
+            "适用场景: 适合硬核开发者 超大量编程辅助需求"
+          ]
         },
         {
           "name": "Starter",
@@ -256,7 +259,13 @@
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
-          "notes": "用量: 40 prompts / 每 5 小时"
+          "notes": "用量: 40 prompts / 每 5 小时",
+          "serviceDetails": [
+            "用量: 40 prompts / 每 5 小时",
+            "支持模型: MiniMax M2.5 MiniMax M2.1 MiniMax M2",
+            "套餐资源: 基础用量",
+            "适用场景: 适合入门级开发场景 满足基础开发需求"
+          ]
         },
         {
           "name": "Plus 高性价比",
@@ -265,7 +274,13 @@
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
-          "notes": "用量: 100 prompts / 每 5 小时"
+          "notes": "用量: 100 prompts / 每 5 小时",
+          "serviceDetails": [
+            "用量: 100 prompts / 每 5 小时",
+            "支持模型: MiniMax M2.5 MiniMax M2.1 MiniMax M2",
+            "套餐资源: 2.5 倍 Starter 套餐用量",
+            "适用场景: 适合专业开发场景 满足复杂开发任务需求"
+          ]
         },
         {
           "name": "Max 超大份量",
@@ -274,61 +289,206 @@
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
-          "notes": "用量: 300 prompts / 每 5 小时"
-        },
+          "notes": "用量: 300 prompts / 每 5 小时",
+          "serviceDetails": [
+            "用量: 300 prompts / 每 5 小时",
+            "支持模型: MiniMax M2.5 MiniMax M2.1 MiniMax M2",
+            "套餐资源: 7.5 倍 Starter 套餐用量",
+            "适用场景: 适合专业开发场景 满足复杂开发任务需求"
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "baidu-qianfan-ai",
+      "sourceUrls": [
+        "https://cloud.baidu.com/product/codingplan.html"
+      ],
+      "plans": [
         {
-          "name": "Plus-极速版 立省¥196",
-          "currentPrice": 980,
-          "currentPriceText": "¥980 /年",
+          "name": "Coding Plan Lite",
+          "currentPrice": 40,
+          "currentPriceText": "40元/月",
           "originalPrice": null,
           "originalPriceText": null,
-          "unit": "年",
-          "notes": "用量: 100 prompts / 每 5 小时"
+          "unit": "月",
+          "notes": "新客首月 9.9元",
+          "serviceDetails": [
+            "每 5 小时限额: 最多1200次请求",
+            "每周限额: 最多9000次请求",
+            "每月限额: 最多18000次请求",
+            "支持模型: GLM-5、Kimi-K2.5、MiniMax-M2.1、DeepSeek-V3.2等"
+          ]
         },
         {
-          "name": "Max-极速版 立省¥398",
-          "currentPrice": 1990,
-          "currentPriceText": "¥1990 /年",
+          "name": "Coding Plan Pro",
+          "currentPrice": 200,
+          "currentPriceText": "200元/月",
           "originalPrice": null,
           "originalPriceText": null,
-          "unit": "年",
-          "notes": "用量: 300 prompts / 每 5 小时"
+          "unit": "月",
+          "notes": "新客首月 49.9元",
+          "serviceDetails": [
+            "每 5 小时限额: 最多6000次请求",
+            "每周限额: 最多45000次请求",
+            "每月限额: 最多90000次请求",
+            "支持模型: GLM-5、Kimi-K2.5、MiniMax-M2.1、DeepSeek-V3.2等"
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "kwaikat-ai",
+      "sourceUrls": [
+        "https://www.streamlake.com/marketing/coding-plan",
+        "https://www.streamlake.com/api/get-kconf-content?key=website_kat_coder_coding_plan&name=platform_web&folder=streamlake",
+        "https://console.streamlake.com/api/common/describe-product-detail"
+      ],
+      "plans": [
+        {
+          "name": "KAT Coding Mini",
+          "currentPrice": 8.8,
+          "currentPriceText": "¥8.8/月",
+          "originalPrice": 29,
+          "originalPriceText": "¥29/月",
+          "unit": "月",
+          "notes": "适合初次体验者的轻量化选择；最低成本体验 KAT-Coder-Pro V1；覆盖日常编码场景；40 Prompts / 5小时",
+          "serviceDetails": [
+            "适合初次体验者的轻量化选择",
+            "最低成本体验 KAT-Coder-Pro V1",
+            "覆盖日常编码场景",
+            "40 Prompts / 5小时"
+          ]
         },
         {
-          "name": "Ultra-极速版 立省¥658",
-          "currentPrice": 8990,
-          "currentPriceText": "¥8990 /年",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "年",
-          "notes": "用量: 2000 prompts / 每 5 小时"
+          "name": "KAT Coding Starter",
+          "currentPrice": 48,
+          "currentPriceText": "¥48/月",
+          "originalPrice": 70,
+          "originalPriceText": "¥70/月",
+          "unit": "月",
+          "notes": "适配日常核心开发场景的高效搭档；由最新旗舰模型 KAT-Coder-Pro V1 驱动；适配Claude Code等主流编程工具；100 Prompts / 5小时",
+          "serviceDetails": [
+            "适配日常核心开发场景的高效搭档",
+            "由最新旗舰模型 KAT-Coder-Pro V1 驱动",
+            "适配Claude Code等主流编程工具",
+            "100 Prompts / 5小时"
+          ]
         },
         {
-          "name": "Starter 立省 ¥58",
-          "currentPrice": 290,
-          "currentPriceText": "¥290 /年",
-          "originalPrice": null,
-          "originalPriceText": null,
-          "unit": "年",
-          "notes": "用量: 40 prompts / 每 5 小时"
+          "name": "KAT Coding Pro",
+          "currentPrice": 96,
+          "currentPriceText": "¥96/月",
+          "originalPrice": 140,
+          "originalPriceText": "¥140/月",
+          "unit": "月",
+          "notes": "驱动复杂架构设计的进阶引擎；包含Starter套餐全部权益，性能全面提升；Starter套餐用量的3倍；300 Prompts / 5小时",
+          "serviceDetails": [
+            "驱动复杂架构设计的进阶引擎",
+            "包含Starter套餐全部权益，性能全面提升",
+            "Starter套餐用量的3倍",
+            "300 Prompts / 5小时"
+          ]
         },
         {
-          "name": "Plus 立省 ¥98",
-          "currentPrice": 490,
-          "currentPriceText": "¥490 /年",
+          "name": "KAT Coding Max",
+          "currentPrice": 240,
+          "currentPriceText": "¥240/月",
+          "originalPrice": 350,
+          "originalPriceText": "¥350/月",
+          "unit": "月",
+          "notes": "支持全天候高强度开发的旗舰配置；卓越的跨文件/仓库级代码深度理解；Pro套餐用量的3倍以上；1000 Prompts / 5小时",
+          "serviceDetails": [
+            "支持全天候高强度开发的旗舰配置",
+            "卓越的跨文件/仓库级代码深度理解",
+            "Pro套餐用量的3倍以上",
+            "1000 Prompts / 5小时"
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "x-aio",
+      "sourceUrls": [
+        "https://code.x-aio.com/",
+        "https://code.x-aio.com/assets/index-ClqKo4eW.js"
+      ],
+      "plans": [
+        {
+          "name": "Lite（入门版）",
+          "currentPrice": 36,
+          "currentPriceText": "¥36/月",
           "originalPrice": null,
           "originalPriceText": null,
-          "unit": "年",
-          "notes": "用量: 100 prompts / 每 5 小时"
+          "unit": "月",
+          "notes": "首购优惠：¥18/月",
+          "serviceDetails": [
+            "适用场景: 适合个人开发者的轻量级使用",
+            "每 4 小时 100 Prompts 配额",
+            "高质量开源模型，覆盖主流编码场景",
+            "稳定响应速度，持续在线可用",
+            "兼容 10+ 主流 AI 编码工具",
+            "模型能力持续更新，长期可用",
+            "资源包折扣权益：9 折"
+          ]
         },
         {
-          "name": "Max 立省 ¥300",
-          "currentPrice": 1190,
-          "currentPriceText": "¥1190 /年",
+          "name": "Pro（专业版）",
+          "currentPrice": 180,
+          "currentPriceText": "¥180/月",
           "originalPrice": null,
           "originalPriceText": null,
-          "unit": "年",
-          "notes": "用量: 300 prompts / 每 5 小时"
+          "unit": "月",
+          "notes": "首购优惠：¥90/月",
+          "serviceDetails": [
+            "适用场景: 适合专业团队的高频使用",
+            "每 4 小时 500 Prompts 配额（5x Lite）",
+            "高质量开源模型，覆盖主流编码场景",
+            "稳定响应速度，持续在线可用",
+            "兼容 10+ 主流 AI 编码工具",
+            "模型能力持续更新，长期可用",
+            "资源包折扣权益：8 折"
+          ]
+        },
+        {
+          "name": "Max（旗舰版）",
+          "currentPrice": 360,
+          "currentPriceText": "¥360/月",
+          "originalPrice": null,
+          "originalPriceText": null,
+          "unit": "月",
+          "notes": "首购优惠：¥180/月",
+          "serviceDetails": [
+            "适用场景: 适合资深开发者的海量工作负载",
+            "每 4 小时 2000 Prompts 配额（20x Lite）",
+            "高质量开源模型，覆盖主流编码场景",
+            "稳定响应速度，持续在线可用",
+            "兼容 10+ 主流 AI 编码工具",
+            "模型能力持续更新，长期可用",
+            "资源包折扣权益：6 折"
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "compshare-ai",
+      "sourceUrls": [
+        "https://www.compshare.cn/docs/modelverse/package_plan/package"
+      ],
+      "plans": [
+        {
+          "name": "包月畅享包",
+          "currentPrice": 49.9,
+          "currentPriceText": "49.9 元/月",
+          "originalPrice": null,
+          "originalPriceText": null,
+          "unit": "月",
+          "notes": null,
+          "serviceDetails": [
+            "计费模式/有效期: 包月计费 (30天)",
+            "积分额度: 7,000,000 积分/日",
+            "核心权益: 每日刷新，适合高频开发者"
+          ]
         }
       ]
     },
@@ -336,28 +496,77 @@
       "provider": "aliyun-ai",
       "sourceUrls": [
         "https://www.aliyun.com/benefit/scene/codingplan",
-        "https://cloud-assets.alicdn.com/lowcode/entry/prod/4379b5883c2c8db90081ff75b5373d69.js",
-        "https://common-buy.aliyun.com/?commodityCode=sfm_codingplan_public_cn#/buy"
+        "https://cloud-assets.alicdn.com/lowcode/entry/prod/ba2567ce6f887f3be6ec369d5ca77c4a.js",
+        "https://t.aliyun.com/abs/promotion/queryPrice"
       ],
-      "fetchedAt": "2026-02-25T10:26:40.061Z",
       "plans": [
         {
           "name": "Coding Plan Lite",
           "currentPrice": 7.9,
-          "currentPriceText": "7.9元/首月",
-          "originalPrice": null,
-          "originalPriceText": null,
+          "currentPriceText": "¥7.9/月",
+          "originalPrice": 40,
+          "originalPriceText": "¥40/月",
           "unit": "月",
-          "notes": "固定月费，每月1.8万次请求；次月续费5折；Lite 产品优惠 用户在活动期间首次购买lite版codingplan，可享受首月7.9元的特惠价； 用户在活动期间首次续费lite版codingplan，可享受次月5折的特惠折扣"
+          "notes": "新人专享",
+          "serviceDetails": [
+            "能力: 支持 Qwen3.5-Plus、Qwen3-Max、Qwen3-Coder-Next、Qwen3-Coder-Plus、MiniMax M2.5、GLM-5、Kimi-k2.5、GLM-4.7 等模型",
+            "场景: 面向处理轻量级工作负载的个人开发者",
+            "工具: Qwen Code、OpenClaw、OpenCode、Claude Code、Claude Code IDE插件、Codex、Cline、Cursor、Kilo CLI、Kilo Code IDE 插件等工具"
+          ]
         },
         {
           "name": "Coding Plan Pro",
           "currentPrice": 39.9,
-          "currentPriceText": "39.9元/首月",
-          "originalPrice": null,
-          "originalPriceText": null,
+          "currentPriceText": "¥39.9/月",
+          "originalPrice": 200,
+          "originalPriceText": "¥200/月",
           "unit": "月",
-          "notes": "固定月费，每月9万次请求；次月续费5折；Pro 产品优惠 用户在活动期间首次购买Pro版codingplan，可享受首月39.9元的特惠价； 用户在活动期间首次续费Pro版codingplan，可享受次月5折的特惠折扣"
+          "notes": "新人专享",
+          "serviceDetails": [
+            "权益: 享受 Lite 套餐的全部能力与权益",
+            "额度: 用量是 Lite 版的 5 倍，速度更快",
+            "场景: 适合大型开发任务，专业级 AI 编程体验"
+          ]
+        }
+      ]
+    },
+    {
+      "provider": "infini-ai",
+      "sourceUrls": [
+        "https://cloud.infini-ai.com/platform/ai",
+        "https://content.cloud.infini-ai.com/platform-web-prod/assets/js/main.4700a281.js",
+        "https://content.cloud.infini-ai.com/platform-web-prod/assets/js/Index.eeabac4a.js",
+        "https://cloud.infini-ai.com/api/maas/system/coding_plan/can_purchase"
+      ],
+      "plans": [
+        {
+          "name": "Infini Coding Lite",
+          "currentPrice": 19.9,
+          "currentPriceText": "¥19.9/月",
+          "originalPrice": 40,
+          "originalPriceText": "¥40/月",
+          "unit": "月",
+          "notes": null,
+          "serviceDetails": [
+            "1,000次/5小时、6,000次/7天、12,000次/1个月",
+            "支持Minimax、GLM、DeepSeek、Kimi等最新模型，Day0上新",
+            "适配Claude Code、Cline等主流编程工具，持续更新..."
+          ]
+        },
+        {
+          "name": "Infini Coding Pro",
+          "currentPrice": 99.9,
+          "currentPriceText": "¥99.9/月",
+          "originalPrice": 200,
+          "originalPriceText": "¥200/月",
+          "unit": "月",
+          "notes": null,
+          "serviceDetails": [
+            "5,000次/5小时、30,000次/7天、60,000次/1个月",
+            "5倍Lite套餐用量",
+            "支持Minimax、GLM、DeepSeek、Kimi等最新模型，Day0上新",
+            "适配Claude Code、Cline等主流编程工具，持续更新..."
+          ]
         }
       ]
     }
