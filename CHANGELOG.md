@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.10] - 2026-02-28
+- fix(extension): 添加模型刷新错误处理并通知信息变更
+- feat: 更新编码套餐数据抓取与展示，支持多语言
+- chore(changelog): add 0.4.9 release notes
+
 ## [0.4.9] - 2026-02-26
 - refactor: update commit message options and add Chinese README
 - refactor(config): 更新默认模型设置并合并供应商模型

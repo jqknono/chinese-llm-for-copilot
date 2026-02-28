@@ -378,7 +378,7 @@
         "changelog:update": "node ./scripts/update-changelog.js",
         "package": "npm run bundle:prod && npm run copy-i18n",
         "package:vsix": "npm run package && npx @vscode/vsce package",
-        "publish:marketplace": "npm run package && node ./scripts/publish-vsce.js",
+        "publish:marketplace": "npm run changelog:update && npm run package && npx @vscode/vsce publish",
         "pricing:fetch": "node ./scripts/fetch-provider-pricing.js",
         "pricing:serve": "node ./scripts/serve-pricing-page.js"
     },
