@@ -178,16 +178,26 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
   private async buildModelInformation(
     configuration?: ProviderPickerConfiguration
   ): Promise<vscode.LanguageModelChatInformation[]> {
-    const models = this.provider.getAvailableModels();
     const requestedVendor = this.resolveRequestedVendorName(configuration);
     const resolvedVendor = this.resolveConfiguredVendorName(requestedVendor);
     if (requestedVendor && !resolvedVendor && this.configStore) {
       return [getVendorNotConfiguredPlaceholderModel(this.provider.getVendor())];
     }
     const vendorForFiltering = resolvedVendor || requestedVendor;
-    const filteredModels = vendorForFiltering
+    let models = this.provider.getAvailableModels();
+    let filteredModels = vendorForFiltering
       ? models.filter(model => model.family.toLowerCase() === vendorForFiltering.toLowerCase())
       : models;
+
+    // Settings updates and model picker queries can race each other.
+    // If we currently see nothing, refresh once and re-check before returning placeholders.
+    if (filteredModels.length === 0) {
+      await this.provider.refreshModels();
+      models = this.provider.getAvailableModels();
+      filteredModels = vendorForFiltering
+        ? models.filter(model => model.family.toLowerCase() === vendorForFiltering.toLowerCase())
+        : models;
+    }
 
     if (filteredModels.length === 0) {
       if (vendorForFiltering && this.configStore) {

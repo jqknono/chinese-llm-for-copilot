@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { logger } from '../logging/outputChannelLogger';
 
 interface Messages {
   [key: string]: string;
@@ -37,7 +38,7 @@ export async function initI18n(): Promise<void> {
     }
     currentMessages = loaded;
   } catch (error) {
-    console.error('Failed to load messages:', error);
+    logger.error('Failed to load messages', error);
     // 回退到英文
     currentMessages = {};
   }

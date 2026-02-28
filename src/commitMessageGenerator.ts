@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { execFile } from 'node:child_process';
 import { getMessage } from './i18n/i18n';
 import { getCompactErrorMessage } from './providers/baseProvider';
+import { logger } from './logging/outputChannelLogger';
 
 const COMMIT_MESSAGE_MODEL_VENDOR_SETTING_KEY = 'commitMessage.modelVendor';
 const COMMIT_MESSAGE_MODEL_ID_SETTING_KEY = 'commitMessage.modelId';
@@ -1292,7 +1293,7 @@ export async function selectCommitMessageModel(): Promise<void> {
       vscode.window.showInformationMessage(getMessage('requestCancelled'));
       return;
     }
-    console.error('Failed to select commit message model.', error);
+    logger.error('Failed to select commit message model.', error);
     const detail = formatErrorDetail(error);
     vscode.window.showErrorMessage(getMessage('commitMessageModelSelectionFailed', detail));
   }
@@ -1403,7 +1404,7 @@ export async function generateCommitMessage(): Promise<void> {
       vscode.window.showInformationMessage(getMessage('requestCancelled'));
       return;
     }
-    console.error('Failed to generate commit message.', error);
+    logger.error('Failed to generate commit message.', error);
     const detail = formatErrorDetail(error);
     vscode.window.showErrorMessage(getMessage('commitMessageFailed', detail));
   }

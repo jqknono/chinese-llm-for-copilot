@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.11] - 2026-02-28
+- feat(core): 添加统一日志系统并增强模型刷新机制
+
 ## [0.4.10] - 2026-02-28
 - fix(extension): 添加模型刷新错误处理并通知信息变更
 - feat: 更新编码套餐数据抓取与展示，支持多语言

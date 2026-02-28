@@ -11,6 +11,7 @@ import {
 } from './baseProvider';
 import { ConfigStore, VendorConfig, VendorModelConfig } from '../config/configStore';
 import { getMessage } from '../i18n/i18n';
+import { logger } from '../logging/outputChannelLogger';
 
 interface OpenAIChatRequest {
   model: string;
@@ -106,6 +107,7 @@ export class GenericAIProvider extends BaseAIProvider {
   private modelVendorMap = new Map<string, ModelVendorMapping>();
   private readonly vendorDiscoveryState = new Map<string, VendorDiscoveryState>();
   private refreshModelsInFlight: Promise<void> | undefined;
+  private refreshModelsPending = false;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -152,20 +154,30 @@ export class GenericAIProvider extends BaseAIProvider {
 
   async refreshModels(): Promise<void> {
     if (this.refreshModelsInFlight) {
+      this.refreshModelsPending = true;
       return this.refreshModelsInFlight;
     }
 
-    const running = this.refreshModelsInternal();
-    this.refreshModelsInFlight = running.finally(() => {
+    const running = (async () => {
+      do {
+        this.refreshModelsPending = false;
+        await this.refreshModelsInternal();
+      } while (this.refreshModelsPending);
+    })();
+
+    this.refreshModelsInFlight = running;
+    try {
+      await running;
+    } finally {
       if (this.refreshModelsInFlight === running) {
         this.refreshModelsInFlight = undefined;
       }
-    });
-    return this.refreshModelsInFlight;
+    }
   }
 
   private async refreshModelsInternal(): Promise<void> {
     const vendors = this.configStore.getVendors();
+    logger.info('Refreshing Coding Plans vendor models', { vendorCount: vendors.length });
     this.modelVendorMap.clear();
     const allModelConfigs: AIModelConfig[] = [];
     const activeVendorKeys = new Set(vendors.map(vendor => this.toVendorStateKey(vendor.name)));
@@ -178,13 +190,23 @@ export class GenericAIProvider extends BaseAIProvider {
 
     for (const vendor of vendors) {
       if (!vendor.baseUrl) {
+        logger.warn('Skip vendor with empty baseUrl', { vendor: vendor.name });
         continue;
       }
       const vendorKey = this.toVendorStateKey(vendor.name);
       const configuredModels = this.buildConfiguredModelsForVendor(vendor);
+      logger.info('Evaluating vendor models', {
+        vendor: vendor.name,
+        useModelsEndpoint: vendor.useModelsEndpoint,
+        configuredCount: configuredModels.length
+      });
 
       if (!vendor.useModelsEndpoint) {
         this.vendorDiscoveryState.delete(vendorKey);
+        logger.info('Using settings models for vendor', {
+          vendor: vendor.name,
+          modelCount: configuredModels.length
+        });
         this.appendResolvedModels(vendor, configuredModels, allModelConfigs);
         continue;
       }
@@ -192,6 +214,10 @@ export class GenericAIProvider extends BaseAIProvider {
       const apiKey = await this.configStore.getApiKey(vendor.name);
       if (!apiKey) {
         this.vendorDiscoveryState.delete(vendorKey);
+        logger.warn('Missing API key; falling back to settings models', {
+          vendor: vendor.name,
+          fallbackCount: configuredModels.length
+        });
         this.appendResolvedModels(vendor, configuredModels, allModelConfigs);
         continue;
       }
@@ -201,6 +227,12 @@ export class GenericAIProvider extends BaseAIProvider {
 
       if (previousState && previousState.signature === signature && previousState.suppressRetry) {
         const cached = previousState.cachedModels.length > 0 ? previousState.cachedModels : configuredModels;
+        logger.warn('Using cached/settings models because discovery retry is suppressed', {
+          vendor: vendor.name,
+          cachedCount: previousState.cachedModels.length,
+          fallbackCount: configuredModels.length,
+          resolvedCount: cached.length
+        });
         this.appendResolvedModels(vendor, cached, allModelConfigs);
         continue;
       }
@@ -211,6 +243,13 @@ export class GenericAIProvider extends BaseAIProvider {
           previousState && previousState.signature === signature && previousState.cachedModels.length > 0
             ? previousState.cachedModels
             : configuredModels;
+        logger.warn('Model discovery failed; using fallback models', {
+          vendor: vendor.name,
+          status: discovered.status,
+          cachedCount: previousState?.cachedModels.length ?? 0,
+          configuredCount: configuredModels.length,
+          resolvedCount: fallbackModels.length
+        });
         this.vendorDiscoveryState.set(vendorKey, {
           signature,
           suppressRetry: this.shouldSuppressDiscoveryRetry(discovered.status),
@@ -220,18 +259,25 @@ export class GenericAIProvider extends BaseAIProvider {
         continue;
       }
 
-      const mergedVendorModels = this.mergeVendorModelConfigs(vendor.models, discovered.models);
-      const resolvedModels = this.buildConfiguredModelsFromVendorModels(vendor, mergedVendorModels);
-      const mergedSignature = this.buildVendorDiscoverySignature({ ...vendor, models: mergedVendorModels }, apiKey);
+      // When useModelsEndpoint is enabled, /models is the source of truth.
+      // settings.json is updated from discovery, not the other way around.
+      const discoveredVendorModels = this.toVendorModelConfigs(discovered.models);
+      const resolvedModels = this.buildConfiguredModelsFromVendorModels(vendor, discoveredVendorModels);
+      const discoveredSignature = this.buildVendorDiscoverySignature({ ...vendor, models: discoveredVendorModels }, apiKey);
+      logger.info('Using /models discovery results for vendor', {
+        vendor: vendor.name,
+        discoveredCount: discovered.models.length,
+        normalizedCount: discoveredVendorModels.length
+      });
 
       try {
-        await this.configStore.updateVendorModels(vendor.name, mergedVendorModels);
+        await this.configStore.updateVendorModels(vendor.name, discoveredVendorModels);
       } catch (error) {
-        console.warn(`Failed to update models config for ${vendor.name}.`, error);
+        logger.warn(`Failed to update models config for ${vendor.name}.`, error);
       }
 
       this.vendorDiscoveryState.set(vendorKey, {
-        signature: mergedSignature,
+        signature: discoveredSignature,
         suppressRetry: false,
         cachedModels: resolvedModels
       });
@@ -239,7 +285,7 @@ export class GenericAIProvider extends BaseAIProvider {
     }
 
     this.models = allModelConfigs.map(m => this.createModel(m));
-    console.log('Coding Plans models refreshed:', this.models.map(m => m.id));
+    logger.info('Coding Plans models refreshed', { modelIds: this.models.map(m => m.id) });
     this.modelChangedEmitter.fire();
   }
 
@@ -371,7 +417,7 @@ export class GenericAIProvider extends BaseAIProvider {
 
       return { models, failed: false };
     } catch (error) {
-      console.warn(`Failed to discover models from ${vendor.name}:`, error);
+      logger.warn(`Failed to discover models from ${vendor.name}`, error);
       return {
         models: [],
         failed: true,
@@ -386,53 +432,26 @@ export class GenericAIProvider extends BaseAIProvider {
     return typeof status === 'number' && NON_RETRYABLE_DISCOVERY_STATUS_CODES.has(status);
   }
 
-  private mergeVendorModelConfigs(
-    configuredModels: VendorModelConfig[],
-    discoveredModels: AIModelConfig[]
-  ): VendorModelConfig[] {
-    const mergedByName = new Map<string, VendorModelConfig>();
-
-    for (const model of configuredModels) {
-      const normalized = this.withModelDefaults(model);
-      if (!normalized) {
-        continue;
-      }
-      const key = normalized.name.toLowerCase();
-      if (!mergedByName.has(key)) {
-        mergedByName.set(key, normalized);
-      }
-    }
+  private toVendorModelConfigs(discoveredModels: AIModelConfig[]): VendorModelConfig[] {
+    const normalized: VendorModelConfig[] = [];
+    const seen = new Set<string>();
 
     for (const model of discoveredModels) {
       const discovered = this.toVendorModelConfig(model);
       if (!discovered) {
         continue;
       }
+
       const key = discovered.name.toLowerCase();
-      if (!mergedByName.has(key)) {
-        mergedByName.set(key, discovered);
+      if (seen.has(key)) {
+        continue;
       }
+
+      seen.add(key);
+      normalized.push(discovered);
     }
 
-    return Array.from(mergedByName.values());
-  }
-
-  private withModelDefaults(model: VendorModelConfig): VendorModelConfig | undefined {
-    const name = model.name.trim();
-    if (name.length === 0) {
-      return undefined;
-    }
-
-    return {
-      name,
-      description: model.description?.trim() || undefined,
-      maxInputTokens: this.readPositiveTokenInteger(model.maxInputTokens) ?? DEFAULT_CONTEXT_SIZE,
-      maxOutputTokens: this.readPositiveTokenInteger(model.maxOutputTokens) ?? DEFAULT_CONTEXT_SIZE,
-      capabilities: {
-        tools: model.capabilities?.tools ?? DEFAULT_MODEL_TOOLS,
-        vision: model.capabilities?.vision ?? DEFAULT_MODEL_VISION
-      }
-    };
+    return normalized;
   }
 
   private toVendorModelConfig(model: AIModelConfig): VendorModelConfig | undefined {

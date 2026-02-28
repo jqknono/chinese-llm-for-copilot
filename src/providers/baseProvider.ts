@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { logger } from '../logging/outputChannelLogger';
 
 export const MODEL_VERSION_LABEL = 'Coding Plans for Copilot';
 export const DEFAULT_CONFIGURED_MODELS: readonly string[] = [];
@@ -254,10 +255,10 @@ export abstract class BaseAIProvider implements vscode.Disposable {
       this.modelDiscoveryUnsupported = false;
       const resolvedModels = await this.resolveModelConfigs();
       this.models = resolvedModels.map(model => this.createModel(model));
-      console.log(`${this.getVendor()} 模型列表已刷新:`, this.models.map(m => m.id));
+      logger.info(`${this.getVendor()} models refreshed`, { modelIds: this.models.map(m => m.id) });
       this.modelChangedEmitter.fire();
     } catch (error: any) {
-      console.error(`刷新 ${this.getVendor()} 模型列表失败:`, error);
+      logger.error(`Failed to refresh ${this.getVendor()} models`, error);
       this.models = [];
       this.modelChangedEmitter.fire();
     }
@@ -319,7 +320,7 @@ export abstract class BaseAIProvider implements vscode.Disposable {
         return discoveredModels;
       }
     } catch (error) {
-      console.warn(`Failed to fetch model list from generic API for ${this.getVendor()}.`, error);
+      logger.warn(`Failed to fetch model list from generic API for ${this.getVendor()}`, error);
     }
 
     return this.buildConfiguredModelConfigs(describe, fallbackFamily);
