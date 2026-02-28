@@ -3,6 +3,7 @@ import { GenericAIProvider } from './providers/genericProvider';
 import { LMChatProviderAdapter } from './providers/lmChatProviderAdapter';
 import { ConfigStore } from './config/configStore';
 import { initI18n, getMessage } from './i18n/i18n';
+import { getCompactErrorMessage } from './providers/baseProvider';
 import { generateCommitMessage, selectCommitMessageModel } from './commitMessageGenerator';
 
 let providers: Map<string, GenericAIProvider> = new Map();
@@ -74,8 +75,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   context.subscriptions.push(
     vscode.commands.registerCommand('coding-plans.refreshModels', async () => {
-      await genericProvider.refreshModels();
-      vscode.window.showInformationMessage(getMessage('modelsRefreshed', 'Coding Plan'));
+      try {
+        await genericProvider.refreshModels();
+        adapter.notifyLanguageModelInformationChanged();
+        vscode.window.showInformationMessage(getMessage('modelsRefreshed', 'Coding Plan'));
+      } catch (error) {
+        vscode.window.showErrorMessage(
+          getMessage('refreshModelsFailed', getCompactErrorMessage(error))
+        );
+      }
     })
   );
 

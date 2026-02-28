@@ -150,6 +150,10 @@ export class LMChatProviderAdapter implements vscode.LanguageModelChatProvider, 
     );
   }
 
+  public notifyLanguageModelInformationChanged(): void {
+    this.onDidChangeLanguageModelChatInformationEmitter.fire();
+  }
+
   async provideLanguageModelChatInformation(
     options: vscode.PrepareLanguageModelChatModelOptions,
     _token: vscode.CancellationToken
