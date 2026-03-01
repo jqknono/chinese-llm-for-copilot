@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-27T10:19:27.616Z",
+  "generatedAt": "2026-03-01T03:04:41.859Z",
   "providers": [
     {
       "provider": "zhipu-ai",
@@ -56,7 +56,7 @@
       "sourceUrls": [
         "https://www.kimi.com/code/zh",
         "https://www.kimi.com/apiv2/kimi.gateway.order.v1.GoodsService/ListGoods",
-        "https://statics.moonshot.cn/kimi-web-seo/assets/common-DWpxLPE7.js"
+        "https://statics.moonshot.cn/kimi-web-seo/assets/common-CtJJqHXf.js"
       ],
       "plans": [
         {
@@ -91,7 +91,7 @@
             "Agent 4 倍速优先用",
             "K2.5 提速并提升额度",
             "PPT 创意视觉 x Nano Banana",
-            "限时活动 Kimi Code 可调用"
+            "Kimi Code 可调用"
           ]
         },
         {
@@ -108,7 +108,7 @@
             "2 倍 Agent 额度",
             "2 倍 K2.5 模型使用额度",
             "无限 PPT 创意视觉 x Nano Banana",
-            "限时活动 Kimi Code 5 倍额度",
+            "Kimi Code 5 倍额度",
             "专属助理 一键部署 Kimi Claw",
             "实验性功能 Agent 集群：",
             "多 Agent 并行，数倍生产力",
@@ -131,7 +131,7 @@
             "高峰时段获得优先回复",
             "5 倍 K2.5 模型使用额度",
             "无限 PPT 创意视觉 x Nano Banana",
-            "限时活动 Kimi Code 15 倍额度",
+            "Kimi Code 15 倍额度",
             "专属助理 一键部署 Kimi Claw",
             "实验性功能 Agent 集群：",
             "多 Agent 并行，数倍生产力",
@@ -154,7 +154,7 @@
             "高峰时段获得优先回复",
             "10 倍 K2.5 模型使用额度",
             "无限 PPT 创意视觉 x Nano Banana",
-            "限时活动 Kimi Code 30 倍额度",
+            "Kimi Code 30 倍额度",
             "专属助理 一键部署 Kimi Claw",
             "实验性功能 Agent 集群：",
             "多 Agent 并行，数倍生产力",
@@ -167,7 +167,7 @@
       "provider": "volcengine-ai",
       "sourceUrls": [
         "https://www.volcengine.com/activity/codingplan",
-        "https://lf6-cdn2-tos.bytegoofy.com/gftar/toutiao/fe_arch/fes2_app_1761224550685339/1.0.0.156/index.js"
+        "https://lf6-cdn2-tos.bytegoofy.com/gftar/toutiao/fe_arch/fes2_app_1761224550685339/1.0.0.160/index.js"
       ],
       "plans": [
         {
@@ -312,7 +312,7 @@
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
-          "notes": "新客首月 9.9元",
+          "notes": "新客首月 7.9元",
           "serviceDetails": [
             "每 5 小时限额: 最多1200次请求",
             "每周限额: 最多9000次请求",
@@ -327,7 +327,7 @@
           "originalPrice": null,
           "originalPriceText": null,
           "unit": "月",
-          "notes": "新客首月 49.9元",
+          "notes": "新客首月 39.9元",
           "serviceDetails": [
             "每 5 小时限额: 最多6000次请求",
             "每周限额: 最多45000次请求",
@@ -411,7 +411,7 @@
       "provider": "x-aio",
       "sourceUrls": [
         "https://code.x-aio.com/",
-        "https://code.x-aio.com/assets/index-ClqKo4eW.js"
+        "https://code.x-aio.com/assets/index-kY5B5WUy.js"
       ],
       "plans": [
         {
@@ -460,6 +460,7 @@
           "notes": "首购优惠：¥180/月",
           "serviceDetails": [
             "适用场景: 适合资深开发者的海量工作负载",
+            "贾维斯",
             "每 4 小时 2000 Prompts 配额（20x Lite）",
             "高质量开源模型，覆盖主流编码场景",
             "稳定响应速度，持续在线可用",
@@ -496,7 +497,7 @@
       "provider": "aliyun-ai",
       "sourceUrls": [
         "https://www.aliyun.com/benefit/scene/codingplan",
-        "https://cloud-assets.alicdn.com/lowcode/entry/prod/ba2567ce6f887f3be6ec369d5ca77c4a.js",
+        "https://cloud-assets.alicdn.com/lowcode/entry/prod/0b5732cc42dea580ff2fc50be553d2c4.js",
         "https://t.aliyun.com/abs/promotion/queryPrice"
       ],
       "plans": [
@@ -529,47 +530,9 @@
           ]
         }
       ]
-    },
-    {
-      "provider": "infini-ai",
-      "sourceUrls": [
-        "https://cloud.infini-ai.com/platform/ai",
-        "https://content.cloud.infini-ai.com/platform-web-prod/assets/js/main.4700a281.js",
-        "https://content.cloud.infini-ai.com/platform-web-prod/assets/js/Index.eeabac4a.js",
-        "https://cloud.infini-ai.com/api/maas/system/coding_plan/can_purchase"
-      ],
-      "plans": [
-        {
-          "name": "Infini Coding Lite",
-          "currentPrice": 19.9,
-          "currentPriceText": "¥19.9/月",
-          "originalPrice": 40,
-          "originalPriceText": "¥40/月",
-          "unit": "月",
-          "notes": null,
-          "serviceDetails": [
-            "1,000次/5小时、6,000次/7天、12,000次/1个月",
-            "支持Minimax、GLM、DeepSeek、Kimi等最新模型，Day0上新",
-            "适配Claude Code、Cline等主流编程工具，持续更新..."
-          ]
-        },
-        {
-          "name": "Infini Coding Pro",
-          "currentPrice": 99.9,
-          "currentPriceText": "¥99.9/月",
-          "originalPrice": 200,
-          "originalPriceText": "¥200/月",
-          "unit": "月",
-          "notes": null,
-          "serviceDetails": [
-            "5,000次/5小时、30,000次/7天、60,000次/1个月",
-            "5倍Lite套餐用量",
-            "支持Minimax、GLM、DeepSeek、Kimi等最新模型，Day0上新",
-            "适配Claude Code、Cline等主流编程工具，持续更新..."
-          ]
-        }
-      ]
     }
   ],
-  "failures": []
+  "failures": [
+    "infini-ai: Task timed out after 15000ms"
+  ]
 }
