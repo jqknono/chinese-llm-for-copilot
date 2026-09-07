@@ -1,11 +1,11 @@
 {
-  "updatedAt": "2026-09-06T12:00:24.568Z",
+  "updatedAt": "2026-09-07T07:00:40.006Z",
   "providers": [
     {
       "provider": "aliyun-ai",
       "sourceUrls": [
         "https://www.aliyun.com/benefit/scene/codingplan",
-        "https://cloud-assets.alicdn.com/lowcode/entry/prod/fdaf320b5080dc0067991ee415057860.js",
+        "https://cloud-assets.alicdn.com/lowcode/entry/prod/90533ad9596a68e8ed53ad70298bbcd1.js",
         "https://t.aliyun.com/abs/promotion/queryPrice",
         "https://help.aliyun.com/zh/model-studio/coding-plan"
       ],
@@ -422,7 +422,9 @@
             "Lite 与 Pro 共计 12000 个专属免费名额"
           ]
         }
-      ]
+      ],
+      "staleReason": "最近一次抓取解析失败，当前展示的是上次成功抓取结果，可能信息已过时。",
+      "staleFailure": "cucloud-coding-plan: fetch failed"
     },
     {
       "provider": "github-copilot",
@@ -622,7 +624,9 @@
             "适配工具：完美适配多种开发场景，支持 Claude Code、OpenCode、OpenClaw、Roo Code、Cursor等主流 AI 编码工具，多工具之间套餐额度共享"
           ]
         }
-      ]
+      ],
+      "staleReason": "最近一次抓取解析失败，当前展示的是上次成功抓取结果，可能信息已过时。",
+      "staleFailure": "jdcloud-ai: Task timed out after 30000ms"
     },
     {
       "provider": "kilo-pass",
@@ -971,7 +975,9 @@
             "抢先体验新功能"
           ]
         }
-      ]
+      ],
+      "staleReason": "最近一次抓取解析失败，当前展示的是上次成功抓取结果，可能信息已过时。",
+      "staleFailure": "mthreads-coding-plan: page.goto: Timeout 15000ms exceeded. Call log: - navigating to \"https://code.mthreads.com/\", waiting until \"domcontentloaded\""
     },
     {
       "provider": "opencode",
@@ -1122,7 +1128,9 @@
             "优先技术支持"
           ]
         }
-      ]
+      ],
+      "staleReason": "最近一次抓取解析失败，当前展示的是上次成功抓取结果，可能信息已过时。",
+      "staleFailure": "stepfun-step-plan: Task timed out after 30000ms"
     },
     {
       "provider": "synthetic-ai",
@@ -1181,7 +1189,9 @@
             "用量限制: 每 5 小时：最多约 6,000 次请求 每周：最多约 45,000 次请求 每订阅月：最多约 90,000 次请求"
           ]
         }
-      ]
+      ],
+      "staleReason": "最近一次抓取解析失败，当前展示的是上次成功抓取结果，可能信息已过时。",
+      "staleFailure": "tencent-cloud-ai: fetch failed; Playwright fallback failed: page.goto: Timeout 12000ms exceeded. Call log: - navigating to \"https://cloud.tencent.com/document/product/1823/130092\", waiting until \"commit\""
     },
     {
       "provider": "tencent-cloud-token-plan",
@@ -1348,9 +1358,7 @@
             "使用 LingClaw 构建个人助理"
           ]
         }
-      ],
-      "staleReason": "最近一次抓取解析失败，当前展示的是上次成功抓取结果，可能信息已过时。",
-      "staleFailure": "x-aio: Request failed: https://code.x-aio.com/assets/index-BlH8fPH1.js -> 525; Playwright fallback failed: page.evaluate: Error: Request failed: https://code.x-aio.com/assets/index-BlH8fPH1.js -> 522 at eval (eval at evaluate (:290:30), <anonymous>:4:15) at async <anonymous>:316:30"
+      ]
     },
     {
       "provider": "xfyun-ai",
@@ -1570,6 +1578,10 @@
   ],
   "failures": [
     "zhipu-ai: Task timed out after 30000ms",
-    "x-aio: Request failed: https://code.x-aio.com/assets/index-BlH8fPH1.js -> 525; Playwright fallback failed: page.evaluate: Error: Request failed: https://code.x-aio.com/assets/index-BlH8fPH1.js -> 522\n    at eval (eval at evaluate (:290:30), <anonymous>:4:15)\n    at async <anonymous>:316:30"
+    "tencent-cloud-ai: fetch failed; Playwright fallback failed: page.goto: Timeout 12000ms exceeded.\nCall log:\n  - navigating to \"https://cloud.tencent.com/document/product/1823/130092\", waiting until \"commit\"\n",
+    "jdcloud-ai: Task timed out after 30000ms",
+    "mthreads-coding-plan: page.goto: Timeout 15000ms exceeded.\nCall log:\n  - navigating to \"https://code.mthreads.com/\", waiting until \"domcontentloaded\"\n",
+    "stepfun-step-plan: Task timed out after 30000ms",
+    "cucloud-coding-plan: fetch failed"
   ]
 }
