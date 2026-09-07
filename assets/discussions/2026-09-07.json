@@ -1,0 +1,81 @@
+{
+  "date": "2026-09-07",
+  "generatedAt": "2026-09-07T11:47:57.825Z",
+  "config": {
+    "sources": [
+      "v2ex",
+      "linuxdo"
+    ],
+    "keywords": [
+      "套餐",
+      "coding",
+      "plan",
+      "claude",
+      "gpt",
+      "openai",
+      "kimi",
+      "zhipu",
+      "moonshot",
+      "qwen",
+      "glm",
+      "deepseek"
+    ],
+    "llmModel": "openrouter/free",
+    "relevanceThreshold": 0.7
+  },
+  "summary": {
+    "totalPostsFetched": 57,
+    "postsAfterKeywordFilter": 19,
+    "relevantPosts": 1,
+    "discussionsCreated": 1,
+    "discussionsSkipped": 0,
+    "supplierMentions": {
+      "LinkAGI": 1
+    }
+  },
+  "posts": [
+    {
+      "id": "v2ex-1240157",
+      "source": "v2ex",
+      "sourceUrl": "https://www.v2ex.com/t/1240157",
+      "title": "LinkAGI：给 Codex / Claude Code / Gemini CLI 的中文接入与排错",
+      "content": "这是我在做的 LinkAGI AI API 接入服务，先把身份和边界说清楚：LinkAGI 不是 OpenAI 、Anthropic 或 Google 的官方服务，也不承诺固定可用率；模型、号池、价格和可用性以实时页面及调用日志为准。 我做这个服务的原因，是很多国内开发者在配置 Codex 、Claude Code 、Gemini CLI 时，会卡在 Base URL 、协议路径、模型名、Key 分组和 401/404/429/504 排错上。LinkAGI 把这些步骤和日志放在一个控制台里，支持人民币按量计费。 当前公开接入规则： Codex / OpenAI Responses： https://api.linktoagi.com/v1 ，客户端继续请求 /responses Claude Code： https://api.linktoagi.com ，客户端继续请求 /v1/messages Gemini CLI： https://api.linktoagi.com ，客户端继续请求 Gemini 原生路由 控制台可以创建独立 API Key 、选择令牌分组、查看模型、Toke",
+      "author": "zykoo",
+      "createdAt": "2026-09-07T11:26:12.000Z",
+      "analysis": {
+        "isRelevant": true,
+        "isCodingPlan": true,
+        "relevance": 0.75,
+        "supplier": "LinkAGI",
+        "supplierCategory": "aggregator",
+        "sentiment": "neutral",
+        "sentimentConfidence": 0.85,
+        "summary": "LinkAGI 是一个 AI API 接入服务，帮助国内开发者配置 Codex、Claude Code 和 Gemini CLI 等 AI 编程工具，提供人民币按量计费和 ¥0.2 试用额度，支持创建独立 API Key、查看 Token 消耗和实际扣费。",
+        "topics": [
+          "定价",
+          "API接入",
+          "按量计费",
+          "Claude Code",
+          "Codex",
+          "Gemini CLI",
+          "试用额度",
+          "排错",
+          "配置"
+        ],
+        "planMentioned": null,
+        "language": "zh",
+        "category": "经验分享"
+      },
+      "discussionUrl": "https://github.com/jqknono/coding-plans-for-copilot/discussions/371",
+      "analyzedAt": "2026-09-07T11:57:23.464Z"
+    }
+  ],
+  "failures": [
+    "linuxdo: https://linux.do/latest.rss → 429",
+    "linuxdo: https://linux.do/latest.json → 429",
+    "linuxdo: https://linux.do/latest.json → 429",
+    "analysis failed for v2ex-1240145: LLM returned empty content (finish_reason=stop)",
+    "analysis failed for v2ex-1240120: LLM returned invalid JSON: Unexpected token 'U', \"User Safety: safe\" is not valid JSON",
+    "analysis failed for v2ex-1239922: The operation was aborted due to timeout"
+  ]
+}
