@@ -1,0 +1,137 @@
+{
+  "date": "2026-09-08",
+  "generatedAt": "2026-09-08T10:46:01.379Z",
+  "config": {
+    "sources": [
+      "v2ex",
+      "linuxdo"
+    ],
+    "keywords": [
+      "套餐",
+      "coding",
+      "plan",
+      "claude",
+      "gpt",
+      "openai",
+      "kimi",
+      "zhipu",
+      "moonshot",
+      "qwen",
+      "glm",
+      "deepseek"
+    ],
+    "llmModel": "openrouter/free",
+    "relevanceThreshold": 0.7
+  },
+  "summary": {
+    "totalPostsFetched": 56,
+    "postsAfterKeywordFilter": 10,
+    "relevantPosts": 3,
+    "discussionsCreated": 3,
+    "discussionsSkipped": 0,
+    "supplierMentions": {
+      "火山": 1,
+      "嘀嘀 GPT": 1
+    }
+  },
+  "posts": [
+    {
+      "id": "v2ex-1240457",
+      "source": "v2ex",
+      "sourceUrl": "https://www.v2ex.com/t/1240457",
+      "title": "搓了个 Agent 执行器：来一起薅 GLM 羊毛，把 Claude Max 5x 额度榨出 20x 生产力",
+      "content": "用大模型写工程代码最大的痛感就是：高级模型的额度金贵，但放手让它自己跑又容易写出灾难代码。 前段时间 GLM-5.3-Flash 发布，速度快且极具性价比，突然给了我灵感：既然粗活脏活不用牛刀，为什么不把流程拆开垫刀？于是顺手搓了 zcode-executor （ https://github.com/KyoMio/zcode-executor ），有以下几个特点： 1.成本节省：大任务拆解后按层级分配。粗活、跑测试、证据收集先扔给 GLM-5.3-Flash 等平价模型垫刀，核心逻辑再换主力模型。加上 ZCode 调用 Coding Plan 有 6.7 折优惠，夜间闲时还有免费额度，双重叠加下来，原本 5x 配额硬生生拉扯出了 20x 的生产力。 2.自动审批：参考 claude code 的 auto 模式逻辑，常规操作灵活放行，确保 zcode 干活能够完全放手。遇到敏感文件读写、不可逆 shell 动作自动阻断进 Gate ，支持人工放行，告别“盲盒式”提交。 3.任务流水线化：任务支持排队、异步执行和 follow 追踪，不占死交互终端。 代码已开源，纯 Node.js C",
+      "author": "kyomio",
+      "createdAt": "2026-09-08T09:23:11.000Z",
+      "analysis": {
+        "isRelevant": true,
+        "isCodingPlan": true,
+        "relevance": 0.95,
+        "supplier": null,
+        "supplierCategory": null,
+        "sentiment": "positive",
+        "sentimentConfidence": 0.92,
+        "summary": "The author shares their experience building zcode-executor, an AI agent that optimizes coding workflows by using cheaper models for routine tasks and premium models for complex logic, achieving 20x productivity from a 5x quota through strategic plan discounts.",
+        "topics": [
+          "定价",
+          "套餐对比",
+          "成本优化",
+          "工具/Agent",
+          "生产力"
+        ],
+        "planMentioned": "Coding Plan (6.7折优惠)",
+        "language": "zh",
+        "category": "经验分享"
+      },
+      "discussionUrl": "https://github.com/jqknono/coding-plans-for-copilot/discussions/373",
+      "analyzedAt": "2026-09-08T10:53:15.695Z"
+    },
+    {
+      "id": "v2ex-1240447",
+      "source": "v2ex",
+      "sourceUrl": "https://www.v2ex.com/t/1240447",
+      "title": "火山 Agent Plan 避雷",
+      "content": "Error: 429 最近新入了火山的 Agent Plan ，到了下午 glm-5.3-flash 基本就是不可用，支持不了能不能就不要超卖 ？卖了又用不起。",
+      "author": "sxw11",
+      "createdAt": "2026-09-08T08:45:18.000Z",
+      "analysis": {
+        "isRelevant": true,
+        "isCodingPlan": true,
+        "relevance": 0.9,
+        "supplier": "火山",
+        "supplierCategory": "chinese-provider",
+        "sentiment": "negative",
+        "sentimentConfidence": 0.95,
+        "summary": "用户抱怨火山 Agent Plan 过度抢购导致 429 错误，GLM-5.3-flash 在下午基本不可用且费用过高。",
+        "topics": [
+          "定价",
+          "使用体验",
+          "超卖",
+          "故障排查"
+        ],
+        "planMentioned": "火山 Agent Plan",
+        "language": "zh",
+        "category": "使用体验"
+      },
+      "discussionUrl": "https://github.com/jqknono/coding-plans-for-copilot/discussions/374",
+      "analyzedAt": "2026-09-08T10:53:20.903Z"
+    },
+    {
+      "id": "v2ex-1240384",
+      "source": "v2ex",
+      "sourceUrl": "https://www.v2ex.com/t/1240384",
+      "title": "嘀嘀 GPT 订阅号 PRO 20X RMB1450",
+      "content": "嘀嘀 GPT PRO 20X RMB1450 需要的私聊 UTU4MzMxNTAyMg==",
+      "author": "iBaoger",
+      "createdAt": "2026-09-08T06:00:22.000Z",
+      "analysis": {
+        "isRelevant": true,
+        "isCodingPlan": true,
+        "relevance": 0.95,
+        "supplier": "嘀嘀 GPT",
+        "supplierCategory": "chinese-provider",
+        "sentiment": "neutral",
+        "sentimentConfidence": 0.9,
+        "summary": "The post announces the HoKe GPT PRO 20X RMB1450 subscription plan priced at 1450 RMB, mentioning the required private chat token.",
+        "topics": [
+          "订阅",
+          "定价",
+          "嘀嘀 GPT",
+          "AI coding assistant"
+        ],
+        "planMentioned": "嘀嘀 GPT PRO 20X RMB1450",
+        "language": "zh",
+        "category": "Announcements"
+      },
+      "discussionUrl": "https://github.com/jqknono/coding-plans-for-copilot/discussions/375",
+      "analyzedAt": "2026-09-08T10:53:27.154Z"
+    }
+  ],
+  "failures": [
+    "linuxdo: https://linux.do/latest.rss → 429",
+    "linuxdo: https://linux.do/latest.json → 429",
+    "linuxdo: https://linux.do/latest.json → 429",
+    "analysis failed for v2ex-1240429: LLM returned invalid JSON: Unexpected token 'U', \"User Safet\"... is not valid JSON",
+    "analysis failed for v2ex-1240396: LLM returned invalid JSON: Unexpected token 'U', \"User Safety: safe\" is not valid JSON"
+  ]
+}
